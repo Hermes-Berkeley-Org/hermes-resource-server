@@ -1,4 +1,6 @@
-# hermes
+# Hermes
+
+Team: Ajay Raj
 
 To setup:
 
@@ -9,7 +11,7 @@ To setup:
     pip install -r requirements.txt
 
     chmod +x deploy/*
-    deploy/setup-env
+    source deploy/setup-env.sh
 
     brew install heroku/brew/heroku
     heroku login
