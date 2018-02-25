@@ -10,3 +10,5 @@ To setup:
 
     chmod +x deploy/*
     deploy/setup-env
+
+    heroku git:remote -a cal-hermes
