@@ -1,0 +1,5 @@
+venv/
+*.pyc
+package.json
+package-lock.json
+node-modules/
