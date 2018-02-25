@@ -12,4 +12,5 @@ To setup:
     deploy/setup-env
 
     brew install heroku/brew/heroku
+    heroku login
     heroku git:remote -a cal-hermes
