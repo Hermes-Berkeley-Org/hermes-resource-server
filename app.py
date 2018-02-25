@@ -6,13 +6,13 @@ import os
 
 app = Flask(__name__)
 
-client = MongoClient(os.environ.MONGODB_URI)
+# client = MongoClient(os.environ.MONGODB_URI)
 
 @app.route('/')
 def index():
-    return "Hermes"
+    return render_template('index.html')
 
 @app.route('/hello/')
 @app.route('/hello/<name>')
 def hello(name=None):
-    return render_template('hello.html', name=name)
+    return "hello"
