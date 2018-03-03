@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang='en'>
+
+<head></head>
+<body>
+
+<table>
+  {% for user in query %}
+      <tr>{{user['Name']}} : {{user['Email']}}</tr>
+  {% endfor %}
+</table>
+
+</body>
+
+
+</html>
