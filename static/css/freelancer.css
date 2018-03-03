@@ -13,7 +13,8 @@ h6 {
 }
 
 hr.star-light,
-hr.star-dark {
+hr.star-dark,
+hr.star-primary {
   max-width: 15rem;
   padding: 0;
   text-align: center;
@@ -24,7 +25,8 @@ hr.star-dark {
 }
 
 hr.star-light:after,
-hr.star-dark:after {
+hr.star-dark:after,
+hr.star-primary:after {
   position: relative;
   top: -.8em;
   display: inline-block;
@@ -32,6 +34,15 @@ hr.star-dark:after {
   content: '\f005';
   font-family: FontAwesome;
   font-size: 2em;
+}
+
+hr.star-primary {
+  border-color: #18BC9C;
+}
+
+hr.star-primary:after {
+  color: #18BC9C;
+  background-color: white;
 }
 
 hr.star-light {
