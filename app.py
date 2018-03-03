@@ -12,7 +12,7 @@ db = client[os.environ.get('DATABASE_NAME')]
 
 @app.route('/')
 def index():
-    logging.warning("SUCK MY NUTS U DUMB CUNT")
+    logging.warning("nah")
     return render_template('index.html')
 
 @app.route('/data/')
@@ -26,3 +26,13 @@ def data():
 @app.route('/class/<cls>')
 def classpage(cls):
     return render_template('class.html', info=db['Classes'].find_one({'Name': cls}), lectures=db['Lectures'].find({'cls': cls}))
+
+@app.route('/class/<cls>')
+def classpage(cls):
+    return render_template('class.html', info=db['Classes'].find_one({'Name': cls}), lectures=db['Lectures'].find({'cls': cls}))
+
+
+@app.route('/class/<cls>/lecture/<lec>')
+def lecturepage(cls, date):
+    classobj = db['Classes'].find_one({'Name' : cls})
+    return render_template('lecture.html', name = classobj["name"]))
