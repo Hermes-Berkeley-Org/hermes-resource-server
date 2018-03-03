@@ -36,7 +36,16 @@
         </tr>
       {% endfor %}
     </table>
+
+    <form action="" method="post">
+        {{ form.csrf }}
+        <p>{{ form.title }}</p>
+        <p>{{ form.date }}</p>
+        <p>{{ form.link }}</p>
+        <p>{{ form.submit() }}</p>
+    </form>
+
   </body>
-  
+
 
 </html>
