@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+
+    <head>
+        {% block head %}
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+        <meta name="description" content="">
+        <meta name="author" content="">
+
+        <title>{% block title %}{% endblock %}</title>
+
+        <!-- Bootstrap core CSS -->
+        <link href="{{ url_for('static', filename='vendor/bootstrap/css/bootstrap.min.css') }}" rel="stylesheet">
+
+        <!-- Custom fonts for this template -->
+        <link href="{{ url_for('static', filename='vendor/font-awesome/css/font-awesome.min.css') }}" rel="stylesheet" type="text/css">
+        <link href="https://fonts.googleapis.com/css?family=Montserrat:400,700" rel="stylesheet" type="text/css">
+        <link href="https://fonts.googleapis.com/css?family=Lato:400,700,400italic,700italic" rel="stylesheet" type="text/css">
+
+        <!-- Plugin CSS -->
+        <link href="{{ url_for('static', filename='vendor/magnific-popup/magnific-popup.css') }}" rel="stylesheet" type="text/css">
+
+        <!-- Custom styles for this template -->
+        <link href="{{ url_for('static', filename='css/freelancer.css') }}" rel="stylesheet">
+
+        <!-- Custom style sheet for this app -->
+        <link href="{{ url_for('static', filename='css/styles.css') }}" rel="stylesheet">
+        {% endblock %}
+    </head>
+    <body>
+    <div id="content">{% block content %}{% endblock %}</div>
+    <div id="footer">
+      {% block footer %}
+      &copy; Copyright 2018 by Ajay Raj, Kartik Kapur, Kian Hooshmand, Anthony Yu.
+      {% endblock %}
+    </div>
+  </body>
+</html>
