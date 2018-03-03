@@ -4,6 +4,8 @@ from pymongo import MongoClient
 import os
 from config import Config
 
+import logging
+
 from utils.webpage_utils import CreateLectureForm
 from utils import db_utils
 from utils.db_utils import User, Class, Lecture, Note
@@ -35,6 +37,8 @@ def classpage(cls):
         if form.validate():
             lecture = Lecture(name=request.form['title'], date=request.form['date'], cls=cls)
             success = db_utils.insert(lecture, db)
+        else:
+            flash('All fields required')
     return render_template(
         'class.html',
         info=db['Classes'].find_one({'Name': cls}),
@@ -42,7 +46,7 @@ def classpage(cls):
         form=form
     )
 
-@app.route('/class/<cls>/lecture/<lec>')
-def lecturepage(cls, date):
-    classobj = db['Classes'].find_one({'Name' : cls})
-    return render_template('lecture.html', name = classobj["name"]))
+# @app.route('/class/<cls>/lecture/<lec>')
+# def lecturepage(cls, date):
+#     classobj = db['Classes'].find_one({'Name' : cls})
+#     return render_template('lecture.html', name = classobj["name"]))
