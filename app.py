@@ -45,4 +45,4 @@ def classpage(cls):
 @app.route('/class/<cls>/lecture/<lec>')
 def lecturepage(cls, date):
     classobj = db['Classes'].find_one({'Name' : cls})
-    return render_template('lecture.html', name = classobj["name"]))
+    return render_template('lecture.html', name = classobj["name"])
