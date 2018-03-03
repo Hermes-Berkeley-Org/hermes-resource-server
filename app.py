@@ -22,17 +22,3 @@ def data():
 # @app.route('/home/')
 # def home():
 #     return render_template('home.html', )
-
-@app.route('/class/<cls>')
-def classpage(cls):
-    return render_template('class.html', info=db['Classes'].find_one({'Name': cls}), lectures=db['Lectures'].find({'cls': cls}))
-
-@app.route('/class/<cls>')
-def classpage(cls):
-    return render_template('class.html', info=db['Classes'].find_one({'Name': cls}), lectures=db['Lectures'].find({'cls': cls}))
-
-
-@app.route('/class/<cls>/lecture/<lec>')
-def lecturepage(cls, date):
-    classobj = db['Classes'].find_one({'Name' : cls})
-    return render_template('lecture.html', name = classobj["name"]))

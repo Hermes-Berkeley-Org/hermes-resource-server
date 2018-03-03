@@ -6,7 +6,7 @@
 
 <table>
   {% for user in query %}
-      <tr>{{user['Name']}} : {{user['Email']}}</tr>
+      <tr><td>{{user['Name']}}</td><td>{{user['Email']}}</td></tr>
   {% endfor %}
 </table>
 
