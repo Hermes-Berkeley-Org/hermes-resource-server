@@ -16,6 +16,12 @@ from flask_oauthlib.client import OAuth
 
 import requests
 
+app = Flask(__name__)
+app.config.from_object(Config)
+
+client = MongoClient(os.environ.get('MONGODB_URI'))
+db = client[os.environ.get('DATABASE_NAME')]
+
 def create_client(app):
 
     oauth = OAuth(app)
@@ -107,19 +113,14 @@ def create_client(app):
             form=form
         )
 
+create_client(app)
+
     # @app.route('/students')
     # def students():
 
 
-if __name__ == '__main__':
-    app = Flask(__name__)
-    app.config.from_object(Config)
+# if __name__ == '__main__':
 
-    client = MongoClient(os.environ.get('MONGODB_URI'))
-    db = client[os.environ.get('DATABASE_NAME')]
-
-    create_client(app)
-    app.run(host='127.0.0.1', port=8000)
 
 # @app.route('/class/<cls>/lecture/<lec>')
 # def lecturepage(cls, date):
