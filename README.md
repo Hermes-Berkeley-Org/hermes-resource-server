@@ -20,3 +20,7 @@ To setup:
 To run locally:
 
     flask run
+
+Once you set up your OK server, in order to test on Heroku:
+
+    heroku config:set OK_SERVER=<your server, could be ngrok>
