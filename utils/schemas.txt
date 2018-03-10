@@ -1,0 +1,31 @@
+Classes{
+  	Id: Json 
+	Department: String
+	Lectures: List
+	Name: String
+	Permissions: Dictionary
+}
+
+
+Lectures{
+	id: Json
+	name: String
+	comments: List
+	date: String
+	keywords: List
+	cls: String
+}
+
+Notes{
+	Text: String
+	Nested Objects:TBD
+}
+
+Users{
+	id: Json
+	classes: List
+	email String
+	name: String
+	is_admin: boolean
+	ok_id: String
+}
