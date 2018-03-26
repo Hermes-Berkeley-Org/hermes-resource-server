@@ -47,6 +47,8 @@ def create_client(app):
 
     @app.route('/login')
     def login():
+        if app.config['OK_MODE'] == 'bypass':
+            return redirect(url_for('home'))
         return remote.authorize(callback=url_for('authorized', _external=True))
 
     @app.route('/logout')
@@ -79,19 +81,31 @@ def create_client(app):
     def get_oauth_token():
         return session.get('dev_token')
 
+    def get_ok_id():
+        if app.config['OK_MODE'] == 'bypass':
+            return app.config['TESTING_OK_ID']
+        else:
+            token = session['dev_token'][0]
+            r = requests.get('{0}/api/v3/user/?access_token={1}'.format(
+                    app.config['OK_SERVER'],
+                    token
+                )
+            )
+            ok_resp = r.json()
+            if ok_resp and 'data' in ok_resp:
+                ok_data = ok_resp['data']
+                return ok_data['id']
+
+    def get_user_data():
+        ok_id = get_ok_id()
+        if ok_id:
+            db_result = db['Users'].find_one({'ok_id': ok_id}) or {}
+            return db_result
+
     @app.route('/home/')
     def home():
-        token = session['dev_token'][0]
-        r = requests.get('{0}/api/v3/user/?access_token={1}'.format(
-                app.config['OK_SERVER'],
-                token
-            )
-        )
-        ok_resp = r.json()
-        if ok_resp and 'data' in ok_resp:
-            ok_data = ok_resp['data']
-            ok_id = ok_data['id']
-            db_result = db['Users'].find_one({'ok_id': ok_id}) or {}
+        db_result = get_user_data()
+        if db_result:
             return render_template('home.html', query=db_result.items())
         return redirect(url_for('error'))
 
@@ -114,15 +128,3 @@ def create_client(app):
         )
 
 create_client(app)
-
-    # @app.route('/students')
-    # def students():
-
-
-# if __name__ == '__main__':
-
-
-# @app.route('/class/<cls>/lecture/<lec>')
-# def lecturepage(cls, date):
-#     classobj = db['Classes'].find_one({'Name' : cls})
-#     return render_template('lecture.html', name = classobj["name"]))

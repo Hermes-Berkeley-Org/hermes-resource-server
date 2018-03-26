@@ -6,3 +6,5 @@ class Config(object):
     DEV_TOKEN = os.environ.get('DEV_TOKEN')
     CLIENT_ID = os.environ.get('CLIENT_ID')
     CLIENT_SECRET = os.environ.get('CLIENT_SECRET')
+    OK_MODE = os.environ.get('OK_MODE')
+    TESTING_OK_ID = os.environ.get('TESTING_OK_ID')

@@ -4,11 +4,11 @@ Team: Ajay Raj
 
 To setup:
 
-    pip install virtualenv
-    virtualenv venv
+    pip3 install virtualenv
+    virtualenv -p python3 venv
     source venv/bin/activate
 
-    pip install -r requirements.txt
+    pip3 install -r requirements.txt
 
     chmod +x deploy/*
     source deploy/setup-env.sh
@@ -19,8 +19,22 @@ To setup:
 
 To run locally:
 
-    flask run
+    flask run --port=3000
 
-Once you set up your OK server, in order to test on Heroku:
+Once you set up your OK server (see https://github.com/Cal-CS-61A-Staff/ok), in order to test on Heroku:
+
+    If you're running OK locally, make sure you ngrok it and set is an environment variable in setup-env.sh
 
     heroku config:set OK_SERVER=<your server, could be ngrok>
+
+
+**OK Bypass**: If you don't want to deal with OK auth in the application, make sure you set OK_MODE = bypass in setup-env.sh and you will operate as Sumukh in the application without having to login
+
+**To access the DB**: Go to Heroku, Resources and click on MLab
+
+**If you're getting weird errors on importing stuff**:
+
+    rm -rf venv
+    virtualenv -p python3 venv
+    source venv/bin/activate
+    pip3 install -r requirements.txt
