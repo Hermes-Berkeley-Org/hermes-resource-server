@@ -32,7 +32,7 @@
 <script>
   // Load the IFrame Player API code asynchronously.
 
-  https://www.youtube.com/watch?v=JPb1k6JdGvg
+  // https://www.youtube.com/watch?v=JPb1k6JdGvg
   var tag = document.createElement('script');
   tag.src = "https://www.youtube.com/player_api";
   var firstScriptTag = document.getElementsByTagName('script')[0];
@@ -45,7 +45,7 @@
     player = new YT.Player('ytplayer', {
       height: '360',
       width: '640',
-      videoId: 'JPb1k6JdGvg'
+      videoId: '{{ id }}'
     });
   }
 </script>

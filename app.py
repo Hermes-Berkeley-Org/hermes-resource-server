@@ -109,22 +109,46 @@ def create_client(app):
             return render_template('home.html', query=db_result.items())
         return redirect(url_for('error'))
 
+    @app.route('/class/<cls>/lecture/<lesson>')
+    def lecture(cls, lesson):
+        lecture = db['Lectures'].find_one({'url_name': lesson})
+        if lecture:
+            url = urllib.parse.urlparse(lecture['link'])
+            params = urllib.parse.parse_qs(url.query)
+            if 'v' in params:
+                return render_template('lecture.html', id=params['v'][0])
+        return redirect(url_for('error'))
 
-    @app.route('/class/<cls>', methods=['GET', 'POST'])
-    def classpage(cls):
+
+    @app.route('/class/<class_name>', methods=['GET', 'POST'])
+    def classpage(class_name):
         form = CreateLectureForm(request.form)
 
         if request.method == 'POST':
+            cls = db['Classes'].find_one({'Name': class_name})
+            num_lectures = len(cls['Lectures'])
             if form.validate():
-                lecture = Lecture(name=request.form['title'], date=request.form['date'], cls=cls)
-                success = db_utils.insert(lecture, db)
+                lecture = Lecture(
+                    name=request.form['title'],
+                    url_name=db_utils.encode_url(request.form['title']),
+                    date=request.form['date'],
+                    link=request.form['link'],
+                    lecture_number=num_lectures,
+                    cls=class_name
+                )
+                success = Class.add_lecture(cls, lecture, db)
             else:
                 flash('All fields required')
+        cls = db['Classes'].find_one({'Name': class_name})
         return render_template(
             'class.html',
-            info=db['Classes'].find_one({'Name': cls}),
-            lectures=db['Lectures'].find({'cls': cls}),
+            info=cls,
+            lectures=[db['Lectures'].find_one({'_id': lecture_id}) for lecture_id in cls['Lectures']],
             form=form
         )
+
+    @app.route('/error')
+    def error():
+        return 'SUCK MY NUTS'
 
 create_client(app)

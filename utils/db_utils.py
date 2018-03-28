@@ -7,6 +7,9 @@ def insert(dbobj, db):
 def get_keys(d, keys):
     return {key: d[key] for key in keys}
 
+def encode_url(s):
+    return s.lower().replace(' ', '-')
+
 class DBObject:
 
     collection = None
@@ -45,6 +48,22 @@ class Class(DBObject):
 
     def __init__(self, **attr):
         DBObject.__init__(self, **attr)
+
+    @staticmethod
+    def add_lecture(cls, lecture, db):
+        id = insert(lecture, db).inserted_id
+        return db[Class.collection].update_one(
+            {
+              '_id': cls['_id']
+            },
+            {
+              '$set': {
+                'Lectures': cls['Lectures'] + [id]
+              }
+            },
+            upsert=False
+        )
+
 
 class Note(DBObject):
 
