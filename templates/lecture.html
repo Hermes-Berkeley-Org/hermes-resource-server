@@ -24,10 +24,29 @@
     <!-- Custom styles for this template -->
     <link href="../static/css/freelancer.min.css" rel="stylesheet">
 
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+
+
   </head>
 
   <body>
-    <div id="ytplayer"></div>
+    <div id="ytplayer">
+
+      <input id='question' placeholder='Enter your question here'></input>
+      <button type=submit onclick="sendQuestion()">Submit Question</input>
+    </div>
+    <div id="questions">
+        <table>
+          {% for question in questions %}
+            <tr>
+              <td>{{questions['timestamp']}}</td>
+              <td>{{questions['text']}}</td>
+            </tr>
+          {% endfor %}
+        </table>
+    </div>
+
+
 
 <script>
   // Load the IFrame Player API code asynchronously.
@@ -43,14 +62,44 @@
   var player;
   function onYouTubePlayerAPIReady() {
     player = new YT.Player('ytplayer', {
-      height: '360',
-      width: '640',
-      videoId: '{{ id }}'
+      height: window.innerHeight / 2,
+      width: window.innerWidth / 2,
+      videoId: '{{ id }}',
+      events: {
+        'onStateChange': recordData
+      }
     });
   }
+
+  function recordData(event) {
+      // Send info for student tracking purposes
+  }
+
+  function sendQuestion() {
+      var timestamp = player.getCurrentTime();
+      var question = document.getElementById('question').innerHTML;
+
+      var data = {
+         timestamp,
+         question,
+         user: '{{ user }}',
+         lecture: '{{ lecture }}',
+         cls: '{{ cls }}'
+      }
+
+      console.log(`${JSON.stringify(data)}`)
+
+      $.ajax({
+        type: "POST",
+        url: "{{ url_for('write_question')}}",
+        data
+      });
+  }
+
 </script>
 
-      <!-- <iframe width="640" height="390" src="//www.youtube-nocookie.com/embed/<%= rsRECORDSET.Fields.Item("MediaObject")%>?rel=0" frameborder="0" allowfullscreen></iframe> -->
+
+
   </body>
 
 

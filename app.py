@@ -111,12 +111,21 @@ def create_client(app):
 
     @app.route('/class/<cls>/lecture/<lesson>')
     def lecture(cls, lesson):
-        lecture = db['Lectures'].find_one({'url_name': lesson})
+        lecture_obj = db['Lectures'].find_one({'url_name': lesson})
+        cls_obj = db['Classes'].find_one({'Name': cls})
+        question_obj = db['Questions'].find_one({'lecture_name': lecture_obj['name']})
         if lecture:
-            url = urllib.parse.urlparse(lecture['link'])
+            url = urllib.parse.urlparse(lecture_obj['link'])
             params = urllib.parse.parse_qs(url.query)
             if 'v' in params:
-                return render_template('lecture.html', id=params['v'][0])
+                return render_template(
+                    'lecture.html',
+                    id=params['v'][0],
+                    lecture=lecture_obj['_id'],
+                    user=get_user_data()['_id'],
+                    cls=cls_obj['_id'],
+                    questions=question_obj['questions']
+                )
         return redirect(url_for('error'))
 
 
@@ -146,6 +155,11 @@ def create_client(app):
             lectures=[db['Lectures'].find_one({'_id': lecture_id}) for lecture_id in cls['Lectures']],
             form=form
         )
+
+    @app.route('/write_question')
+    def write_question():
+        if request.method == 'POST':
+            print(request.data)
 
     @app.route('/error')
     def error():
