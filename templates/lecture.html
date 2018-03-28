@@ -10,37 +10,23 @@
 
     <title>Hermes</title>
 
-    <!-- Bootstrap core CSS -->
-    <link href="../static/vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
-
-    <!-- Custom fonts for this template -->
-    <link href="../static/vendor/font-awesome/css/font-awesome.min.css" rel="stylesheet" type="text/css">
-    <link href="https://fonts.googleapis.com/css?family=Montserrat:400,700" rel="stylesheet" type="text/css">
-    <link href="https://fonts.googleapis.com/css?family=Lato:400,700,400italic,700italic" rel="stylesheet" type="text/css">
-
-    <!-- Plugin CSS -->
-    <link href="../static/vendor/magnific-popup/magnific-popup.css" rel="stylesheet" type="text/css">
-
-    <!-- Custom styles for this template -->
-    <link href="../static/css/freelancer.min.css" rel="stylesheet">
-
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
 
 
   </head>
 
   <body>
-    <div id="ytplayer">
-
+    <div id="ytplayer"></div>
+    <div id="questions">
       <input id='question' placeholder='Enter your question here'></input>
       <button type=submit onclick="sendQuestion()">Submit Question</input>
     </div>
-    <div id="questions">
+    <div>
         <table>
           {% for question in questions %}
             <tr>
-              <td>{{questions['timestamp']}}</td>
-              <td>{{questions['text']}}</td>
+              <td>{{question['timestamp']}}</td>
+              <td>{{question['question']}}</td>
             </tr>
           {% endfor %}
         </table>
@@ -77,7 +63,9 @@
 
   function sendQuestion() {
       var timestamp = player.getCurrentTime();
-      var question = document.getElementById('question').innerHTML;
+      var question = document.getElementById('question').value;
+
+      
 
       var data = {
          timestamp,

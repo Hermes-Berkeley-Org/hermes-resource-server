@@ -1,6 +1,7 @@
 from flask import Flask
 from flask import render_template, request, redirect, url_for, flash, session, jsonify
 from pymongo import MongoClient
+from bson.objectid import ObjectId
 import os
 from config import Config
 
@@ -109,11 +110,12 @@ def create_client(app):
             return render_template('home.html', query=db_result.items())
         return redirect(url_for('error'))
 
-    @app.route('/class/<cls>/lecture/<lesson>')
-    def lecture(cls, lesson):
-        lecture_obj = db['Lectures'].find_one({'url_name': lesson})
+    @app.route('/class/<cls>/lecture/<lecture_number>')
+    def lecture(cls, lecture_number):
+        lecture_obj = db['Lectures'].find_one({'lecture_number': int(lecture_number)})
         cls_obj = db['Classes'].find_one({'Name': cls})
-        question_obj = db['Questions'].find_one({'lecture_name': lecture_obj['name']})
+        question_obj = db['Questions'].find_one({'lecture_id': lecture_obj['_id']})
+        print(question_obj['questions'])
         if lecture:
             url = urllib.parse.urlparse(lecture_obj['link'])
             params = urllib.parse.parse_qs(url.query)
@@ -156,10 +158,17 @@ def create_client(app):
             form=form
         )
 
-    @app.route('/write_question')
+    @app.route('/write_question', methods=['GET', 'POST'])
     def write_question():
         if request.method == 'POST':
-            print(request.data)
+            data = request.form
+            print(data['lecture'])
+            lecture = db['Lectures'].find_one({'_id': ObjectId(data['lecture'])})
+            print(lecture)
+            Lecture.write_question(lecture, data, db)
+            return jsonify(success=True), 200
+        else:
+            return redirect(url_for('error'))
 
     @app.route('/error')
     def error():

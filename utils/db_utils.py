@@ -52,13 +52,30 @@ class Class(DBObject):
     @staticmethod
     def add_lecture(cls, lecture, db):
         id = insert(lecture, db).inserted_id
+        questions_id = insert(
+            Question(
+                lecture_id=id,
+                lecture_name=lecture.get('name'),
+                questions=[]
+            ), db).inserted_id
+        db[Lecture.collection].update_one(
+            {
+              '_id': id
+            },
+            {
+              '$set': {
+                'questions_id': questions_id
+              }
+            },
+            upsert=False
+        )
         return db[Class.collection].update_one(
             {
               '_id': cls['_id']
             },
             {
-              '$set': {
-                'Lectures': cls['Lectures'] + [id]
+              '$push': {
+                'Lectures': id,
               }
             },
             upsert=False
@@ -75,6 +92,28 @@ class Note(DBObject):
 class Lecture(DBObject):
 
     collection = 'Lectures'
+
+    def __init__(self, **attr):
+        DBObject.__init__(self, **attr)
+
+    @staticmethod
+    def write_question(lecture, question, db):
+
+        return db[Question.collection].update_one(
+            {
+              '_id': lecture['questions_id']
+            },
+            {
+              '$push': {
+                'questions': question
+              }
+            },
+            upsert=False
+        )
+
+class Question(DBObject):
+
+    collection = 'Questions'
 
     def __init__(self, **attr):
         DBObject.__init__(self, **attr)

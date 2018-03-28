@@ -8,7 +8,7 @@
     <table>
       {% for lec in lectures %}
         <tr>
-          <td><a href={{ url_for('lecture', cls=lec['cls'], lesson=lec['url_name'])}}>{{ lec['name'] }}</a></td>
+          <td><a href={{ url_for('lecture', cls=lec['cls'], lecture_number=lec['lecture_number'])}}>{{ lec['name'] }}</a></td>
           <td>{{lec['date']}}</td>
         </tr>
       {% endfor %}
