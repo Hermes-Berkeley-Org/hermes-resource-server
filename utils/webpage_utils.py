@@ -7,3 +7,8 @@ class CreateLectureForm(Form):
     date = DateField('Date of Lecture', validators=[DataRequired()])
     link = StringField('Link to the Lecture', validators=[DataRequired()])
     submit = SubmitField('Create')
+
+class QuestionForm(Form):
+    question = StringField('Question', validators=[DataRequired()])
+    timestamp = StringField('Timestamp', validators=[DataRequired()])
+    submit = SubmitField('Ask')

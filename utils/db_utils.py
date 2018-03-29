@@ -1,14 +1,21 @@
 from pymongo import MongoClient
+from bson.objectid import ObjectId
 import os
 
 def insert(dbobj, db):
     return db[dbobj.collection].insert_one(dbobj.to_dict())
 
 def get_keys(d, keys):
-    return {key: d[key] for key in keys}
+    return {key: d.get(key) for key in keys}
 
 def encode_url(s):
     return s.lower().replace(' ', '-')
+
+def find_by_id(id, collection, db):
+    return db[collection].find({'_id': ObjectId(id)})
+
+def find_one_by_id(id, collection, db):
+    return db[collection].find({'_id': ObjectId(id)})
 
 class DBObject:
 
@@ -52,24 +59,7 @@ class Class(DBObject):
     @staticmethod
     def add_lecture(cls, lecture, db):
         id = insert(lecture, db).inserted_id
-        questions_id = insert(
-            Question(
-                lecture_id=id,
-                lecture_name=lecture.get('name'),
-                questions=[]
-            ), db).inserted_id
-        db[Lecture.collection].update_one(
-            {
-              '_id': id
-            },
-            {
-              '$set': {
-                'questions_id': questions_id
-              }
-            },
-            upsert=False
-        )
-        return db[Class.collection].update_one(
+        db[Class.collection].update_one(
             {
               '_id': cls['_id']
             },
@@ -80,6 +70,7 @@ class Class(DBObject):
             },
             upsert=False
         )
+        return id
 
 
 class Note(DBObject):
@@ -97,15 +88,32 @@ class Lecture(DBObject):
         DBObject.__init__(self, **attr)
 
     @staticmethod
-    def write_question(lecture, question, db):
+    def write_question(question, db):
+        def convert_seconds_to_timestamp(ts):
+            return '%d:%02d' % (ts // 60, ts % 60)
+        question['timestamp'] = convert_seconds_to_timestamp(
+            round(float(question['seconds'])))
+        return insert(
+            Question(
+                seconds=float(question['seconds']),
+                timestamp=question['timestamp'],
+                text=question['text'],
+                name=question['name'],
+                ok_id=question['ok_id'],
+                lecture_id=question['lecture']
+            ),
+            db
+        ).inserted_id
 
-        return db[Question.collection].update_one(
+    @staticmethod
+    def add_transcript(lecture_id, transcript, db):
+        db[Lecture.collection].update_one(
             {
-              '_id': lecture['questions_id']
+              '_id': lecture_id
             },
             {
-              '$push': {
-                'questions': question
+              '$set': {
+                'transcript': transcript,
               }
             },
             upsert=False

@@ -1,7 +1,6 @@
 from flask import Flask
 from flask import render_template, request, redirect, url_for, flash, session, jsonify
 from pymongo import MongoClient
-from bson.objectid import ObjectId
 import os
 from config import Config
 
@@ -10,6 +9,7 @@ import logging
 from utils.webpage_utils import CreateLectureForm
 from utils import db_utils
 from utils.db_utils import User, Class, Lecture, Note
+from utils.transcribe_utils import transcribe
 
 import urllib.parse
 from werkzeug import security
@@ -114,8 +114,7 @@ def create_client(app):
     def lecture(cls, lecture_number):
         lecture_obj = db['Lectures'].find_one({'lecture_number': int(lecture_number)})
         cls_obj = db['Classes'].find_one({'Name': cls})
-        question_obj = db['Questions'].find_one({'lecture_id': lecture_obj['_id']})
-        print(question_obj['questions'])
+        user = get_user_data()
         if lecture:
             url = urllib.parse.urlparse(lecture_obj['link'])
             params = urllib.parse.parse_qs(url.query)
@@ -123,10 +122,10 @@ def create_client(app):
                 return render_template(
                     'lecture.html',
                     id=params['v'][0],
-                    lecture=lecture_obj['_id'],
-                    user=get_user_data()['_id'],
-                    cls=cls_obj['_id'],
-                    questions=question_obj['questions']
+                    lecture=str(lecture_obj['_id']),
+                    user=user,
+                    cls=str(cls_obj['_id']),
+                    db=db
                 )
         return redirect(url_for('error'))
 
@@ -147,7 +146,9 @@ def create_client(app):
                     lecture_number=num_lectures,
                     cls=class_name
                 )
-                success = Class.add_lecture(cls, lecture, db)
+                id = Class.add_lecture(cls, lecture, db)
+                transcript = transcribe(id, request.form['link'], db)
+                Lecture.add_transcript(id, transcript, db)
             else:
                 flash('All fields required')
         cls = db['Classes'].find_one({'Name': class_name})
@@ -161,11 +162,7 @@ def create_client(app):
     @app.route('/write_question', methods=['GET', 'POST'])
     def write_question():
         if request.method == 'POST':
-            data = request.form
-            print(data['lecture'])
-            lecture = db['Lectures'].find_one({'_id': ObjectId(data['lecture'])})
-            print(lecture)
-            Lecture.write_question(lecture, data, db)
+            Lecture.write_question(request.form.to_dict(), db)
             return jsonify(success=True), 200
         else:
             return redirect(url_for('error'))

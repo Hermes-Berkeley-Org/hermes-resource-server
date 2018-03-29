@@ -22,11 +22,12 @@
       <button type=submit onclick="sendQuestion()">Submit Question</input>
     </div>
     <div>
-        <table>
-          {% for question in questions %}
+        <table id='questions_table'>
+          {% for question in db['Questions'].find({'lecture_id': lecture}).sort([('seconds', 1)]) %}
             <tr>
+              <td>{{question['name']}}</td>
               <td>{{question['timestamp']}}</td>
-              <td>{{question['question']}}</td>
+              <td>{{question['text']}}</td>
             </tr>
           {% endfor %}
         </table>
@@ -62,17 +63,18 @@
   }
 
   function sendQuestion() {
-      var timestamp = player.getCurrentTime();
+      var seconds = player.getCurrentTime();
       var question = document.getElementById('question').value;
 
-      
+
 
       var data = {
-         timestamp,
-         question,
-         user: '{{ user }}',
-         lecture: '{{ lecture }}',
-         cls: '{{ cls }}'
+         seconds,
+         text: question,
+         name: "{{ user['name'] }}",
+         ok_id: "{{ user['ok_id'] }}",
+         lecture: "{{ lecture }}",
+         cls: "{{ cls }}"
       }
 
       console.log(`${JSON.stringify(data)}`)
@@ -80,8 +82,14 @@
       $.ajax({
         type: "POST",
         url: "{{ url_for('write_question')}}",
-        data
+        data,
+        success: function (data) {
+            $("#questions_table").find("tr").remove();
+            $('#questions').load('');
+        }
       });
+
+
   }
 
 </script>
