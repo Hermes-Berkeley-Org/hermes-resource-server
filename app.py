@@ -123,6 +123,7 @@ def create_client(app):
                     'lecture.html',
                     id=params['v'][0],
                     lecture=str(lecture_obj['_id']),
+                    transcript=lecture_obj['transcript'],
                     user=user,
                     cls=str(cls_obj['_id']),
                     db=db
@@ -147,7 +148,7 @@ def create_client(app):
                     cls=class_name
                 )
                 id = Class.add_lecture(cls, lecture, db)
-                transcript = transcribe(id, request.form['link'], db)
+                transcript = transcribe(request.form['link'])
                 Lecture.add_transcript(id, transcript, db)
             else:
                 flash('All fields required')
