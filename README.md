@@ -38,3 +38,9 @@ Once you set up your OK server (see https://github.com/Cal-CS-61A-Staff/ok), in 
     virtualenv -p python3 venv
     source venv/bin/activate
     pip3 install -r requirements.txt
+
+**Additional steps to install selenium**:
+
+Go to https://sites.google.com/a/chromium.org/chromedriver/downloads and download the chromedriver. Move the chromedriver executable file into a good location on your computer and run:
+
+    export PATH=$PATH:path/to/chromedriver
