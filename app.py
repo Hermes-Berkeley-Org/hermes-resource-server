@@ -168,8 +168,26 @@ def create_client(app):
         else:
             return redirect(url_for('error'))
 
-    @app.route('/error')
-    def error():
-        return 'SUCK MY NUTS'
+    @app.errorhandler(404)
+    def page_not_found(e):
+    	return redirect(url_for('error', code=404))
+
+    @app.errorhandler(403)
+    def forbidden(e):
+    	return redirect(url_for('error', code=403))
+
+    @app.errorhandler(500)
+    def internal_server_error(e):
+    	return redirect(url_for('error', code=500))
+
+    @app.route('/error/<code>')
+    def error(code):
+    	if code == '404':
+    		return render_template('404.html')
+    	elif code == '403':
+    		return render_template('403.html')
+    	elif code == '500':
+    		return render_template('500.html')
+
 
 create_client(app)
