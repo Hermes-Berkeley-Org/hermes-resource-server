@@ -3,7 +3,7 @@
 {% block head %}{{ super() }}{% endblock %}
 {% block content %}
 
-  <div>
+<div class="wrapper text-primary full-section-shifted">
     <h5> {{info["Name"]}} </h5>
     <table>
       {% for lec in lectures %}
@@ -31,7 +31,7 @@
       {% endif %}
     {% endwith %}
 
-  </div>
+</div>
 {% endblock %}
 {% block footer %}
 {{ super() }}

@@ -6,3 +6,26 @@
 .full-section {
 	height: 100vh;
 }
+
+.full-section-shifted {
+	height: 90vh;
+}
+
+.wrapper {
+	padding-top: 110px;
+	padding-left: 5%;
+}
+@media (max-width: 979px) {
+  .wrapper {
+    padding-top: 75px;
+  }
+}
+
+.content header {
+	padding-top: 0px;
+}
+@media (max-width: 979px) {
+  .content header {
+    padding-top: 0px;
+  }
+}

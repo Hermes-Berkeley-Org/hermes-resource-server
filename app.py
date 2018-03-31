@@ -76,7 +76,7 @@ def create_client(app):
                 ok_data = ok_resp['data']
                 User.register_user(ok_data, db)
                 return redirect(url_for('home'))
-        return redirect(url_for('error'))
+        return redirect(url_for('error'), code=403)
 
     @remote.tokengetter
     def get_oauth_token():
@@ -107,8 +107,8 @@ def create_client(app):
     def home():
         db_result = get_user_data()
         if db_result:
-            return render_template('home.html', query=db_result.items())
-        return redirect(url_for('error'))
+            return render_template('home.html', name=db_result['name'], classes=db_result['classes'])
+        return redirect(url_for('error'), code=403)
 
     @app.route('/class/<cls>/lecture/<lecture_number>')
     def lecture(cls, lecture_number):
@@ -128,7 +128,7 @@ def create_client(app):
                     cls=str(cls_obj['_id']),
                     db=db
                 )
-        return redirect(url_for('error'))
+        return redirect(url_for('error'), code=404)
 
 
     @app.route('/class/<class_name>', methods=['GET', 'POST'])
