@@ -7,10 +7,10 @@ from selenium.common.exceptions import TimeoutException
 from urllib.parse import parse_qs, urlencode
 
 def transcribe(link):
-    driver = webdriver.Chrome()
-    driver.get(clean_link(link))
-    delay = 3 # seconds
     try:
+        driver = webdriver.Chrome()
+        driver.get(clean_link(link))
+        delay = 3 # seconds
         more_actions_button = WebDriverWait(driver, delay).until(
             EC.presence_of_element_located(
                 (By.XPATH, '//button[@aria-label=\'More actions\']')))
@@ -32,6 +32,9 @@ def transcribe(link):
         return transcript
     except TimeoutException:
         driver.quit()
+        return []
+    except:
+        print('Transcribe failed') # @Kian: logger statement here!
         return []
 
 def clean_link(link):
