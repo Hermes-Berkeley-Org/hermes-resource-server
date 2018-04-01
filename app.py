@@ -76,7 +76,7 @@ def create_client(app):
                 ok_data = ok_resp['data']
                 User.register_user(ok_data, db)
                 return redirect(url_for('home'))
-        return redirect(url_for('error'), code=403)
+        return redirect(url_for('error', code=403))
 
     @remote.tokengetter
     def get_oauth_token():
@@ -108,14 +108,14 @@ def create_client(app):
         db_result = get_user_data()
         if db_result:
             return render_template('home.html', name=db_result['name'], classes=db_result['classes'])
-        return redirect(url_for('error'), code=403)
+        return redirect(url_for('error', code=403))
 
     @app.route('/class/<cls>/lecture/<lecture_number>')
     def lecture(cls, lecture_number):
         lecture_obj = db['Lectures'].find_one({'lecture_number': int(lecture_number)})
         cls_obj = db['Classes'].find_one({'Name': cls})
         user = get_user_data()
-        if lecture:
+        if lecture_obj and cls_obj:
             url = urllib.parse.urlparse(lecture_obj['link'])
             params = urllib.parse.parse_qs(url.query)
             if 'v' in params:
@@ -128,7 +128,7 @@ def create_client(app):
                     cls=str(cls_obj['_id']),
                     db=db
                 )
-        return redirect(url_for('error'), code=404)
+        return redirect(url_for('error', code=404))
 
 
     @app.route('/class/<class_name>', methods=['GET', 'POST'])
@@ -166,7 +166,7 @@ def create_client(app):
             Lecture.write_question(request.form.to_dict(), db)
             return jsonify(success=True), 200
         else:
-            return redirect(url_for('error'))
+            return redirect(url_for('error', code=500))
 
     @app.errorhandler(404)
     def page_not_found(e):

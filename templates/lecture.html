@@ -1,21 +1,9 @@
-<!DOCTYPE html>
-<html lang="en">
+{% extends 'header.html' %}
+{% block title %}Hermes | Dashboard{% endblock %}
+{% block head %}{{ super() }}{% endblock %}
+{% block content %}
 
-  <head>
-
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <meta name="description" content="">
-    <meta name="author" content="">
-
-    <title>Hermes</title>
-
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
-
-
-  </head>
-
-  <body>
+<div class="wrapper text-primary">
     <div id="ytplayer"></div>
     <div id="questions">
       <input id='question' placeholder='Enter your question here'></input>
@@ -24,11 +12,11 @@
     <div>
         <table id='questions_table'>
           {% for question in db['Questions'].find({'lecture_id': lecture}).sort([('seconds', 1)]) %}
-            <tr>
-              <td>{{question['name']}}</td>
-              <td>{{question['timestamp']}}</td>
-              <td>{{question['text']}}</td>
-            </tr>
+             <tr>
+               <td>{{question['name']}}</td>
+               <td>{{question['timestamp']}}</td>
+               <td>{{question['text']}}</td>
+             </tr>
           {% endfor %}
         </table>
     </div>
@@ -42,8 +30,7 @@
           {% endfor %}
         </table>
     </div>
-
-
+</div>
 
 <script>
   // Load the IFrame Player API code asynchronously.
@@ -76,8 +63,6 @@
       var seconds = player.getCurrentTime();
       var question = document.getElementById('question').value;
 
-
-
       var data = {
          seconds,
          text: question,
@@ -94,19 +79,18 @@
         url: "{{ url_for('write_question')}}",
         data,
         success: function (data) {
-            $("#questions_table").find("tr").remove();
-            $('#questions').load('');
+          $('#questions_table').find("tr").remove();
+          $('#questions_table').load(window.location.href + ' #questions_table');
         }
       });
 
 
   }
 
+
+
 </script>
-
-
-
-  </body>
-
-
-</html>
+{% endblock %}
+{% block footer %}
+{{ super() }}
+{% endblock %}
