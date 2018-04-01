@@ -4,32 +4,38 @@
 {% block content %}
 
 <div class="wrapper text-primary">
-    <div id="ytplayer"></div>
-    <div id="questions">
-      <input id='question' placeholder='Enter your question here'></input>
-      <button type=submit onclick="sendQuestion()">Submit Question</input>
+  <div class="row">
+    <div class="col-md-7">
+      <div id="ytplayer"></div>
     </div>
-    <div>
-        <table id='questions_table'>
-          {% for question in db['Questions'].find({'lecture_id': lecture}).sort([('seconds', 1)]) %}
-             <tr>
-               <td>{{question['name']}}</td>
-               <td>{{question['timestamp']}}</td>
-               <td>{{question['text']}}</td>
-             </tr>
-          {% endfor %}
-        </table>
+    <div class="col-md-5">
+      <div id="questions">
+        <input id='question' placeholder='Enter your question here'></input>
+        <button type=submit onclick="sendQuestion()">Submit Question</button>
+      </div>
+      <div>
+          <table id='questions_table'>
+            {% for question in db['Questions'].find({'lecture_id': lecture}).sort([('seconds', 1)]) %}
+               <tr>
+                 <td>{{question['name']}}</td>
+                 <td>{{question['timestamp']}}</td>
+                 <td>{{question['text']}}</td>
+               </tr>
+            {% endfor %}
+          </table>
+      </div>
+      <div>
+          <table id='transcript'>
+            {% for transcript_element in transcript %}
+              <tr>
+                <td>{{transcript_element['timestamp']}}</td>
+                <td>{{transcript_element['text']}}</td>
+              </tr>
+            {% endfor %}
+          </table>
+      </div>
     </div>
-    <div>
-        <table id='transcript'>
-          {% for transcript_element in transcript %}
-            <tr>
-              <td>{{transcript_element['timestamp']}}</td>
-              <td>{{transcript_element['text']}}</td>
-            </tr>
-          {% endfor %}
-        </table>
-    </div>
+  </div>
 </div>
 
 <script>
