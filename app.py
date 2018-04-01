@@ -137,6 +137,8 @@ def create_client(app):
         user = get_user_data()
 
         if request.method == 'POST':
+            if not user['is_admin']:
+                redirect(url_for('error', code=403))
             cls = db['Classes'].find_one({'Name': class_name})
             num_lectures = len(cls['Lectures'])
             if form.validate():
