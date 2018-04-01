@@ -47,6 +47,6 @@ Go to https://sites.google.com/a/chromium.org/chromedriver/downloads and downloa
 
 **If you push with new environment variables**:
 
-Make sure to also change it in deploy/heroku_env, then run:
+Make sure to also make changes in deploy/heroku_env, then run:
 
     heroku config:push --file deploy/heroku_env
