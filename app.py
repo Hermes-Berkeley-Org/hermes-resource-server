@@ -107,7 +107,7 @@ def create_client(app):
     def home():
         db_result = get_user_data()
         if db_result:
-            return render_template('home.html', name=db_result['name'], classes=db_result['classes'])
+            return render_template('home.html', user=db_result, classes=db_result['classes'])
         return redirect(url_for('error', code=403))
 
     @app.route('/class/<cls>/lecture/<lecture_number>')
@@ -134,6 +134,7 @@ def create_client(app):
     @app.route('/class/<class_name>', methods=['GET', 'POST'])
     def classpage(class_name):
         form = CreateLectureForm(request.form)
+        user = get_user_data()
 
         if request.method == 'POST':
             cls = db['Classes'].find_one({'Name': class_name})
@@ -157,7 +158,8 @@ def create_client(app):
             'class.html',
             info=cls,
             lectures=[db['Lectures'].find_one({'_id': lecture_id}) for lecture_id in cls['Lectures']],
-            form=form
+            form=form,
+            user=user
         )
 
     @app.route('/write_question', methods=['GET', 'POST'])

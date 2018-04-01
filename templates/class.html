@@ -1,5 +1,5 @@
 {% extends 'header.html' %}
-{% block title %}Hermes{% endblock %}
+{% block title %}Hermes | {{info["Name"]}}{% endblock %}
 {% block head %}{{ super() }}{% endblock %}
 {% block content %}
 
@@ -14,13 +14,15 @@
       {% endfor %}
     </table>
 
-    <form action="" method="post">
-        {{ form.csrf }}
-        <p>{{ form.title }}</p>
-        <p>{{ form.date }}</p>
-        <p>{{ form.link }}</p>
-        <p>{{ form.submit() }}</p>
-    </form>
+    {% if user['is_admin'] %}
+      <form action="" method="post">
+          {{ form.csrf }}
+          <p>{{ form.title }}</p>
+          <p>{{ form.date }}</p>
+          <p>{{ form.link }}</p>
+          <p>{{ form.submit() }}</p>
+      </form>
+    {% endif %}
     {% with messages = get_flashed_messages() %}
       {% if messages %}
         <ul class=flashes>
