@@ -10,7 +10,6 @@ from utils.webpage_utils import CreateLectureForm
 from utils import db_utils
 from utils.db_utils import User, Class, Lecture, Note
 from utils.transcribe_utils import transcribe, get_youtube_id
-from utils.youtube_auth import get_authorization_url
 
 import urllib.parse
 from werkzeug import security
