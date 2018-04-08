@@ -9,3 +9,4 @@ export CLIENT_ID=hermes-ok
 export CLIENT_SECRET=wQZ3A1y7eREp4yeI5EkK4nP6yj7oz7M
 export OK_MODE=bypass
 export TESTING_OK_ID=lejRej
+export TRANSCRIPTION_MODE=api
