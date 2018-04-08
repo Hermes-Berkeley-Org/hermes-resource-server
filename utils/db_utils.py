@@ -126,6 +126,26 @@ class Question(DBObject):
     def __init__(self, **attr):
         DBObject.__init__(self, **attr)
 
+class Answer(DBObject):
+
+    collection = 'Answers'
+
+    def __init__(self, **attr):
+        DBObject.__init__(self, **attr)
+
+    def add_answer(answer, db):
+        return insert(
+            Answer(
+                question_id=answer['question_id'],
+                text=answer['text'],
+                user_id=answer['user_id'],
+                name=answer['name'],
+                upvotes=0,
+                endorsed=False
+            ),
+            db
+        ).inserted_id
+
 if __name__ == '__main__':
     client = MongoClient(os.environ.get('MONGODB_URI'))
     db = client[os.environ.get('DATABASE_NAME')]

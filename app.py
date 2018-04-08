@@ -172,6 +172,12 @@ def create_client(app):
         else:
             return redirect(url_for('error', code=500))
 
+    @app.route('/write_answer', methods=['GET', 'POST'])
+    def write_answer():
+        if request.method == 'POST':
+
+        else:
+            return redirect(url_for('error', code=500))
     @app.errorhandler(404)
     def page_not_found(e):
     	return redirect(url_for('error', code=404))
