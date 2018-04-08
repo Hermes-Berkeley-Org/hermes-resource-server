@@ -177,7 +177,9 @@ def create_client(app):
                 'lecture.html',
                 id=get_youtube_id(lecture_obj['link']),
                 lecture=str(lecture_obj['_id']),
+                name=lecture_obj['name'],
                 transcript=lecture_obj['transcript'],
+                cls_name=lecture_obj['cls'],
                 user=user,
                 cls=str(cls_obj['_id']),
                 db=db
