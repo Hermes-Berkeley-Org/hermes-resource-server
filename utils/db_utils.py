@@ -151,8 +151,7 @@ class Question(DBObject):
                 'question': question["text"],
               }
             },
-            upsert = False
-        }).inserted_id
+        }, upsert = False).inserted_id
 
 class Answer(DBObject):
 
@@ -183,8 +182,7 @@ class Answer(DBObject):
                 'text': answer["text"],
               }
             },
-            upsert = False
-        }).inserted_id
+        }, upsert = False).inserted_id
 
 
 if __name__ == '__main__':
