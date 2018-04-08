@@ -4,6 +4,8 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
 from selenium.common.exceptions import TimeoutException
 
+from bs4 import BeautifulSoup
+
 from urllib.parse import parse_qs, urlencode, urlparse
 
 def get_youtube_id(link):
@@ -29,11 +31,19 @@ def read_from_youtube(link, youtube):
             return item["id"]
     caption_id = get_caption_id(video_id)
     tfmt = "ttml"
-    subtitle = youtube.captions().download(
+    subtitle_html = youtube.captions().download(
         id=caption_id,
         tfmt=tfmt
     ).execute()
-    return subtitle
+    soup = BeautifulSoup(subtitle_html, 'html.parser')
+    transcript = []
+    for p in soup.find_all('p'):
+        transcript.append({
+            'begin': p.get('begin'),
+            'end': p.get('end'),
+            'text': p.text
+        })
+    return transcript
 
 
 def scrape(link):

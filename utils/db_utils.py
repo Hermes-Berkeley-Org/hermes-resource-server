@@ -48,6 +48,20 @@ class User(DBObject):
             u = User(**attr)
             return insert(u, db)
 
+    @staticmethod
+    def add_admin_google_credentials(id, credentials, db):
+        db[User.collection].update_one(
+            {
+                '_id': id
+            },
+            {
+                '$set': {
+                    'google_credentials': credentials
+                }
+            },
+            upsert=False
+        )
+
 
 class Class(DBObject):
 
