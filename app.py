@@ -24,7 +24,7 @@ app.config.from_object(Config)
 client = MongoClient(os.environ.get('MONGODB_URI'))
 db = client[os.environ.get('DATABASE_NAME')]
 
-youtube = get_authenticated_service({})
+youtube = get_authenticated_service()
 
 def create_client(app):
 
