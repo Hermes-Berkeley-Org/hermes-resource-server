@@ -28,7 +28,7 @@
           <table id='transcript'>
             {% for transcript_element in transcript %}
               <tr>
-                <td>{{transcript_element['timestamp']}}</td>
+                <td>{{transcript_element['begin']}}-{{transcript_element['end']}}</td>
                 <td>{{transcript_element['text']}}</td>
               </tr>
             {% endfor %}
