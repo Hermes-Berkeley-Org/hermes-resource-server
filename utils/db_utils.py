@@ -143,8 +143,9 @@ class Question(DBObject):
             db
         ).inserted_id
 
-    def edit_answer(id, question, db):
-        return db[collection].update({
+    @staticmethod
+    def edit_question(id, question, db):
+        return db[Question.collection].update({
             {'id':id},
             {
               '$set': {
@@ -174,8 +175,9 @@ class Answer(DBObject):
             db
         ).inserted_id
 
+    @staticmethod
     def edit_answer(answer_id, answer, db):
-        return db[collection].update_one({
+        return db[Answer.collection].update_one({
             {'id': answer_id},
             {
               '$set': {
