@@ -43,4 +43,14 @@ Once you set up your OK server (see https://github.com/Cal-CS-61A-Staff/ok), in 
 
 Go to https://sites.google.com/a/chromium.org/chromedriver/downloads and download the chromedriver. Move the chromedriver executable file into a good location on your computer and run:
 
-    export PATH=$PATH:path/to/chromedriver
+    export PATH=$PATH:folder/with/chromedriver
+
+**If you push with new environment variables**:
+
+Make sure to also make changes in deploy/heroku_env, then run:
+
+    heroku config:push --file deploy/heroku_env
+
+**Google Auth**:
+
+Download the client_secret.json file from the Drive and put it in a directory called "keys"

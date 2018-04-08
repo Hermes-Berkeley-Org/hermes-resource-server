@@ -8,3 +8,4 @@ class Config(object):
     CLIENT_SECRET = os.environ.get('CLIENT_SECRET')
     OK_MODE = os.environ.get('OK_MODE')
     TESTING_OK_ID = os.environ.get('TESTING_OK_ID')
+    TRANSCRIPTION_MODE = os.environ.get('TRANSCRIPTION_MODE')

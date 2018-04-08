@@ -4,13 +4,53 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
 from selenium.common.exceptions import TimeoutException
 
-from urllib.parse import parse_qs, urlencode
+from bs4 import BeautifulSoup
 
-def transcribe(link):
-    driver = webdriver.Chrome()
-    driver.get(clean_link(link))
-    delay = 3 # seconds
+from urllib.parse import parse_qs, urlencode, urlparse
+
+def get_youtube_id(link):
+    url = urlparse(link)
+    params = parse_qs(url.query)
+    return params['v'][0] if 'v' in params else None
+
+def transcribe(link, mode, youtube=None):
+    if mode == 'api':
+        return read_from_youtube(link, youtube)
+    elif mode == 'scrape':
+        return scrape(link)
+
+def read_from_youtube(link, youtube):
+    video_id = get_youtube_id(link)
+    def get_caption_id(video_id):
+        results = youtube.captions().list(
+            part="snippet",
+            videoId=video_id
+        ).execute()
+
+        for item in results["items"]:
+            return item["id"]
+    caption_id = get_caption_id(video_id)
+    tfmt = "ttml"
+    subtitle_html = youtube.captions().download(
+        id=caption_id,
+        tfmt=tfmt
+    ).execute()
+    soup = BeautifulSoup(subtitle_html, 'html.parser')
+    transcript = []
+    for p in soup.find_all('p'):
+        transcript.append({
+            'begin': p.get('begin'),
+            'end': p.get('end'),
+            'text': p.text
+        })
+    return transcript
+
+
+def scrape(link):
     try:
+        driver = webdriver.Chrome()
+        driver.get(clean_link(link))
+        delay = 3 # seconds
         more_actions_button = WebDriverWait(driver, delay).until(
             EC.presence_of_element_located(
                 (By.XPATH, '//button[@aria-label=\'More actions\']')))
@@ -32,6 +72,9 @@ def transcribe(link):
         return transcript
     except TimeoutException:
         driver.quit()
+        return []
+    except:
+        print('Transcribe failed') # @Kian: logger statement here!
         return []
 
 def clean_link(link):
