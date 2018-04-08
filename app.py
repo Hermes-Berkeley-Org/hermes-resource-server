@@ -167,7 +167,15 @@ def create_client(app):
     @app.route('/write_question', methods=['GET', 'POST'])
     def write_question():
         if request.method == 'POST':
-            Lecture.write_question(request.form.to_dict(), db)
+            Question.write_question(request.form.to_dict(), db)
+            return jsonify(success=True), 200
+        else:
+            return redirect(url_for('error', code=500))
+
+    @app.route('/edit_question', methods=['GET', 'POST'])
+    def edit_question():
+        if request.method == 'POST':
+            Answer.edit_question(id, request.form.to_dict(), db)
             return jsonify(success=True), 200
         else:
             return redirect(url_for('error', code=500))
@@ -175,9 +183,19 @@ def create_client(app):
     @app.route('/write_answer', methods=['GET', 'POST'])
     def write_answer():
         if request.method == 'POST':
-
+            Answer.write_answer(request.form.to_dict(), db)
+            return jsonify(success=True), 200
         else:
             return redirect(url_for('error', code=500))
+
+    @app.route('/edit_answer', methods=['GET', 'POST'])
+    def edit_answer():
+        if request.method == 'POST':
+            Answer.edit_answer(request.form.to_dict(), db)
+            return jsonify(success=True), 200
+        else:
+            return redirect(url_for('error', code=500))
+
     @app.errorhandler(404)
     def page_not_found(e):
     	return redirect(url_for('error', code=404))
