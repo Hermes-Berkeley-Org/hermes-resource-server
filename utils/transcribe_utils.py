@@ -6,7 +6,37 @@ from selenium.common.exceptions import TimeoutException
 
 from urllib.parse import parse_qs, urlencode
 
-def transcribe(link):
+def get_youtube_id(link):
+    url = urllib.parse.urlparse(lecture_obj['link'])
+    params = urllib.parse.parse_qs(url.query)
+    return params['v'][0] if 'v' in params else None
+
+def transcribe(link, mode, youtube=None):
+    if mode == 'api':
+        return read_from_youtube(link, youtube)
+    elif mode == 'scrape':
+        return scrape(link)
+
+def read_from_youtube(link, youtube):
+    video_id = get_youtube_id(link)
+    def get_caption_id(video_id):
+        results = youtube.captions().list(
+            part="snippet",
+            videoId=video_id
+        ).execute()
+
+        for item in results["items"]:
+            return item["id"]
+    caption_id = get_caption_id(video_id)
+    tfmt = "ttml"
+    subtitle = youtube.captions().download(
+        id=caption_id,
+        tfmt=tfmt
+    ).execute()
+    return subtitle
+
+
+def scrape(link):
     try:
         driver = webdriver.Chrome()
         driver.get(clean_link(link))

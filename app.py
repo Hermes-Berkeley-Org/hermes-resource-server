@@ -9,7 +9,8 @@ import logging
 from utils.webpage_utils import CreateLectureForm
 from utils import db_utils
 from utils.db_utils import User, Class, Lecture, Note
-from utils.transcribe_utils import transcribe
+from utils.transcribe_utils import transcribe, get_youtube_id
+from utils.youtube_auth import get_authenticated_service
 
 import urllib.parse
 from werkzeug import security
@@ -22,6 +23,8 @@ app.config.from_object(Config)
 
 client = MongoClient(os.environ.get('MONGODB_URI'))
 db = client[os.environ.get('DATABASE_NAME')]
+
+youtube = get_authenticated_service({})
 
 def create_client(app):
 
@@ -116,18 +119,15 @@ def create_client(app):
         cls_obj = db['Classes'].find_one({'Name': cls})
         user = get_user_data()
         if lecture_obj and cls_obj:
-            url = urllib.parse.urlparse(lecture_obj['link'])
-            params = urllib.parse.parse_qs(url.query)
-            if 'v' in params:
-                return render_template(
-                    'lecture.html',
-                    id=params['v'][0],
-                    lecture=str(lecture_obj['_id']),
-                    transcript=lecture_obj['transcript'],
-                    user=user,
-                    cls=str(cls_obj['_id']),
-                    db=db
-                )
+            return render_template(
+                'lecture.html',
+                id=get_youtube_id(lecture_obj['link']),
+                lecture=str(lecture_obj['_id']),
+                transcript=lecture_obj['transcript'],
+                user=user,
+                cls=str(cls_obj['_id']),
+                db=db
+            )
         return redirect(url_for('error', code=404))
 
 
@@ -151,7 +151,12 @@ def create_client(app):
                     cls=class_name
                 )
                 id = Class.add_lecture(cls, lecture, db)
-                transcript = transcribe(request.form['link'])
+                transcript = transcribe(
+                    request.form['link'],
+                    app.config['TRANSCRIPTION_MODE'],
+                    youtube=youtube
+                )
+                print(transcript)
                 Lecture.add_transcript(id, transcript, db)
             else:
                 flash('All fields required')
