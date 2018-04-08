@@ -143,7 +143,7 @@ class Question(DBObject):
             db
         ).inserted_id
 
-    def edit_answer(id, question, db):
+    def edit_question(id, question, db):
         return db[collection].update({
             {'id':id},
             {
