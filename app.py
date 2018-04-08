@@ -223,7 +223,6 @@ def create_client(app):
                     app.config['TRANSCRIPTION_MODE'],
                     youtube=youtube
                 )
-                transcript['mode'] = app.config['TRANSCRIPTION_MODE']
                 Lecture.add_transcript(id, transcript, db)
             else:
                 flash('All fields required')
