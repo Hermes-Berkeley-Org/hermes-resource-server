@@ -48,6 +48,20 @@ class User(DBObject):
             u = User(**attr)
             return insert(u, db)
 
+    @staticmethod
+    def add_admin_google_credentials(id, credentials, db):
+        db[User.collection].update_one(
+            {
+                '_id': id
+            },
+            {
+                '$set': {
+                    'google_credentials': credentials
+                }
+            },
+            upsert=False
+        )
+
 
 class Class(DBObject):
 
@@ -87,6 +101,30 @@ class Lecture(DBObject):
     def __init__(self, **attr):
         DBObject.__init__(self, **attr)
 
+
+    @staticmethod
+    def add_transcript(lecture_id, transcript, db):
+        db[Lecture.collection].update_one(
+            {
+              '_id': lecture_id
+            },
+            {
+              '$set': {
+                'transcript': transcript,
+              }
+            },
+            upsert=False
+        )
+
+
+
+class Question(DBObject):
+
+    collection = 'Questions'
+
+    def __init__(self, **attr):
+        DBObject.__init__(self, **attr)
+
     @staticmethod
     def write_question(question, db):
         def convert_seconds_to_timestamp(ts):
@@ -105,26 +143,47 @@ class Lecture(DBObject):
             db
         ).inserted_id
 
-    @staticmethod
-    def add_transcript(lecture_id, transcript, db):
-        db[Lecture.collection].update_one(
-            {
-              '_id': lecture_id
-            },
+    def edit_answer(id, question, db):
+        return db[collection].update({
+            {'id':id},
             {
               '$set': {
-                'transcript': transcript,
+                'question': question["text"],
               }
             },
-            upsert=False
-        )
+        }, upsert = False).inserted_id
 
-class Question(DBObject):
+class Answer(DBObject):
 
-    collection = 'Questions'
+    collection = 'Answers'
 
     def __init__(self, **attr):
         DBObject.__init__(self, **attr)
+
+    @staticmethod
+    def add_answer(answer, db):
+        return insert(
+            Answer(
+                question_id=answer['question_id'],
+                text=answer['text'],
+                user_id=answer['user_id'],
+                name=answer['name'],
+                upvotes=0,
+                endorsed=False
+            ),
+            db
+        ).inserted_id
+
+    def edit_answer(answer_id, answer, db):
+        return db[collection].update_one({
+            {'id': answer_id},
+            {
+              '$set': {
+                'text': answer["text"],
+              }
+            },
+        }, upsert = False).inserted_id
+
 
 if __name__ == '__main__':
     client = MongoClient(os.environ.get('MONGODB_URI'))

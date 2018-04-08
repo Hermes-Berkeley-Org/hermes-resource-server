@@ -1,5 +1,5 @@
-Classes{
-  	Id: Json 
+Classes {
+  	Id: Json
 	Department: String
 	Lectures: List
 	Name: String
@@ -7,7 +7,7 @@ Classes{
 }
 
 
-Lectures{
+Lectures {
 	id: Json
 	name: String
 	comments: List
@@ -16,12 +16,12 @@ Lectures{
 	cls: String
 }
 
-Notes{
+Notes {
 	Text: String
 	Nested Objects:TBD
 }
 
-Users{
+Users {
 	id: Json
 	classes: List
 	email String

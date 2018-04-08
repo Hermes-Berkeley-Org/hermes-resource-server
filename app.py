@@ -9,11 +9,15 @@ import logging
 from utils.webpage_utils import CreateLectureForm
 from utils import db_utils
 from utils.db_utils import User, Class, Lecture, Note
-from utils.transcribe_utils import transcribe
+from utils.transcribe_utils import transcribe, get_youtube_id
 
 import urllib.parse
 from werkzeug import security
 from flask_oauthlib.client import OAuth
+
+import google.oauth2.credentials
+import google_auth_oauthlib.flow
+import googleapiclient.discovery
 
 import requests
 
@@ -23,9 +27,17 @@ app.config.from_object(Config)
 client = MongoClient(os.environ.get('MONGODB_URI'))
 db = client[os.environ.get('DATABASE_NAME')]
 
+CLIENT_SECRETS_FILE = 'keys/client_secret.json'
+
+SCOPES = ['https://www.googleapis.com/auth/youtube.force-ssl']
+API_SERVICE_NAME = 'youtube'
+API_VERSION = 'v3'
+
 def create_client(app):
 
     oauth = OAuth(app)
+
+
 
     ok_server = app.config['OK_SERVER']
 
@@ -55,6 +67,8 @@ def create_client(app):
     @app.route('/logout')
     def logout():
         session.pop('dev_token', None)
+        if 'google_credentials' in session:
+            del session['google_credentials']
         return redirect(url_for('index'))
 
     @app.route('/authorized')
@@ -77,6 +91,46 @@ def create_client(app):
                 User.register_user(ok_data, db)
                 return redirect(url_for('home'))
         return redirect(url_for('error', code=403))
+
+    @app.route('/google_authorize')
+    def google_authorize():
+        # Create flow instance to manage the OAuth 2.0 Authorization Grant Flow steps.
+        flow = google_auth_oauthlib.flow.Flow.from_client_secrets_file(
+            CLIENT_SECRETS_FILE, scopes=SCOPES)
+
+        flow.redirect_uri = url_for('google_authorized', _external=True)
+
+        authorization_url, state = flow.authorization_url(
+            access_type='offline',
+            include_granted_scopes='true'
+        )
+
+        session['state'] = state
+        return redirect(authorization_url)
+
+    @app.route('/google_authorized')
+    def google_authorized():
+        state = session['state']
+
+        flow = google_auth_oauthlib.flow.Flow.from_client_secrets_file(
+            CLIENT_SECRETS_FILE, scopes=SCOPES, state=state)
+        flow.redirect_uri = url_for('google_authorized', _external=True)
+
+        authorization_response = request.url
+        flow.fetch_token(authorization_response=authorization_response)
+
+        credentials = flow.credentials
+        user = get_user_data()
+        credentials = {
+            'token': credentials.token,
+            'refresh_token': credentials.refresh_token,
+            'token_uri': credentials.token_uri,
+            'client_id': credentials.client_id,
+            'client_secret': credentials.client_secret,
+            'scopes': credentials.scopes
+        }
+        User.add_admin_google_credentials(user['_id'], credentials, db)
+        return redirect(url_for('home'))
 
     @remote.tokengetter
     def get_oauth_token():
@@ -105,9 +159,11 @@ def create_client(app):
 
     @app.route('/home/')
     def home():
-        db_result = get_user_data()
-        if db_result:
-            return render_template('home.html', user=db_result, classes=db_result['classes'])
+        user = get_user_data()
+        if user:
+            if user['is_admin'] and 'google_credentials' not in user:
+                return redirect(url_for('google_authorize'))
+            return render_template('home.html', user=user, classes=user['classes'])
         return redirect(url_for('error', code=403))
 
     @app.route('/class/<cls>/lecture/<lecture_number>')
@@ -116,27 +172,37 @@ def create_client(app):
         cls_obj = db['Classes'].find_one({'Name': cls})
         user = get_user_data()
         if lecture_obj and cls_obj:
-            url = urllib.parse.urlparse(lecture_obj['link'])
-            params = urllib.parse.parse_qs(url.query)
-            if 'v' in params:
-                return render_template(
-                    'lecture.html',
-                    id=params['v'][0],
-                    lecture=str(lecture_obj['_id']),
-                    name=lecture_obj['name'],
-                    transcript=lecture_obj['transcript'],
-                    cls_name=lecture_obj['cls'],
-                    user=user,
-                    cls=str(cls_obj['_id']),
-                    db=db
-                )
+            return render_template(
+                'lecture.html',
+                id=get_youtube_id(lecture_obj['link']),
+                lecture=str(lecture_obj['_id']),
+                name=lecture_obj['name'],
+                transcript=lecture_obj['transcript'],
+                cls_name=lecture_obj['cls'],
+                user=user,
+                cls=str(cls_obj['_id']),
+                db=db
+            )
         return redirect(url_for('error', code=404))
 
 
     @app.route('/class/<class_name>', methods=['GET', 'POST'])
     def classpage(class_name):
+
         form = CreateLectureForm(request.form)
         user = get_user_data()
+
+        youtube = None
+
+        if user['is_admin']:
+            if 'google_credentials' not in user:
+                return redirect(url_for('error', code=403))
+            else:
+                credentials = google.oauth2.credentials.Credentials(
+                    **user['google_credentials']
+                )
+                youtube = googleapiclient.discovery.build(
+                    API_SERVICE_NAME, API_VERSION, credentials=credentials)
 
         if request.method == 'POST':
             if not user['is_admin']:
@@ -153,7 +219,11 @@ def create_client(app):
                     cls=class_name
                 )
                 id = Class.add_lecture(cls, lecture, db)
-                transcript = transcribe(request.form['link'])
+                transcript = transcribe(
+                    request.form['link'],
+                    app.config['TRANSCRIPTION_MODE'],
+                    youtube=youtube
+                )
                 Lecture.add_transcript(id, transcript, db)
             else:
                 flash('All fields required')
@@ -169,7 +239,31 @@ def create_client(app):
     @app.route('/write_question', methods=['GET', 'POST'])
     def write_question():
         if request.method == 'POST':
-            Lecture.write_question(request.form.to_dict(), db)
+            Question.write_question(request.form.to_dict(), db)
+            return jsonify(success=True), 200
+        else:
+            return redirect(url_for('error', code=500))
+
+    @app.route('/edit_question', methods=['GET', 'POST'])
+    def edit_question():
+        if request.method == 'POST':
+            Answer.edit_question(id, request.form.to_dict(), db)
+            return jsonify(success=True), 200
+        else:
+            return redirect(url_for('error', code=500))
+
+    @app.route('/write_answer', methods=['GET', 'POST'])
+    def write_answer():
+        if request.method == 'POST':
+            Answer.write_answer(request.form.to_dict(), db)
+            return jsonify(success=True), 200
+        else:
+            return redirect(url_for('error', code=500))
+
+    @app.route('/edit_answer', methods=['GET', 'POST'])
+    def edit_answer():
+        if request.method == 'POST':
+            Answer.edit_answer(request.form.to_dict(), db)
             return jsonify(success=True), 200
         else:
             return redirect(url_for('error', code=500))
