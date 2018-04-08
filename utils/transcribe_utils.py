@@ -4,11 +4,11 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
 from selenium.common.exceptions import TimeoutException
 
-from urllib.parse import parse_qs, urlencode
+from urllib.parse import parse_qs, urlencode, urlparse
 
 def get_youtube_id(link):
-    url = urllib.parse.urlparse(lecture_obj['link'])
-    params = urllib.parse.parse_qs(url.query)
+    url = urlparse(link)
+    params = parse_qs(url.query)
     return params['v'][0] if 'v' in params else None
 
 def transcribe(link, mode, youtube=None):
