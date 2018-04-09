@@ -30,6 +30,7 @@ class DBObject:
     def to_dict(self):
         return self.attributes
 
+
 class User(DBObject):
 
     collection = 'Users'
@@ -45,7 +46,15 @@ class User(DBObject):
                 ['name', 'email', 'is_admin']
             )
             attr['ok_id'] = ok_data['id']
-            attr['classes'] = ['CS61A'] # TODO: class enrollment
+            classes = []
+            for participation in ok_data['participations']:
+                classes.append({
+                    'ok_id': participation['course']['id'],
+                    'display_name': participation['course']['display_name'],
+                    'offering': participation['course']['offering'],
+                    'role': participation['role']
+                })
+            attr['classes'] = classes
             u = User(**attr)
             return insert(u, db)
 
@@ -94,12 +103,28 @@ class Class(DBObject):
             },
             {
               '$push': {
-                'Lectures': id,
+                'lectures': id,
               }
             },
             upsert=False
         )
         return id
+
+    @staticmethod
+    def get_semester(offering):
+        return offering.split('/')[-1].upper()
+
+    @staticmethod
+    def create_class(display_name, data, db):
+        data['display_name'] = display_name
+        return insert(
+            Class(
+                lectures=[],
+                semester=Class.get_semester(data['offering']),
+                **data
+            ),
+            db
+        )
 
 
 class Note(DBObject):

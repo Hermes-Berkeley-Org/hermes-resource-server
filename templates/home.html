@@ -7,11 +7,49 @@
     <h2>Welcome, {{user['name']}}</h2>
     <br />
     <h3>Classes</h3>
+    <h4>{{curr_semester}}</h4>
+    <h5>Staff Classes</h5>
     <ul>
     {% for class in classes %}
-        <li><a href="{{ url_for('classpage', class_name=class) }}">{{class}}</a></li>
+        {% if class['role'] != 'student' and class['semester'] == curr_semester %}
+            {% if class['class_exists'] %}
+                <li><a href="{{ url_for('classpage', class_ok_id=class['ok_id']) }}">{{class['display_name']}} ({{class['role'].capitalize()}})</a></li>
+            {% else %}
+                <li><a href="{{ url_for('create_class', class_ok_id=class['ok_id']) }}">{{class['display_name']}} ({{class['role'].capitalize()}})</a></li>
+            {% endif %}
+        {% endif %}
     {% endfor %}
     </ul>
+    <h5>Student Classes</h5>
+    <ul>
+    {% for class in classes %}
+        {% if class['role'] == 'student' and class['semester'] == curr_semester %}
+            <li><a href="{{ url_for('classpage', class_ok_id=class['ok_id']) }}">{{class['display_name']}}</a></li>
+        {% endif %}
+    {% endfor %}
+    </ul>
+    <h5>Previous Classes</h5>
+    <h5>Staff Classes</h5>
+    <ul>
+    {% for class in classes %}
+        {% if class['role'] != 'student' and class['semester'] != curr_semester %}
+            {% if class['class_exists'] %}
+                <li><a href="{{ url_for('classpage', class_ok_id=class['ok_id']) }}">{{class['display_name']}} ({{class['semester']}}) ({{class['role'].capitalize()}})</a></li>
+            {% else %}
+                <li><a href="{{ url_for('create_class', class_ok_id=class['ok_id']) }}">{{class['display_name']}} ({{class['semester']}}) ({{class['role'].capitalize()}})</a></li>
+            {% endif %}
+        {% endif %}
+    {% endfor %}
+    </ul>
+    <h5>Student Classes</h5>
+    <ul>
+    {% for class in classes %}
+        {% if class['role'] == 'student' and class['semester'] != curr_semester %}
+            <li><a href="{{ url_for('classpage', class_ok_id=class['ok_id']) }}">{{class['display_name']}} ({{class['semester']}}) ({{class['role'].capitalize()}}) </a></li>
+        {% endif %}
+    {% endfor %}
+    </ul>
+
 </div>
 
 {% endblock %}
