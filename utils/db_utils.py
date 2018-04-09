@@ -63,6 +63,20 @@ class User(DBObject):
             upsert=False
         )
 
+    @staticmethod
+    def remove_google_credentials(id, db):
+        db[User.collection].update_one(
+            {
+                '_id': id
+            },
+            {
+                '$set': {
+                    'google_credentials': {}
+                }
+            },
+            upsert=False
+        )
+
 
 class Class(DBObject):
 
