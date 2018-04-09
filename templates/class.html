@@ -14,7 +14,7 @@
       {% endfor %}
     </table>
 
-    {% if user['is_admin'] %}
+    {% if role == consts.INSTRUCTOR %}
       <form action="" method="post">
           {{ form.csrf }}
           <p>{{ form.title }}</p>
