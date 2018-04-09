@@ -31,8 +31,14 @@
               <p class="qa-entry">{{question['text']}}</p>
             </div>
             <div class="clear"></div>
-            <div class="from-them">
-              <p class="qa-entry">Answer here</p>
+            <div id="answers-{{question['_id']}}">
+                {% for answer in db['Answers'].find({'question_id': question['_id']}) %}
+                    <div class="from-them">
+                      <p class="qa-entry">{{answer['name']}} - {{answer['text']}}</p>
+                    </div>
+                {% endfor %}
+                    <input id="answer-{{question['_id']}}" placeholder='Enter your question here'></input>
+                    <button type=submit onclick='sendAnswer("{{question['_id']}}")'>Submit Answer</button>
             </div>
             <div class="clear"></div>
           {% endfor %}
@@ -94,6 +100,29 @@
         }
       });
 
+
+  }
+
+  function sendAnswer(questionId) {
+
+      var answer = document.getElementById(`answer-${questionId}`).value;
+
+      var data = {
+         question_id: questionId,
+         text: answer
+      };
+
+      console.log(`${JSON.stringify(data)}`)
+
+      $.ajax({
+        type: "POST",
+        url: "{{ url_for('write_answer') }}",
+        data,
+        success: function (data) {
+          $(`#answers-${questionId}`).find("p").remove();
+          $(`#answers-${questionId}`).load(window.location.href + ` #answers-${questionId}`);
+        }
+      });
 
   }
 

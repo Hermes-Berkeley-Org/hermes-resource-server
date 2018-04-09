@@ -4,11 +4,13 @@ from pymongo import MongoClient
 import os
 from config import Config
 
+from bson.objectid import ObjectId
+
 import logging
 
 from utils.webpage_utils import CreateLectureForm
 from utils import db_utils
-from utils.db_utils import User, Class, Lecture, Note
+from utils.db_utils import User, Class, Lecture, Note, Question, Answer
 from utils.transcribe_utils import transcribe, get_youtube_id
 
 import urllib.parse
@@ -247,7 +249,7 @@ def create_client(app):
     @app.route('/edit_question', methods=['GET', 'POST'])
     def edit_question():
         if request.method == 'POST':
-            Answer.edit_question(id, request.form.to_dict(), db)
+            Question.edit_question(id, request.form.to_dict(), db)
             return jsonify(success=True), 200
         else:
             return redirect(url_for('error', code=500))
@@ -255,7 +257,7 @@ def create_client(app):
     @app.route('/write_answer', methods=['GET', 'POST'])
     def write_answer():
         if request.method == 'POST':
-            Answer.write_answer(request.form.to_dict(), db)
+            Answer.write_answer(get_user_data(), request.form.to_dict(), db)
             return jsonify(success=True), 200
         else:
             return redirect(url_for('error', code=500))
