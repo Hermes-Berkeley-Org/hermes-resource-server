@@ -21,7 +21,7 @@
     <div class="col-md-4">
       <div id="questions">
         <input id='question' placeholder='Enter your question here'></input>
-        <input id='anon'type="hidden" name="checkboxName" value="0"><input type="checkbox" onclick="this.previousSibling.value=1-this.previousSibling.value">
+        <input id='anon'type="hidden" name="checkboxName" value="0"><input type="checkbox" onclick="this.previousSibling.value=1-this.previousSibling.value"> Anonymous?
         <button type=submit onclick="sendQuestion()">Submit Question</button>
       </div>
       <section id="questions_table">
@@ -29,7 +29,7 @@
           {% for question in db['Questions'].find({'lecture_id': lecture}).sort([('seconds', 1)]) %}
             <!-- {{question['anon']}} -->
 
-            {% if question['anon'] == "truee" %}
+            {% if question['anon'] == "true" %}
               <center><p class="question-tag"> Anonymous {{question['timestamp']}}</p></center>
             {% else %}
               <center><p class="question-tag">{{question['name']}} {{question['timestamp']}}</p></center>
@@ -41,10 +41,14 @@
             <div id="answers-{{question['_id']}}">
                 {% for answer in db['Answers'].find({'question_id': question['_id']}) %}
                     <div class="from-them">
-                      <p class="qa-entry">{{answer['name']}} - {{answer['text']}}</p>
+                      {% if question['anon'] == "true" %}
+                        <p class="qa-entry">Anonymous - {{answer['text']}}</p>
+                      {% else %}
+                        <p class="qa-entry">{{answer['name']} - {{answer['text']}}</p>
                     </div>
                 {% endfor %}
                     <input id="answer-{{question['_id']}}" placeholder='Enter your question here'></input>
+                    <input id='anon'type="hidden" name="checkboxName" value="0"><input type="checkbox" onclick="this.previousSibling.value=1-this.previousSibling.value"> Anonymous?
                     <button type=submit onclick='sendAnswer("{{question['_id']}}")'>Submit Answer</button>
             </div>
             <div class="clear"></div>
@@ -122,10 +126,18 @@
 
       var answer = document.getElementById(`answer-${questionId}`).value;
 
+      if(anonymous == "1"){
+        anonymous = (true);
+      }
+      else{
+        anonymous = (false);
+      }
       var data = {
          question_id: questionId,
-         text: answer
+         text: answer,
+         anon: anonymous
       };
+
 
       console.log(`${JSON.stringify(data)}`)
 
