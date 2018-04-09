@@ -45,6 +45,7 @@ class User(DBObject):
                 ['name', 'email', 'is_admin']
             )
             attr['ok_id'] = ok_data['id']
+            attr['classes'] = ['CS61A'] # TODO: class enrollment
             u = User(**attr)
             return insert(u, db)
 

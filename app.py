@@ -45,7 +45,7 @@ def create_client(app):
         'ok-server',  # Server Name
         consumer_key=app.config['CLIENT_ID'],
         consumer_secret=app.config['CLIENT_SECRET'],
-        request_token_params={'scope': 'all',
+        request_token_params={'scope': 'email',
                               'state': lambda: security.gen_salt(10)},
         base_url='{0}/api/v3/'.format(ok_server),
         request_token_url=None,
