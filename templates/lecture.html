@@ -21,12 +21,19 @@
     <div class="col-md-4">
       <div id="questions">
         <input id='question' placeholder='Enter your question here'></input>
+        <input id='anon'type="hidden" name="checkboxName" value="0"><input type="checkbox" onclick="this.previousSibling.value=1-this.previousSibling.value">
         <button type=submit onclick="sendQuestion()">Submit Question</button>
       </div>
       <section id="questions_table">
         <!--<table id='questions_table'>-->
           {% for question in db['Questions'].find({'lecture_id': lecture}).sort([('seconds', 1)]) %}
-            <center><p class="question-tag">{{question['name']}} {{question['timestamp']}}</p></center>
+            <!-- {{question['anon']}} -->
+
+            {% if question['anon'] == "truee" %}
+              <center><p class="question-tag"> Anonymous {{question['timestamp']}}</p></center>
+            {% else %}
+              <center><p class="question-tag">{{question['name']}} {{question['timestamp']}}</p></center>
+            {% endif %}
             <div class="from-me">
               <p class="qa-entry">{{question['text']}}</p>
             </div>
@@ -78,14 +85,22 @@
   function sendQuestion() {
       var seconds = player.getCurrentTime();
       var question = document.getElementById('question').value;
-
+      var anonymous = document.getElementById('anon').value;
+      if(anonymous == "1"){
+        anonymous = (true);
+      }
+      else{
+        anonymous = (false);
+      }
+      alert("{{ anon }}");
       var data = {
          seconds,
          text: question,
          name: "{{ user['name'] }}",
          ok_id: "{{ user['ok_id'] }}",
          lecture: "{{ lecture }}",
-         cls: "{{ cls }}"
+         cls: "{{ cls }}",
+         anon: anonymous
       }
 
       console.log(`${JSON.stringify(data)}`)
