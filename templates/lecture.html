@@ -21,7 +21,7 @@
     <div class="col-md-4">
       <div id="questions">
         <input id='question' placeholder='Enter your question here'></input>
-        <input id='anon'type="hidden" name="checkboxName" value="0"><input type="checkbox" onclick="this.previousSibling.value=1-this.previousSibling.value"> Anonymous?
+        <input id='anonq'type="hidden" name="checkboxName" value="0"><input type="checkbox" onclick="this.previousSibling.value=1-this.previousSibling.value"> Anonymous?
         <button type=submit onclick="sendQuestion()">Submit Question</button>
       </div>
       <section id="questions_table">
@@ -29,7 +29,7 @@
           {% for question in db['Questions'].find({'lecture_id': lecture}).sort([('seconds', 1)]) %}
             <!-- {{question['anon']}} -->
 
-            {% if question['anon'] == "true" %}
+            {% if question['anon'] == "true" and role == consts.STUDENT %}
               <center><p class="question-tag"> Anonymous {{question['timestamp']}}</p></center>
             {% else %}
               <center><p class="question-tag">{{question['name']}} {{question['timestamp']}}</p></center>
@@ -41,14 +41,15 @@
             <div id="answers-{{question['_id']}}">
                 {% for answer in db['Answers'].find({'question_id': question['_id']}) %}
                     <div class="from-them">
-                      {% if question['anon'] == "true" %}
+                      {% if answer['anon'] == "true" and role == consts.STUDENT %}
                         <p class="qa-entry">Anonymous - {{answer['text']}}</p>
                       {% else %}
-                        <p class="qa-entry">{{answer['name']} - {{answer['text']}}</p>
+                        <p class="qa-entry">{{answer['name']}} - {{answer['text']}}</p>
+                      {% endif %}
                     </div>
                 {% endfor %}
                     <input id="answer-{{question['_id']}}" placeholder='Enter your question here'></input>
-                    <input id='anon'type="hidden" name="checkboxName" value="0"><input type="checkbox" onclick="this.previousSibling.value=1-this.previousSibling.value"> Anonymous?
+                    <input id='anona' type="hidden" name="checkboxName" value="0"><input type="checkbox" onclick="this.previousSibling.value=1-this.previousSibling.value"> Anonymous?
                     <button type=submit onclick='sendAnswer("{{question['_id']}}")'>Submit Answer</button>
             </div>
             <div class="clear"></div>
@@ -89,14 +90,13 @@
   function sendQuestion() {
       var seconds = player.getCurrentTime();
       var question = document.getElementById('question').value;
-      var anonymous = document.getElementById('anon').value;
+      var anonymous = document.getElementById('anonq').value;
       if(anonymous == "1"){
         anonymous = (true);
       }
       else{
         anonymous = (false);
       }
-      alert("{{ anon }}");
       var data = {
          seconds,
          text: question,
@@ -125,7 +125,7 @@
   function sendAnswer(questionId) {
 
       var answer = document.getElementById(`answer-${questionId}`).value;
-
+      var anonymous = document.getElementById('anona').value;
       if(anonymous == "1"){
         anonymous = (true);
       }

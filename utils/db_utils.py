@@ -211,7 +211,8 @@ class Answer(DBObject):
                 user=user['_id'],
                 name=user['name'],
                 upvotes=0,
-                endorsed=False
+                endorsed=False,
+                anon= answer['anon']
             ),
             db
         ).inserted_id
