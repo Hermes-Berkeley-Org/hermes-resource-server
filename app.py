@@ -66,7 +66,9 @@ def create_client(app):
 
     @app.route('/logout')
     def logout():
+        User.remove_google_credentials(get_user_data()['_id'], db)
         session.pop('dev_token', None)
+        session['logged_in'] = False
         if 'google_credentials' in session:
             del session['google_credentials']
         return redirect(url_for('index'))
@@ -89,6 +91,7 @@ def create_client(app):
             if ok_resp and 'data' in ok_resp:
                 ok_data = ok_resp['data']
                 User.register_user(ok_data, db)
+                session['logged_in'] = True
                 return redirect(url_for('home'))
         return redirect(url_for('error', code=403))
 
@@ -152,6 +155,8 @@ def create_client(app):
                 return ok_data['id']
 
     def get_user_data():
+        if not session.get('logged_in'):
+            return
         ok_id = get_ok_id()
         if ok_id:
             db_result = db['Users'].find_one({'ok_id': ok_id}) or {}
@@ -164,7 +169,7 @@ def create_client(app):
             if user['is_admin'] and 'google_credentials' not in user:
                 return redirect(url_for('google_authorize'))
             return render_template('home.html', user=user, classes=user['classes'])
-        return redirect(url_for('error', code=403))
+        return redirect(url_for('index'))
 
     @app.route('/class/<cls>/lecture/<lecture_number>')
     def lecture(cls, lecture_number):
