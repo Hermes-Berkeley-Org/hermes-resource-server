@@ -39,8 +39,6 @@ def create_client(app):
 
     oauth = OAuth(app)
 
-
-
     ok_server = app.config['OK_SERVER']
 
     remote = oauth.remote_app(
