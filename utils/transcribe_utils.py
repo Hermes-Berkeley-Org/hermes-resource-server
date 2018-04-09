@@ -14,10 +14,14 @@ def get_youtube_id(link):
     return params['v'][0] if 'v' in params else None
 
 def transcribe(link, mode, youtube=None):
-    if mode == 'api':
-        return read_from_youtube(link, youtube)
-    elif mode == 'scrape':
-        return scrape(link)
+    try:
+        if mode == 'api':
+            return read_from_youtube(link, youtube)
+        elif mode == 'scrape':
+            return scrape(link)
+    except:
+        print('Transcribe failed') # @Kian: logger statement here!
+        return []
 
 def read_from_youtube(link, youtube):
     video_id = get_youtube_id(link)
@@ -26,6 +30,8 @@ def read_from_youtube(link, youtube):
             part="snippet",
             videoId=video_id
         ).execute()
+
+        print(results['items'])
 
         for item in results["items"]:
             return item["id"]
@@ -72,9 +78,6 @@ def scrape(link):
         return transcript
     except TimeoutException:
         driver.quit()
-        return []
-    except:
-        print('Transcribe failed') # @Kian: logger statement here!
         return []
 
 def clean_link(link):

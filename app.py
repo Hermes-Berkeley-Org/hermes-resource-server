@@ -4,14 +4,18 @@ from pymongo import MongoClient
 import os
 from config import Config
 
+from datetime import datetime
+
 from bson.objectid import ObjectId
 
 import logging
 
-from utils.webpage_utils import CreateLectureForm
+from utils.webpage_utils import CreateLectureForm, CreateClassForm
 from utils import db_utils
 from utils.db_utils import User, Class, Lecture, Note, Question, Answer
 from utils.transcribe_utils import transcribe, get_youtube_id
+
+import consts
 
 import urllib.parse
 from werkzeug import security
@@ -61,13 +65,17 @@ def create_client(app):
     @app.route('/login')
     def login():
         if app.config['OK_MODE'] == 'bypass':
+            session['logged_in'] = True
             return redirect(url_for('home'))
         return remote.authorize(callback=url_for('authorized', _external=True))
 
     @app.route('/logout')
     def logout():
-        User.remove_google_credentials(get_user_data()['_id'], db)
-        session.pop('dev_token', None)
+        user = get_user_data()
+        if user:
+            User.remove_google_credentials(get_user_data()['_id'], db)
+        if 'dev_token' in session:
+            session.pop('dev_token', None)
         session['logged_in'] = False
         if 'google_credentials' in session:
             del session['google_credentials']
@@ -101,7 +109,10 @@ def create_client(app):
         flow = google_auth_oauthlib.flow.Flow.from_client_secrets_file(
             CLIENT_SECRETS_FILE, scopes=SCOPES)
 
-        flow.redirect_uri = url_for('google_authorized', _external=True)
+        flow.redirect_uri = url_for(
+            'google_authorized',
+            _external=True
+        )
 
         authorization_url, state = flow.authorization_url(
             access_type='offline',
@@ -109,11 +120,16 @@ def create_client(app):
         )
 
         session['state'] = state
+        session['class_oauth_redirect'] = request.args.get('class_ok_id')
         return redirect(authorization_url)
 
     @app.route('/google_authorized')
     def google_authorized():
         state = session['state']
+
+        class_ok_id = session['class_oauth_redirect']
+
+        session.pop('class_oauth_redirect', None)
 
         flow = google_auth_oauthlib.flow.Flow.from_client_secrets_file(
             CLIENT_SECRETS_FILE, scopes=SCOPES, state=state)
@@ -133,7 +149,7 @@ def create_client(app):
             'scopes': credentials.scopes
         }
         User.add_admin_google_credentials(user['_id'], credentials, db)
-        return redirect(url_for('home'))
+        return redirect(url_for('classpage', class_ok_id=class_ok_id))
 
     @remote.tokengetter
     def get_oauth_token():
@@ -164,17 +180,38 @@ def create_client(app):
 
     @app.route('/home/')
     def home():
+        def get_curr_semester():
+            today = datetime.today()
+            month, year = today.month, today.year
+            def get_season(month):
+                if month < 6:
+                    return 'SP'
+                elif month < 8:
+                    return 'SU'
+                else:
+                    return 'FA'
+            return '{0}{1}'.format(get_season(month), str(year)[-2:])
         user = get_user_data()
+        def validate(participation):
+            participation['semester'] = Class.get_semester(participation['offering'])
+            participation['class_exists'] = db[Class.collection].find({'ok_id': participation['ok_id']}).count() > 0
+            return participation['role'] == consts.INSTRUCTOR or \
+                participation['class_exists']
         if user:
-            if user['is_admin'] and 'google_credentials' not in user:
-                return redirect(url_for('google_authorize'))
-            return render_template('home.html', user=user, classes=user['classes'])
+            classes = [participation for participation in user['classes'] if validate(participation)]
+            print(classes)
+            return render_template(
+                'home.html',
+                user=user,
+                classes=classes,
+                curr_semester=get_curr_semester()
+            )
         return redirect(url_for('index'))
 
     @app.route('/class/<cls>/lecture/<lecture_number>')
     def lecture(cls, lecture_number):
-        lecture_obj = db['Lectures'].find_one({'lecture_number': int(lecture_number)})
-        cls_obj = db['Classes'].find_one({'Name': cls})
+        cls_obj = db['Classes'].find_one({'ok_id': int(cls)})
+        lecture_obj = db['Lectures'].find_one({'cls': cls, 'lecture_number': int(lecture_number)})
         user = get_user_data()
         if lecture_obj and cls_obj:
             return render_template(
@@ -190,18 +227,27 @@ def create_client(app):
             )
         return redirect(url_for('error', code=404))
 
+    def get_role(class_ok_id):
+        user = get_user_data()
+        for participation in user['classes']:
+            if participation['ok_id'] == int(class_ok_id):
+                return participation['role'], participation
 
-    @app.route('/class/<class_name>', methods=['GET', 'POST'])
-    def classpage(class_name):
+    @app.route('/class/<class_ok_id>', methods=['GET', 'POST'])
+    def classpage(class_ok_id):
 
         form = CreateLectureForm(request.form)
         user = get_user_data()
 
         youtube = None
 
-        if user['is_admin']:
-            if 'google_credentials' not in user:
-                return redirect(url_for('error', code=403))
+        role, data = get_role(class_ok_id)
+
+        cls = db['Classes'].find_one({'ok_id': int(class_ok_id)})
+
+        if role == consts.INSTRUCTOR:
+            if not user.get('google_credentials'):
+                return redirect(url_for('google_authorize', class_ok_id=class_ok_id))
             else:
                 credentials = google.oauth2.credentials.Credentials(
                     **user['google_credentials']
@@ -210,10 +256,9 @@ def create_client(app):
                     API_SERVICE_NAME, API_VERSION, credentials=credentials)
 
         if request.method == 'POST':
-            if not user['is_admin']:
+            if role != consts.INSTRUCTOR:
                 redirect(url_for('error', code=403))
-            cls = db['Classes'].find_one({'Name': class_name})
-            num_lectures = len(cls['Lectures'])
+            num_lectures = len(cls['lectures'])
             if form.validate():
                 lecture = Lecture(
                     name=request.form['title'],
@@ -221,7 +266,7 @@ def create_client(app):
                     date=request.form['date'],
                     link=request.form['link'],
                     lecture_number=num_lectures,
-                    cls=class_name
+                    cls=class_ok_id
                 )
                 id = Class.add_lecture(cls, lecture, db)
                 transcript = transcribe(
@@ -232,14 +277,37 @@ def create_client(app):
                 Lecture.add_transcript(id, transcript, db)
             else:
                 flash('All fields required')
-        cls = db['Classes'].find_one({'Name': class_name})
         return render_template(
             'class.html',
             info=cls,
-            lectures=[db['Lectures'].find_one({'_id': lecture_id}) for lecture_id in cls['Lectures']],
+            lectures=[db['Lectures'].find_one({'_id': lecture_id}) for lecture_id in cls['lectures']],
             form=form,
-            user=user
+            user=user,
+            role=role,
+            consts=consts
         )
+
+
+    @app.route('/create_class/<class_ok_id>', methods=['GET', 'POST'])
+    def create_class(class_ok_id):
+        form = CreateClassForm(request.form)
+
+        role, data = get_role(class_ok_id)
+        if role == consts.INSTRUCTOR:
+            if request.method == 'POST':
+                if form.validate():
+                    Class.create_class(request.form['class_name'], data, db)
+                else:
+                    flash('All fields required')
+                return redirect(url_for('classpage', _external=True, class_ok_id=class_ok_id))
+            else:
+                return render_template(
+                    'create_class.html',
+                    init_display_name=data['display_name'],
+                    form=form
+                )
+        else:
+            return redirect(url_for('error'), code=403)
 
     @app.route('/write_question', methods=['GET', 'POST'])
     def write_question():
