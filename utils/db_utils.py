@@ -153,7 +153,8 @@ class Question(DBObject):
                 text=question['text'],
                 name=question['name'],
                 ok_id=question['ok_id'],
-                lecture_id=question['lecture']
+                lecture_id=question['lecture'],
+                anon = question['anon']
             ),
             db
         ).inserted_id
