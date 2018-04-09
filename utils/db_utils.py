@@ -162,13 +162,13 @@ class Answer(DBObject):
         DBObject.__init__(self, **attr)
 
     @staticmethod
-    def add_answer(answer, db):
+    def write_answer(user, answer, db):
         return insert(
             Answer(
-                question_id=answer['question_id'],
+                question_id=ObjectId(answer['question_id']),
                 text=answer['text'],
-                user_id=answer['user_id'],
-                name=answer['name'],
+                user=user['_id'],
+                name=user['name'],
                 upvotes=0,
                 endorsed=False
             ),
