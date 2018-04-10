@@ -6,4 +6,3 @@ node-modules/
 .env
 .DS_Store
 .idea/
-keys/*
