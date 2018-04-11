@@ -168,7 +168,8 @@ def create_client(app):
             ok_resp = r.json()
             if ok_resp and 'data' in ok_resp:
                 ok_data = ok_resp['data']
-                return ok_data['id']
+                if 'id' in ok_data:
+                    return ok_data['id']
 
     def get_user_data():
         if not session.get('logged_in'):

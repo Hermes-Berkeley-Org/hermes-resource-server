@@ -37,16 +37,22 @@
             <div class="from-me">
               <p class="qa-entry">{{question['text']}}</p>
             </div>
+            <button type="button" class="btn" data-toggle="collapse" data-target="#answers-{{question['_id']}}">Show responses / Submit Answer</button>
             <div class="clear"></div>
-            <div id="answers-{{question['_id']}}">
+            <div id="answers-{{question['_id']}}" class="collapse">
                 {% for answer in db['Answers'].find({'question_id': question['_id']}) %}
-                    <div class="from-them">
-                      {% if answer['anon'] == "true" and role == consts.STUDENT %}
-                        <p class="qa-entry">Anonymous - {{answer['text']}}</p>
-                      {% else %}
-                        <p class="qa-entry">{{answer['name']}} - {{answer['text']}}</p>
-                      {% endif %}
+                    <div id="each-answer">
+                    {% if answer['anon'] == "true" and role == consts.STUDENT %}
+                        <p class="question-tag">Anonymous</p>
+                        <div class="from-them">
+                          <p class="qa-entry">Anonymous - {{answer['text']}}</p>
+                    {% else %}
+                        <p class="question-tag">{{answer['name']}}</p>
+                        <div class="from-them">
+                          <p class="qa-entry">{{answer['text']}}</p>
+                    {% endif %}
                     </div>
+                  </div>
                 {% endfor %}
                     <input id="answer-{{question['_id']}}" placeholder='Enter your question here'></input>
                     <input id='anona' type="hidden" name="checkboxName" value="0"><input type="checkbox" onclick="this.previousSibling.value=1-this.previousSibling.value"> Anonymous?
