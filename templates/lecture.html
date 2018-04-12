@@ -20,9 +20,17 @@
     </div>
     <div class="col-md-4">
       <div id="questions">
-        <input id='question' placeholder='Enter your question here'></input>
-        <input id='anonq'type="hidden" name="checkboxName" value="0"><input type="checkbox" onclick="this.previousSibling.value=1-this.previousSibling.value"> Anonymous?
-        <button type=submit onclick="sendQuestion()">Submit Question</button>
+        <!-- <form class="form-horizontal"> -->
+          <div class="form-group">
+            <input id='question' class="form-control" placeholder='Enter your question here'></input>
+          </div>
+          <div class="form-group">
+              <input id="anonq" type="checkbox">Post anonymously</input>
+          </div>
+          <div class="form-group">
+            <button class="btn btn-primary" type=submit onclick="sendQuestion()">Submit Question</button>
+          </div>
+        <!-- </form> -->
       </div>
       <section id="questions_table">
         <!--<table id='questions_table'>-->
@@ -37,7 +45,8 @@
             <div class="from-me">
               <p class="qa-entry">{{question['text']}}</p>
             </div>
-            <button type="button" class="btn" data-toggle="collapse" data-target="#answers-{{question['_id']}}">Show responses / Submit Answer</button>
+            <div id="answers-container-{{question['_id']}}">
+            <button type="button" class="btn btn-default btn-sm" style="border: 1px solid" id="show-answers-{{question['_id']}}" data-toggle="collapse" onclick="toggleResponses('show-answers-{{question['_id']}}')" data-target="#answers-{{question['_id']}}">Show responses</button>
             <div class="clear"></div>
             <div id="answers-{{question['_id']}}" class="collapse">
                 {% for answer in db['Answers'].find({'question_id': question['_id']}) %}
@@ -45,21 +54,33 @@
                     {% if answer['anon'] == "true" and role == consts.STUDENT %}
                         <p class="question-tag">Anonymous</p>
                         <div class="from-them">
-                          <p class="qa-entry">Anonymous - {{answer['text']}}</p>
+                          <p class="qa-entry">{{answer['text']}}</p>
+                        </div>
                     {% else %}
                         <p class="question-tag">{{answer['name']}}</p>
                         <div class="from-them">
                           <p class="qa-entry">{{answer['text']}}</p>
+                        </div>
                     {% endif %}
-                    </div>
                   </div>
                 {% endfor %}
-                    <input id="answer-{{question['_id']}}" placeholder='Enter your question here'></input>
-                    <input id='anona' type="hidden" name="checkboxName" value="0"><input type="checkbox" onclick="this.previousSibling.value=1-this.previousSibling.value"> Anonymous?
-                    <button type=submit onclick='sendAnswer("{{question['_id']}}")'>Submit Answer</button>
+                  <!-- <form class="form-horizontal"> -->
+                    <div class="form-group">
+                    <input id="answer-{{question['_id']}}" class="form-control input-sm" placeholder='Enter your answer here'></input>
+                    </div>
+                    <div class="form-group">
+                      <input id='anona-{{question['_id']}}' type="checkbox">Answer anonymously</input>
+                    </div>
+                    <div class="form-group">
+                    <button class="btn btn-primary btn-sm" type=submit onclick='sendAnswer("{{question['_id']}}")'>Submit Answer</button>
+                  </div>
+                  <!-- </form> -->
             </div>
+          </div>
             <div class="clear"></div>
           {% endfor %}
+        <!-- </section>
+      </div> -->
         <!--</table>-->
       </div>
     </div>
@@ -93,69 +114,76 @@
       // Send info for student tracking purposes
   }
 
+  function toggleResponses(buttonId) {
+      var possibleTexts = ["Show responses", "Hide responses"];
+      document.getElementById(buttonId).innerHTML = possibleTexts[1 - possibleTexts.indexOf(document.getElementById(buttonId).innerHTML)];
+  }
+
   function sendQuestion() {
       var seconds = player.getCurrentTime();
       var question = document.getElementById('question').value;
-      var anonymous = document.getElementById('anonq').value;
-      if(anonymous == "1"){
-        anonymous = (true);
-      }
-      else{
-        anonymous = (false);
-      }
-      var data = {
-         seconds,
-         text: question,
-         name: "{{ user['name'] }}",
-         ok_id: "{{ user['ok_id'] }}",
-         lecture: "{{ lecture }}",
-         cls: "{{ cls }}",
-         anon: anonymous
-      }
-
-      console.log(`${JSON.stringify(data)}`)
-
-      $.ajax({
-        type: "POST",
-        url: "{{ url_for('write_question') }}",
-        data,
-        success: function (data) {
-          $('#questions_table').find("tr").remove();
-          $('#questions_table').load(window.location.href + ' #questions_table');
+      if (question.length > 0) {
+        var anonymous = $('#anonq').is(":checked");
+        var data = {
+           seconds,
+           text: question,
+           name: "{{ user['name'] }}",
+           ok_id: "{{ user['ok_id'] }}",
+           lecture: "{{ lecture }}",
+           cls: "{{ cls }}",
+           anon: anonymous
         }
-      });
 
+        console.log(`${JSON.stringify(data)}`)
 
-  }
+        $.ajax({
+          type: "POST",
+          url: "{{ url_for('write_question') }}",
+          data,
+          success: function (data) {
+            $('#questions_table').load(window.location.href + ' #questions_table');
+          }
+        });
+      }
+    }
 
   function sendAnswer(questionId) {
 
       var answer = document.getElementById(`answer-${questionId}`).value;
-      var anonymous = document.getElementById('anona').value;
-      if(anonymous == "1"){
-        anonymous = (true);
+      var anonymous = $(`#anona-${questionId}`).is(":checked");;
+
+      if (answer.length > 0) {
+          if(anonymous == "1"){
+            anonymous = (true);
+          }
+          else{
+            anonymous = (false);
+          }
+          var data = {
+             question_id: questionId,
+             text: answer,
+             anon: anonymous
+          };
+
+
+          console.log(`${JSON.stringify(data)}`)
+
+          $.ajax({
+            type: "POST",
+            url: "{{ url_for('write_answer') }}",
+            data,
+            success: function (data) {
+              // $(`#answers-${questionId}`).find("p").remove()
+              $(`#answers-container-${questionId}`).load(window.location.href + ` #answers-container-${questionId}`, function () {
+                  $(`#show-answers-${questionId}`).trigger("click");
+              });
+
+
+            }
+          });
       }
-      else{
-        anonymous = (false);
-      }
-      var data = {
-         question_id: questionId,
-         text: answer,
-         anon: anonymous
-      };
 
 
-      console.log(`${JSON.stringify(data)}`)
-
-      $.ajax({
-        type: "POST",
-        url: "{{ url_for('write_answer') }}",
-        data,
-        success: function (data) {
-          $(`#answers-${questionId}`).find("p").remove();
-          $(`#answers-${questionId}`).load(window.location.href + ` #answers-${questionId}`);
-        }
-      });
 
   }
 

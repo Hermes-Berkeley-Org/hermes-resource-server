@@ -223,7 +223,7 @@ def create_client(app):
                 transcript=lecture_obj['transcript'],
                 cls_name=lecture_obj['cls'],
                 user=user,
-                role=get_role(cls),
+                role=get_role(cls)[0],
                 consts=consts,
                 cls=str(cls_obj['_id']),
                 db=db
