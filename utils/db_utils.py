@@ -15,7 +15,7 @@ def find_by_id(id, collection, db):
     return db[collection].find({'_id': ObjectId(id)})
 
 def find_one_by_id(id, collection, db):
-    return db[collection].find({'_id': ObjectId(id)})
+    return db[collection].find_one({'_id': ObjectId(id)})
 
 class DBObject:
 
@@ -210,8 +210,7 @@ class Answer(DBObject):
                 text=answer['text'],
                 user=user['_id'],
                 name=user['name'],
-                upvotes=0,
-                endorsed=False,
+                upvotes=[],
                 anon= answer['anon']
             ),
             db
@@ -220,13 +219,45 @@ class Answer(DBObject):
     @staticmethod
     def edit_answer(answer_id, answer, db):
         return db[Answer.collection].update_one({
-            {'id': answer_id},
+            {'_id': answer_id},
             {
               '$set': {
                 'text': answer["text"],
               }
             },
         }, upsert = False).inserted_id
+
+    @staticmethod
+    def upvote_answer(data, db):
+
+        user_id = data['user_id']
+        print(user_id)
+        upvotes =  find_one_by_id(data['answer_id'], Answer.collection, db)['upvotes']
+
+        if user_id not in upvotes:
+            return db[Answer.collection].update_one(
+                {
+                    '_id': ObjectId(data['answer_id'])
+                },
+                {
+                    '$addToSet': {
+                        'upvotes': user_id
+                    }
+                },
+                upsert=False
+            )
+        else:
+            return db[Answer.collection].update_one(
+                {
+                    '_id': ObjectId(data['answer_id'])
+                },
+                {
+                    '$pop': {
+                        'upvotes': user_id
+                    }
+                },
+                upsert=False
+            )
 
 
 if __name__ == '__main__':

@@ -61,6 +61,11 @@
                         <div class="from-them">
                           <p class="qa-entry">{{answer['text']}}</p>
                         </div>
+                        <div id="upvotes-{{answer['_id']}}">
+                          <button class="btn btn-default btn-sm" type=submit onclick='upvoteAnswer("{{user['_id']}}", "{{answer['_id']}}")'>
+                              <span class="glyphicon glyphicon-thumbs-up"></span> Like  {{ answer['upvotes']|length }}
+                          </button>
+                        </div>
                     {% endif %}
                   </div>
                 {% endfor %}
@@ -147,6 +152,23 @@
       }
     }
 
+  function upvoteAnswer(user, answer){
+    var currentcount = document.getElementById(`upvotes-${answer}`).value;
+    var data ={
+      user_id:user,
+      answer_id:answer
+    };
+    console.log(`${JSON.stringify(data)}`)
+    $.ajax({
+      type: "POST",
+      url: "{{ url_for('upvote_answer') }}",
+      data,
+      success: function (data) {
+
+        $(`#upvotes-${answer}`).load(window.location.href + ` #upvotes-${answer}`);
+      }
+    });
+  }
   function sendAnswer(questionId) {
 
       var answer = document.getElementById(`answer-${questionId}`).value;
@@ -182,10 +204,9 @@
             }
           });
       }
-
-
-
   }
+
+
 
 
 
