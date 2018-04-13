@@ -60,6 +60,8 @@ def create_client(app):
 
     @app.route('/')
     def index():
+        if not get_user_data():
+            session['logged_in'] = False
         return render_template('index.html')
 
     @app.route('/login')
