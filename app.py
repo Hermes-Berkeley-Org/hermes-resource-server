@@ -344,6 +344,14 @@ def create_client(app):
         else:
             return redirect(url_for('error', code=500))
 
+    @app.route('/upvote_answer', methods=['GET', 'POST'])
+    def upvote_answer():
+        if request.method == 'POST':
+            Answer.upvote_answer(request.form.to_dict(), db)
+            return jsonify(success=True), 200
+        else:
+            return redirect(url_for('error', code=500))
+
     @app.errorhandler(404)
     def page_not_found(e):
     	return redirect(url_for('error', code=404))
