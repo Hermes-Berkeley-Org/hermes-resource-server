@@ -295,17 +295,15 @@ def create_client(app):
                 Lecture.add_transcript(id, transcript, db)
             else:
                 flash('All fields required')
-        logger.info("Displaying class page.")
         return render_template(
             'class.html',
             info=cls,
-            lectures=[db['Lectures'].find_one({'_id': lecture_id}) for lecture_id in cls['lectures']],
+            lectures=db['Lectures'].find({'cls': class_ok_id}),
             form=form,
             user=user,
             role=role,
             consts=consts
         )
-
 
     @app.route('/create_class/<class_ok_id>', methods=['GET', 'POST'])
     def create_class(class_ok_id):
