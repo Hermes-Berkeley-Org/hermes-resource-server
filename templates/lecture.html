@@ -10,11 +10,12 @@
       <div>
           <table id='transcript'>
             {% for i in range(transcript|length // 2) %}
-                <tr id="row-{{2 * i}}">
-                    <td id="ts-{{2 * i}}"></td>
-                    <td id="text-{{2 * i}}"></td>
-                    <td id="ts-{{2 * i + 1}}"></td>
-                    <td id="text-{{2 * i + 1}}"></td>
+                <tr>
+                  <td>
+                    <span id="ts-{{2 * i}}"></span>
+                    <span id="text-{{2 * i}}"></span>
+                    <span id="text-{{2 * i + 1}}"></span>
+                  </td>
                 </tr>
             {% endfor %}
           </table>
@@ -26,11 +27,13 @@
           <div class="form-group">
             <input id='question' class="form-control" placeholder='Enter your question here'></input>
           </div>
-          <div class="form-group">
-              <input id="anonq" type="checkbox">Post anonymously</input>
-          </div>
-          <div class="form-group">
-            <button class="btn btn-primary" type=submit onclick="sendQuestion()">Submit Question</button>
+          <div class="row">
+            <div class="form-group col-md-6">
+                <input id="anonq" type="checkbox">  Post anonymously</input>
+            </div>
+            <div class="form-group col-md-6">
+              <button class="btn btn-primary submission" type=submit onclick="sendQuestion()">Submit Question</button>
+            </div>
           </div>
         <!-- </form> -->
       </div>
@@ -39,51 +42,57 @@
           {% for question in db['Questions'].find({'lecture_id': lecture}).sort([('seconds', 1)]) %}
             <!-- {{question['anon']}} -->
 
-            {% if question['anon'] == "true" and role == consts.STUDENT %}
-              <center><p class="question-tag"> Anonymous {{question['timestamp']}}</p></center>
-            {% else %}
-              <center><p class="question-tag">{{question['name']}} {{question['timestamp']}}</p></center>
-            {% endif %}
             <!-- <div class="from-me"> -->
-              <p class="qa-entry">{{question['text']}}</p>
+              <a id="show-answers-{{question['_id']}}" data-toggle="collapse" onclick="toggleResponses('toggle-icon-{{question['_id']}}')" data-target="#answers-{{question['_id']}}">
+                <p><span class="fa fa-chevron-down qa-entry" id="toggle-icon-{{question['_id']}}" aria-hidden="true"></span>
+                {% if question['anon'] == "true" and role == consts.STUDENT %}
+                  <span class="question-tag-lg"> Anonymous {{question['timestamp']}}</span>
+                {% else %}
+                  <span class="question-tag-lg"> {{question['name']}} {{question['timestamp']}}</span>
+                {% endif %}
+                <span class="qa-entry-lg"> {{question['text']}}</span></p>
+              </a>
             <!-- </div> -->
             <div id="answers-container-{{question['_id']}}">
-            <a id="show-answers-{{question['_id']}}" data-toggle="collapse" onclick="toggleResponses('show-answers-{{question['_id']}}')" data-target="#answers-{{question['_id']}}">></a>
-            <div class="clear"></div>
+            <!--<div class="clear"></div>-->
             <div id="answers-{{question['_id']}}" class="collapse">
                 {% for answer in db['Answers'].find({'question_id': question['_id']}) %}
                     <div id="each-answer">
-                    {% if answer['anon'] == "true" and role == consts.STUDENT %}
-                        <p class="question-tag">Anonymous</p>
-                        <!-- <div class="from-them"> -->
-                          <p class="qa-entry">{{answer['text']}}</p>
-                        <!-- </div> -->
-                    {% else %}
-                        <p class="question-tag">{{answer['name']}}</p>
-                        <!-- <div class="from-them"> -->
-                          <p class="qa-entry">{{answer['text']}}</p>
-                        <!-- </div> -->
-                    {% endif %}
-                    <div id="upvotes-{{answer['_id']}}">
-                      <button class="btn btn-default btn-sm" type=submit onclick='upvoteAnswer("{{user['_id']}}", "{{answer['_id']}}")'>
+                      <p><span id="upvotes-{{answer['_id']}}" class="qa-entry">
+                      <button class="btn btn-default btn-sm likes" type=submit onclick='upvoteAnswer("{{user['_id']}}", "{{answer['_id']}}")'>
                           {% if user_id in answer['upvotes'] %}
                           <i class="fa fa-thumbs-up" aria-hidden="true"></i> Like  {{ answer['upvotes']|length }}
                           {% else %}
                           <i class="fa fa-thumbs-o-up" aria-hidden="true"></i> Like  {{ answer['upvotes']|length }}
                           {% endif %}
                       </button>
-                    </div>
+                    </span>
+                    {% if answer['anon'] == "true" and role == consts.STUDENT %}
+                        <span class="question-tag"> Anonymous</span>
+                        <!-- <div class="from-them"> -->
+                          <span class="qa-entry"> {{answer['text']}}</span>
+                        <!-- </div> -->
+                    {% else %}
+                        <span class="question-tag"> {{answer['name']}}</span>
+                        <!-- <div class="from-them"> -->
+                          <span class="qa-entry"> {{answer['text']}}</span>
+                        <!-- </div> -->
+                    {% endif %}
+                    </p>
                   </div>
                 {% endfor %}
                   <!-- <form class="form-horizontal"> -->
                     <div class="form-group">
-                    <input id="answer-{{question['_id']}}" class="form-control input-sm" placeholder='Enter your answer here'></input>
+                    <input id="answer-{{question['_id']}}" class="form-control qa-entry" placeholder='Enter your answer here'></input>
                     </div>
-                    <div class="form-group">
-                      <input id='anona-{{question['_id']}}' type="checkbox">Answer anonymously</input>
+                    <div class="row">
+                      <div class="form-group col-md-6">
+                        <input id='anona-{{question['_id']}}' type="checkbox"></input><span class="qa-entry">  Answer anonymously</span>
+                      </div>
+                      <div class="col-md-3"></div>
+                      <div class="form-group col-md-3">
+                      <button class="btn btn-primary btn-sm qa-entry submission" type="submit" onclick='sendAnswer("{{question['_id']}}")'>Submit Answer</button>
                     </div>
-                    <div class="form-group">
-                    <button class="btn btn-primary btn-sm" type=submit onclick='sendAnswer("{{question['_id']}}")'>Submit Answer</button>
                   </div>
                   <!-- </form> -->
             </div>
@@ -161,10 +170,12 @@
           {% for transcript_element in transcript %}
           if (currentTime >= timestamps[{{loop.index - 1}}]) {
               if ($("#text-{{loop.index - 1}}").contents().length == 0) {
-                  var td1 = document.getElementById("ts-{{loop.index - 1}}");
-                  td1.innerHTML = "<p class='question-tag'>" + cleanTimestamp("{{transcript_element['begin']}}") + "</p>"
-                  var td2 = document.getElementById("text-{{loop.index - 1}}");
-                  td2.innerHTML = "<p class='question-tag'>" + "{{transcript_element['text']}}" + "</p>";
+                  var p1 = document.getElementById("ts-{{loop.index - 1}}");
+                  if (p1) {
+                      p1.innerHTML = cleanTimestamp("{{transcript_element['begin']}}")
+                  }
+                  var p2 = document.getElementById("text-{{loop.index - 1}}");
+                  p2.innerHTML = "{{transcript_element['text']}}";
               }
           }
           {% endfor %}
@@ -178,8 +189,14 @@
   }
 
   function toggleResponses(buttonId) {
-      var possibleTexts = [">", "<"];
-      document.getElementById(buttonId).innerHTML = possibleTexts[1 - possibleTexts.indexOf(document.getElementById(buttonId).innerHTML)];
+    elem = document.getElementById(buttonId);
+    if (elem.classList.contains('fa-chevron-down')) {
+      elem.classList.remove('fa-chevron-down');
+      elem.classList.add('fa-chevron-up');
+    } else {
+      elem.classList.remove('fa-chevron-up');
+      elem.classList.add('fa-chevron-down');
+    }
   }
 
   function sendQuestion() {
