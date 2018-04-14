@@ -5,9 +5,8 @@ section#questions_table {
 }
 
 section#questions_table div {
-  max-width: 255px;
   word-wrap: break-word;
-  margin-bottom: 12px;
+  /*margin-bottom: 12px;*/
   line-height: 12px;
 }
 section#questions_table div:after {
@@ -87,13 +86,30 @@ section#questions_table div:after {
 
 
 
-p.question-tag {
+.question-tag-lg {
   color: #888;
   font-size: 14px;
 }
 
-p.qa-entry {
-  margin-bottom: 0.7rem;
+.qa-entry-lg {
+  font-size: 14px;
+}
+
+.question-tag {
+  color: #888;
+  font-size: 12px;
+}
+
+.qa-entry {
+  font-size: 12px;
+}
+
+.likes {
+  font-size: 12px;
+}
+
+.submission {
+  float: right;
 }
 
 button:focus {outline:0;}
