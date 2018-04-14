@@ -1,6 +1,7 @@
 from pymongo import MongoClient
 from bson.objectid import ObjectId
 import os
+from datetime import datetime
 
 def insert(dbobj, db):
     return db[dbobj.collection].insert_one(dbobj.to_dict())
@@ -29,6 +30,9 @@ class DBObject:
 
     def to_dict(self):
         return self.attributes
+
+    def set(self, key, value):
+        self.attributes[key] = value
 
 
 class User(DBObject):
@@ -96,6 +100,12 @@ class Class(DBObject):
 
     @staticmethod
     def add_lecture(cls, lecture, db):
+        def change_date_format(lecture):
+            british_date = lecture.get('date')
+            print(british_date)
+            date = datetime.strptime(british_date, "%Y-%m-%d")
+            lecture.set('date', date.strftime("%m/%d/%y"))
+        change_date_format(lecture)
         id = insert(lecture, db).inserted_id
         db[Class.collection].update_one(
             {
