@@ -64,7 +64,11 @@
                     {% endif %}
                     <div id="upvotes-{{answer['_id']}}">
                       <button class="btn btn-default btn-sm" type=submit onclick='upvoteAnswer("{{user['_id']}}", "{{answer['_id']}}")'>
-                          <span class="glyphicon glyphicon-thumbs-up"></span> Like  {{ answer['upvotes']|length }}
+                          {% if user_id in answer['upvotes'] %}
+                          <i class="fa fa-thumbs-up" aria-hidden="true"></i> Like  {{ answer['upvotes']|length }}
+                          {% else %}
+                          <i class="fa fa-thumbs-o-up" aria-hidden="true"></i> Like  {{ answer['upvotes']|length }}
+                          {% endif %}
                       </button>
                     </div>
                   </div>
