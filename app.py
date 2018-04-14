@@ -39,6 +39,9 @@ SCOPES = ['https://www.googleapis.com/auth/youtube.force-ssl']
 API_SERVICE_NAME = 'youtube'
 API_VERSION = 'v3'
 
+logger = logging.getLogger('app_logger')
+logger.setLevel(logging.INFO)
+
 def create_client(app):
 
     oauth = OAuth(app)
@@ -62,13 +65,16 @@ def create_client(app):
     def index():
         if not get_user_data():
             session['logged_in'] = False
+        logger.info("Successfully routed to index.")
         return render_template('index.html')
 
     @app.route('/login')
     def login():
         if app.config['OK_MODE'] == 'bypass':
             session['logged_in'] = True
+            logger.info("Successfully bypassed login.")
             return redirect(url_for('home'))
+        logger.info("Authorizing user.")
         return remote.authorize(callback=url_for('authorized', _external=True))
 
     @app.route('/logout')
@@ -81,6 +87,7 @@ def create_client(app):
         session['logged_in'] = False
         if 'google_credentials' in session:
             del session['google_credentials']
+        logger.info("Successfully logged out user.");
         return redirect(url_for('index'))
 
     @app.route('/authorized')
@@ -102,7 +109,9 @@ def create_client(app):
                 ok_data = ok_resp['data']
                 User.register_user(ok_data, db)
                 session['logged_in'] = True
+                logger.info("Authorization successful.")
                 return redirect(url_for('home'))
+        logger.info("Authorization failed.")
         return redirect(url_for('error', code=403))
 
     @app.route('/google_authorize')
@@ -209,6 +218,7 @@ def create_client(app):
                 classes=classes,
                 curr_semester=get_curr_semester()
             )
+        logger.info("Displaying home.")
         return redirect(url_for('index'))
 
     @app.route('/class/<cls>/lecture/<lecture_number>')
@@ -230,6 +240,7 @@ def create_client(app):
                 cls=str(cls_obj['_id']),
                 db=db
             )
+        logger.info("Displaying lecture.")
         return redirect(url_for('error', code=404))
 
     def get_role(class_ok_id):
@@ -262,6 +273,7 @@ def create_client(app):
 
         if request.method == 'POST':
             if role != consts.INSTRUCTOR:
+                logger.info("Error: user access level is %s", role)
                 redirect(url_for('error', code=403))
             num_lectures = len(cls['lectures'])
             if form.validate():
@@ -282,6 +294,7 @@ def create_client(app):
                 Lecture.add_transcript(id, transcript, db)
             else:
                 flash('All fields required')
+        logger.info("Displaying class page.")
         return render_template(
             'class.html',
             info=cls,
@@ -306,52 +319,64 @@ def create_client(app):
                     flash('All fields required')
                 return redirect(url_for('classpage', _external=True, class_ok_id=class_ok_id))
             else:
+                logger.info("Creating class.")
                 return render_template(
                     'create_class.html',
                     init_display_name=data['display_name'],
                     form=form
                 )
         else:
+            logger.info("Error: user access level is %s", role)
             return redirect(url_for('error'), code=403)
 
     @app.route('/write_question', methods=['GET', 'POST'])
     def write_question():
         if request.method == 'POST':
             Question.write_question(request.form.to_dict(), db)
+            logger.info("Successfully wrote question.")
             return jsonify(success=True), 200
         else:
+            logger.info("Illegal request type: %s", request.method)
             return redirect(url_for('error', code=500))
 
     @app.route('/edit_question', methods=['GET', 'POST'])
     def edit_question():
         if request.method == 'POST':
             Question.edit_question(id, request.form.to_dict(), db)
+            logger.info("Successfully edited question.")
             return jsonify(success=True), 200
         else:
+            logger.info("Illegal request type: %s", request.method)
             return redirect(url_for('error', code=500))
 
     @app.route('/write_answer', methods=['GET', 'POST'])
     def write_answer():
         if request.method == 'POST':
             Answer.write_answer(get_user_data(), request.form.to_dict(), db)
+            logger.info("Successfully wrote answer.")
             return jsonify(success=True), 200
         else:
+            logger.info("Illegal request type: %s", request.method)
             return redirect(url_for('error', code=500))
 
     @app.route('/edit_answer', methods=['GET', 'POST'])
     def edit_answer():
         if request.method == 'POST':
             Answer.edit_answer(request.form.to_dict(), db)
+            logger.info("Successfully edited answer.")
             return jsonify(success=True), 200
         else:
+            logger.info("Illegal request type: %s", request.method)
             return redirect(url_for('error', code=500))
 
     @app.route('/upvote_answer', methods=['GET', 'POST'])
     def upvote_answer():
         if request.method == 'POST':
             Answer.upvote_answer(request.form.to_dict(), db)
+            logger.info("Successfully upvoted answer.")
             return jsonify(success=True), 200
         else:
+            logger.info("Illegal request type: %s", request.method)
             return redirect(url_for('error', code=500))
 
     @app.errorhandler(404)
