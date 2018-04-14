@@ -49,7 +49,7 @@ Go to https://sites.google.com/a/chromium.org/chromedriver/downloads and downloa
 
 Make sure to also make changes in deploy/heroku_env, then run:
 
-    heroku config:push --file deploy/heroku_env
+    heroku config:push --file deploy/heroku_env --overwrite
 
 **Google Auth**:
 

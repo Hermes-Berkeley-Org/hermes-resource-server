@@ -35,7 +35,7 @@
             <!-- Navigation -->
     <nav class="navbar navbar-expand-lg fixed-top bg-white text-uppercase" id="mainNav">
       <div class="container">
-        <a class="navbar-brand js-scroll-trigger text-primary" href="{{ url_for('index') }}">Hermes</a>
+        <a class="navbar-brand js-scroll-trigger text-primary" href="{{ url_for('home') }}">Hermes</a>
         <button class="navbar-toggler navbar-toggler-right text-uppercase bg-primary text-white rounded" type="button" data-toggle="collapse" data-target="#navbarResponsive" aria-controls="navbarResponsive" aria-expanded="false" aria-label="Toggle navigation">
           Menu
           <i class="fa fa-bars"></i>
@@ -43,7 +43,11 @@
         <div class="collapse navbar-collapse" id="navbarResponsive">
           <ul class="navbar-nav ml-auto">
             <li class="nav-item mx-0 mx-md-1">
-              <a class="nav-link py-3 px-0 px-lg-3 js-scroll-trigger btn btn-sm btn-outline-light navbar-btn" href="{{ url_for('login' )}}">Login</a>
+              {% if not session.get('logged_in') %}
+                <a class="nav-link py-3 px-0 px-lg-3 js-scroll-trigger btn btn-sm btn-outline-light navbar-btn" href="{{ url_for('login' )}}">Login</a>
+              {% else %}
+                <a class="nav-link py-3 px-0 px-lg-3 js-scroll-trigger btn btn-sm btn-outline-light navbar-btn" href="{{ url_for('logout' )}}">Logout</a>
+              {% endif %}
             </li>
             <li class="nav-item mx-0 mx-md-1">
               <a class="nav-link py-3 px-0 px-lg-3 js-scroll-trigger btn btn-sm btn-outline-light navbar-btn" href="walkthrough.html">How to Use Hermes</a>
