@@ -8,7 +8,16 @@
     <div class="col-md-7">
       <div id="ytplayer"></div>
       <div>
-          <table id='transcript'></table>
+          <table id='transcript'>
+            {% for i in range(transcript|length // 2) %}
+                <tr id="row-{{2 * i}}">
+                    <td id="ts-{{2 * i}}"></td>
+                    <td id="text-{{2 * i}}"></td>
+                    <td id="ts-{{2 * i + 1}}"></td>
+                    <td id="text-{{2 * i + 1}}"></td>
+                </tr>
+            {% endfor %}
+          </table>
       </div>
     </div>
     <div class="col-md-4">
@@ -151,16 +160,11 @@
           // alert(currentTime);
           {% for transcript_element in transcript %}
           if (currentTime >= timestamps[{{loop.index - 1}}]) {
-              var tr = document.createElement("tr");
-              var td1 = document.createElement("td");
-              td1.innerHTML = cleanTimestamp("{{transcript_element['begin']}}")
-              var td2 = document.createElement("td");
-              td2.innerHTML = "{{transcript_element['text']}}";
-              td2.id = 'transcript-elem-' + '{{loop.index - 1}}';
-              tr.appendChild(td1)
-              tr.appendChild(td2);
-              if ($(`#${td2.id}`).length == 0) {
-                  $('#transcript').append(tr);
+              if ($("#text-{{loop.index - 1}}").contents().length == 0) {
+                  var td1 = document.getElementById("ts-{{loop.index - 1}}");
+                  td1.innerHTML = "<p class='question-tag'>" + cleanTimestamp("{{transcript_element['begin']}}") + "</p>"
+                  var td2 = document.getElementById("text-{{loop.index - 1}}");
+                  td2.innerHTML = "<p class='question-tag'>" + "{{transcript_element['text']}}" + "</p>";
               }
           }
           {% endfor %}
