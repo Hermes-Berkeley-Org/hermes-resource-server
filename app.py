@@ -236,7 +236,6 @@ def create_client(app):
                 transcript=lecture_obj['transcript'],
                 cls_name=lecture_obj['cls'],
                 user=user,
-                user_id=str(user['_id']),
                 role=get_role(cls)[0],
                 consts=consts,
                 cls=str(cls_obj['_id']),
@@ -341,6 +340,16 @@ def create_client(app):
             logger.info("Illegal request type: %s", request.method)
             return redirect(url_for('error', code=500))
 
+    @app.route('/delete_question', methods=['GET', 'POST'])
+    def delete_question():
+        if request.method == 'POST':
+            Question.delete_question(request.form.to_dict(), db)
+            logger.info("Successfully deleted question.")
+            return jsonify(success=True), 200
+        else:
+            logger.info("Illegal request type: %s", request.method)
+            return redirect(url_for('error', code=500))
+
     @app.route('/edit_question', methods=['GET', 'POST'])
     def edit_question():
         if request.method == 'POST':
@@ -356,6 +365,16 @@ def create_client(app):
         if request.method == 'POST':
             Answer.write_answer(get_user_data(), request.form.to_dict(), db)
             logger.info("Successfully wrote answer.")
+            return jsonify(success=True), 200
+        else:
+            logger.info("Illegal request type: %s", request.method)
+            return redirect(url_for('error', code=500))
+
+    @app.route('/delete_answer', methods=['GET', 'POST'])
+    def delete_answer():
+        if request.method == 'POST':
+            Answer.delete_answer(request.form.to_dict(), db)
+            logger.info("Successfully deleted answer.")
             return jsonify(success=True), 200
         else:
             logger.info("Illegal request type: %s", request.method)

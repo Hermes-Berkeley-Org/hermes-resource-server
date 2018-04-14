@@ -36,7 +36,11 @@
         <!--<table id='questions_table'>-->
           {% for question in db['Questions'].find({'lecture_id': lecture}).sort([('seconds', 1)]) %}
             <!-- {{question['anon']}} -->
-
+            {% if role == consts.INSTRUCTOR %}
+              <div>
+              <button class="btn btn-primary" type=submit onclick='deleteQuestion("{{question['_id']}}")'>Delete Question</button>
+              </div>
+            {% endif %}
             {% if question['anon'] == "true" and role == consts.STUDENT %}
               <center><p class="question-tag"> Anonymous {{question['timestamp']}}</p></center>
             {% else %}
@@ -61,6 +65,11 @@
                         <!-- <div class="from-them"> -->
                           <p class="qa-entry">{{answer['text']}}</p>
                         <!-- </div> -->
+                    {% endif %}
+                    {% if role == consts.INSTRUCTOR %}
+                      <div>
+                        <button class="btn btn-primary" type=submit onclick='deleteAnswer("{{answer['_id']}}", "{{answer['question_id']}}")'>Delete Answer</button>
+                      </div>
                     {% endif %}
                     <div id="upvotes-{{answer['_id']}}">
                       <button class="btn btn-default btn-sm" type=submit onclick='upvoteAnswer("{{user['_id']}}", "{{answer['_id']}}")'>
@@ -158,6 +167,41 @@
         });
       }
     }
+
+  function deleteQuestion(question) {
+    var data = {
+      question_id: question
+    }
+
+    $.ajax({
+      type: "POST",
+      url: "{{ url_for('delete_question') }}",
+      data: data,
+      success: function (data) {
+        $('#questions_table').load(window.location.href + ' #questions_table');
+      }
+    })
+  }
+
+  function deleteAnswer(answer, question) {
+    var data = {
+      answer_id: answer
+    };
+
+    question_id = question;
+    console.log(question);
+
+    $.ajax({
+      type: "POST",
+      url: "{{ url_for('delete_answer') }}",
+      data,
+      success: function (data) {
+        $(`#answers-container-${question}`).load(window.location.href + ` #answers-container-${question}`, function () {
+            $(`#show-answers-${question}`).trigger("click");
+        });
+      }
+    })
+  }
 
   function upvoteAnswer(user, answer){
     var currentcount = document.getElementById(`upvotes-${answer}`).value;
