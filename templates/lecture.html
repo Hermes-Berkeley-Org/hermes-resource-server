@@ -42,25 +42,25 @@
             {% else %}
               <center><p class="question-tag">{{question['name']}} {{question['timestamp']}}</p></center>
             {% endif %}
-            <div class="from-me">
+            <!-- <div class="from-me"> -->
               <p class="qa-entry">{{question['text']}}</p>
-            </div>
+            <!-- </div> -->
             <div id="answers-container-{{question['_id']}}">
-            <button type="button" class="btn btn-default btn-sm" style="border: 1px solid" id="show-answers-{{question['_id']}}" data-toggle="collapse" onclick="toggleResponses('show-answers-{{question['_id']}}')" data-target="#answers-{{question['_id']}}">Show responses</button>
+            <a id="show-answers-{{question['_id']}}" data-toggle="collapse" onclick="toggleResponses('show-answers-{{question['_id']}}')" data-target="#answers-{{question['_id']}}">></a>
             <div class="clear"></div>
             <div id="answers-{{question['_id']}}" class="collapse">
                 {% for answer in db['Answers'].find({'question_id': question['_id']}) %}
                     <div id="each-answer">
                     {% if answer['anon'] == "true" and role == consts.STUDENT %}
                         <p class="question-tag">Anonymous</p>
-                        <div class="from-them">
+                        <!-- <div class="from-them"> -->
                           <p class="qa-entry">{{answer['text']}}</p>
-                        </div>
+                        <!-- </div> -->
                     {% else %}
                         <p class="question-tag">{{answer['name']}}</p>
-                        <div class="from-them">
+                        <!-- <div class="from-them"> -->
                           <p class="qa-entry">{{answer['text']}}</p>
-                        </div>
+                        <!-- </div> -->
                     {% endif %}
                     <div id="upvotes-{{answer['_id']}}">
                       <button class="btn btn-default btn-sm" type=submit onclick='upvoteAnswer("{{user['_id']}}", "{{answer['_id']}}")'>
@@ -117,6 +117,9 @@
         'onStateChange': recordData
       }
     });
+
+    // player.at('')
+
   }
 
   function recordData(event) {
@@ -124,7 +127,7 @@
   }
 
   function toggleResponses(buttonId) {
-      var possibleTexts = ["Show responses", "Hide responses"];
+      var possibleTexts = [">", "<"];
       document.getElementById(buttonId).innerHTML = possibleTexts[1 - possibleTexts.indexOf(document.getElementById(buttonId).innerHTML)];
   }
 
