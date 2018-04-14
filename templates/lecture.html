@@ -8,14 +8,7 @@
     <div class="col-md-7">
       <div id="ytplayer"></div>
       <div>
-          <table id='transcript'>
-            {% for transcript_element in transcript %}
-              <tr>
-                <td>{{transcript_element['begin']}}-{{transcript_element['end']}}</td>
-                <td>{{transcript_element['text']}}</td>
-              </tr>
-            {% endfor %}
-          </table>
+          <table id='transcript'></table>
       </div>
     </div>
     <div class="col-md-4">
@@ -114,11 +107,65 @@
       width: window.innerWidth / 2,
       videoId: '{{ id }}',
       events: {
-        'onStateChange': recordData
+        'onStateChange': recordData,
+        'onReady': onPlayerReady
       }
     });
 
-    // player.at('')
+  }
+
+  function onPlayerReady() {
+      var convertToSeconds = function(timestamp) {
+          var data = timestamp.split(':');
+          var hours = data[0];
+          var minutes = data[1];
+          var seconds = data[2];
+          return (parseInt(hours) * 360 + parseInt(minutes) * 60 + parseFloat(seconds))
+      };
+
+      var cleanTimestamp = function(timestamp) {
+          var data = timestamp.split(':');
+          var hours = data[0];
+          var minutes = data[1];
+          var seconds = data[2];
+          var output = "";
+          if (parseInt(hours) > 0) {
+              output += hours.toString() + ":";
+          }
+          output += minutes.toString() + ':';
+          var roundedSeconds = Math.round(parseFloat(seconds));
+          if (roundedSeconds < 10) {
+              output += "0";
+          }
+          output += roundedSeconds.toString();
+          return output;
+      }
+
+      var timestamps = [];
+      {% for transcript_element in transcript %}
+      timestamps.push(convertToSeconds("{{transcript_element['begin']}}"));
+      {% endfor %}
+
+      setInterval(function() {
+          var currentTime = player.getCurrentTime();
+          // alert(currentTime);
+          {% for transcript_element in transcript %}
+          if (currentTime >= timestamps[{{loop.index - 1}}]) {
+              var tr = document.createElement("tr");
+              var td1 = document.createElement("td");
+              td1.innerHTML = cleanTimestamp("{{transcript_element['begin']}}")
+              var td2 = document.createElement("td");
+              td2.innerHTML = "{{transcript_element['text']}}";
+              td2.id = 'transcript-elem-' + '{{loop.index - 1}}';
+              tr.appendChild(td1)
+              tr.appendChild(td2);
+              if ($(`#${td2.id}`).length == 0) {
+                  $('#transcript').append(tr);
+              }
+          }
+          {% endfor %}
+      }, 3000);
+
 
   }
 
