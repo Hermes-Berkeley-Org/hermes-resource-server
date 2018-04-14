@@ -93,3 +93,5 @@ p.question-tag {
 p.qa-entry {
   margin-bottom: 0.7rem;
 }
+
+button:focus {outline:0;}
