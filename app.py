@@ -205,6 +205,7 @@ def create_client(app):
                     return 'FA'
             return '{0}{1}'.format(get_season(month), str(year)[-2:])
         user = get_user_data()
+        print(user)
         def validate(participation):
             participation['semester'] = Class.get_semester(participation['offering'])
             participation['class_exists'] = db[Class.collection].find({'ok_id': participation['ok_id']}).count() > 0
