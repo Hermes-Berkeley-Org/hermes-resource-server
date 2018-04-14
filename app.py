@@ -170,17 +170,18 @@ def create_client(app):
         if app.config['OK_MODE'] == 'bypass':
             return app.config['TESTING_OK_ID']
         else:
-            token = session['dev_token'][0]
-            r = requests.get('{0}/api/v3/user/?access_token={1}'.format(
-                    app.config['OK_SERVER'],
-                    token
+            if 'dev_token' in session:
+                token = session['dev_token'][0]
+                r = requests.get('{0}/api/v3/user/?access_token={1}'.format(
+                        app.config['OK_SERVER'],
+                        token
+                    )
                 )
-            )
-            ok_resp = r.json()
-            if ok_resp and 'data' in ok_resp:
-                ok_data = ok_resp['data']
-                if 'id' in ok_data:
-                    return ok_data['id']
+                ok_resp = r.json()
+                if ok_resp and 'data' in ok_resp:
+                    ok_data = ok_resp['data']
+                    if 'id' in ok_data:
+                        return ok_data['id']
 
     def get_user_data():
         if not session.get('logged_in'):
