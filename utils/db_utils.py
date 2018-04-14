@@ -15,7 +15,7 @@ def find_by_id(id, collection, db):
     return db[collection].find({'_id': ObjectId(id)})
 
 def find_one_by_id(id, collection, db):
-    return db[collection].find({'_id': ObjectId(id)})
+    return db[collection].find_one({'_id': ObjectId(id)})
 
 class DBObject:
 
@@ -29,6 +29,7 @@ class DBObject:
 
     def to_dict(self):
         return self.attributes
+
 
 class User(DBObject):
 
@@ -45,6 +46,15 @@ class User(DBObject):
                 ['name', 'email', 'is_admin']
             )
             attr['ok_id'] = ok_data['id']
+            classes = []
+            for participation in ok_data['participations']:
+                classes.append({
+                    'ok_id': participation['course']['id'],
+                    'display_name': participation['course']['display_name'],
+                    'offering': participation['course']['offering'],
+                    'role': participation['role']
+                })
+            attr['classes'] = classes
             u = User(**attr)
             return insert(u, db)
 
@@ -57,6 +67,20 @@ class User(DBObject):
             {
                 '$set': {
                     'google_credentials': credentials
+                }
+            },
+            upsert=False
+        )
+
+    @staticmethod
+    def remove_google_credentials(id, db):
+        db[User.collection].update_one(
+            {
+                '_id': id
+            },
+            {
+                '$set': {
+                    'google_credentials': {}
                 }
             },
             upsert=False
@@ -79,12 +103,28 @@ class Class(DBObject):
             },
             {
               '$push': {
-                'Lectures': id,
+                'lectures': id,
               }
             },
             upsert=False
         )
         return id
+
+    @staticmethod
+    def get_semester(offering):
+        return offering.split('/')[-1].upper()
+
+    @staticmethod
+    def create_class(display_name, data, db):
+        data['display_name'] = display_name
+        return insert(
+            Class(
+                lectures=[],
+                semester=Class.get_semester(data['offering']),
+                **data
+            ),
+            db
+        )
 
 
 class Note(DBObject):
@@ -138,7 +178,8 @@ class Question(DBObject):
                 text=question['text'],
                 name=question['name'],
                 ok_id=question['ok_id'],
-                lecture_id=question['lecture']
+                lecture_id=question['lecture'],
+                anon = question['anon']
             ),
             db
         ).inserted_id
@@ -169,8 +210,8 @@ class Answer(DBObject):
                 text=answer['text'],
                 user=user['_id'],
                 name=user['name'],
-                upvotes=0,
-                endorsed=False
+                upvotes=[],
+                anon= answer['anon']
             ),
             db
         ).inserted_id
@@ -178,13 +219,45 @@ class Answer(DBObject):
     @staticmethod
     def edit_answer(answer_id, answer, db):
         return db[Answer.collection].update_one({
-            {'id': answer_id},
+            {'_id': answer_id},
             {
               '$set': {
                 'text': answer["text"],
               }
             },
         }, upsert = False).inserted_id
+
+    @staticmethod
+    def upvote_answer(data, db):
+
+        user_id = data['user_id']
+        print(user_id)
+        upvotes =  find_one_by_id(data['answer_id'], Answer.collection, db)['upvotes']
+
+        if user_id not in upvotes:
+            return db[Answer.collection].update_one(
+                {
+                    '_id': ObjectId(data['answer_id'])
+                },
+                {
+                    '$addToSet': {
+                        'upvotes': user_id
+                    }
+                },
+                upsert=False
+            )
+        else:
+            return db[Answer.collection].update_one(
+                {
+                    '_id': ObjectId(data['answer_id'])
+                },
+                {
+                    '$pop': {
+                        'upvotes': user_id
+                    }
+                },
+                upsert=False
+            )
 
 
 if __name__ == '__main__':
