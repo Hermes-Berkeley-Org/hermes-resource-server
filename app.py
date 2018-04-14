@@ -227,6 +227,18 @@ def create_client(app):
         cls_obj = db['Classes'].find_one({'ok_id': int(cls)})
         lecture_obj = db['Lectures'].find_one({'cls': cls, 'lecture_number': int(lecture_number)})
         user = get_user_data()
+        def partition(cursor, questions_interval):
+            partitions = []
+            curr_time = questions_interval
+            curr_partition = []
+            for question in cursor:
+                if question['seconds'] > curr_time:
+                    partitions.append(curr_partition)
+                    curr_time += questions_interval
+                    curr_partition = []
+                curr_partition.append(question)
+            return partitions
+        questions_interval = 30
         if lecture_obj and cls_obj:
             return render_template(
                 'lecture.html',
@@ -236,6 +248,7 @@ def create_client(app):
                 transcript=lecture_obj['transcript'],
                 cls_name=lecture_obj['cls'],
                 user=user,
+                partition=lambda questions: partition(questions, questions_interval),
                 user_id=str(user['_id']),
                 role=get_role(cls)[0],
                 consts=consts,

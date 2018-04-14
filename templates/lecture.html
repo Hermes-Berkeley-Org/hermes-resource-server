@@ -39,8 +39,12 @@
       </div>
       <section id="questions_table">
         <!--<table id='questions_table'>-->
-          {% for question in db['Questions'].find({'lecture_id': lecture}).sort([('seconds', 1)]) %}
+          {% for question_set in partition(db['Questions'].find({'lecture_id': lecture}).sort([('seconds', 1)])) %}
             <!-- {{question['anon']}} -->
+
+            <p>Partition:</p>
+
+            {% for question in question_set %}
 
             <!-- <div class="from-me"> -->
               <a id="show-answers-{{question['_id']}}" data-toggle="collapse" onclick="toggleResponses('toggle-icon-{{question['_id']}}')" data-target="#answers-{{question['_id']}}">
@@ -98,6 +102,8 @@
             </div>
           </div>
             <div class="clear"></div>
+
+            {% endfor %}
           {% endfor %}
         <!-- </section>
       </div> -->
