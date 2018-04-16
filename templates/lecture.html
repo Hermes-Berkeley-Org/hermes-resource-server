@@ -149,7 +149,7 @@
       width: window.innerWidth / 2,
       videoId: '{{ id }}',
       events: {
-        'onStateChange': recordData,
+        'onStateChange': stateChange,
         'onReady': onPlayerReady
       }
     });
@@ -157,7 +157,7 @@
   }
 
   function onPlayerReady() {
-      $('#partition-1').collapse("show");
+      toggleTopQuestions();
 
       var convertToSeconds = function(timestamp) {
           var data = timestamp.split(':');
@@ -199,6 +199,7 @@
 
       setInterval(function() {
           var currentTime = player.getCurrentTime();
+          var state = player.getPlayerState();
           // alert(currentTime);
           {% for transcript_element in transcript %}
           if (currentTime >= timestamps[{{loop.index - 1}}]) {
@@ -215,15 +216,28 @@
 
           {% for begin, end in partition_titles %}
           if (currentTime >= convertToSecondsTiny("{{begin}}") && currentTime < convertToSecondsTiny("{{end}}")) {
-            $($("a:contains('{{begin}} - {{end}}')").attr('data-target')).collapse('show');
+            if (state == 1) { // video is playing
+              var collapseButton = $("a:contains('{{begin}} - {{end}}')");
+              var div = $(collapseButton.attr('data-target'));
+              if (div.attr('class').split(' ').indexOf('show') == -1) {
+                console.log(collapseButton.children()[0].id);
+                toggleResponses(collapseButton.children()[0].id);
+                div.collapse('show');
+              }
+            }
           }
           {% endfor %}
       }, {{questions_interval}} * 250);
 
   }
 
-  function recordData(event) {
-      // Send info for student tracking purposes
+  function stateChange() {
+      // recordData maybe
+  }
+
+  function toggleTopQuestions() {
+      toggleResponses('partition-icon-1');
+      $('#partition-1').collapse("show");
   }
 
   function toggleResponses(buttonId) {
@@ -260,7 +274,7 @@
           data,
           success: function (data) {
             $('#questions_table').load(window.location.href + ' #questions_table', function () {
-                $('#partition-1').collapse("show");
+                toggleTopQuestions()
             });
 
           }
@@ -279,7 +293,7 @@
       data: data,
       success: function (data) {
         $('#questions_table').load(window.location.href + ' #questions_table', function () {
-            $('#partition-1').collapse("show");
+            toggleTopQuestions()
         });
       }
     })
@@ -300,7 +314,7 @@
       success: function (data) {
         $(`#answers-container-${question}`).load(window.location.href + ` #answers-container-${question}`, function () {
             $(`#show-answers-${question}`).trigger("click", function () {
-                $('#partition-1').collapse("show");
+                toggleTopQuestions()
             });
         });
       }
@@ -321,7 +335,7 @@
       success: function (data) {
 
         $(`#upvotes-${answer}`).load(window.location.href + ` #upvotes-${answer}`, function () {
-            $('#partition-1').collapse("show");
+            toggleTopQuestions()
         });
       }
     });
@@ -354,7 +368,7 @@
             success: function (data) {
               $(`#answers-container-${questionId}`).load(window.location.href + ` #answers-container-${questionId}`, function () {
                   $(`#show-answers-${questionId}`).trigger("click", function () {
-                      $('#partition-1').collapse("show");
+                      toggleTopQuestions()
                   });
               });
 
