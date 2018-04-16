@@ -1,3 +1,4 @@
+html,html *{box-sizing: border-box !important;}
 
 .navbar-btn {
 	background-color: #18BC9C;
