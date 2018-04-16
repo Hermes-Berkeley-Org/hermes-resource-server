@@ -213,6 +213,15 @@ class Question(DBObject):
             },
         }, upsert = False).inserted_id
 
+    @staticmethod
+    def delete_question(question, db):
+        question_id = question['question_id']
+        print(question_id)
+        result = db[Question.collection].delete_one(
+        {'_id': ObjectId(question_id)}
+        )
+        print(result.deleted_count)
+
 class Answer(DBObject):
 
     collection = 'Answers'
@@ -276,6 +285,14 @@ class Answer(DBObject):
                 },
                 upsert=False
             )
+
+    @staticmethod
+    def delete_answer(answer, db):
+        answer_id = answer['answer_id']
+        print(answer_id)
+        return db[Answer.collection].delete_one(
+        {'_id': ObjectId(answer_id)}
+        )
 
 
 if __name__ == '__main__':
