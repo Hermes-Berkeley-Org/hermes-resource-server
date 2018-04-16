@@ -9,7 +9,7 @@
       <div id="ytplayer"></div>
       <div>
           <table id='transcript'>
-            {% for i in range(transcript|length // 2) %}
+            {% for i in range(transcript|length // 2 + 1) %}
                 <tr>
                   <td>
                     <span id="ts-{{2 * i}}"></span>
@@ -212,19 +212,13 @@
               }
           }
           {% endfor %}
-      }, 3000);
 
-      setInterval(function() {
-          var currentTime = player.getCurrentTime();
           {% for begin, end in partition_titles %}
           if (currentTime >= convertToSecondsTiny("{{begin}}") && currentTime < convertToSecondsTiny("{{end}}")) {
             $($("a:contains('{{begin}} - {{end}}')").attr('data-target')).collapse('show');
           }
           {% endfor %}
-      }, 1000);
-
-
-
+      }, {{questions_interval}} * 250);
 
   }
 
