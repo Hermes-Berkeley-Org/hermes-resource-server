@@ -2,25 +2,34 @@
 {% block title %}Hermes | {{info["Name"]}}{% endblock %}
 {% block head %}{{ super() }}{% endblock %}
 {% block content %}
-
 <div class="wrapper text-primary full-section-shifted">
-    <h5> {{info["Name"]}} </h5>
-    <table>
+  <table class = "classtable">
+    <tr>
+    <th class = "classsections">
+    <h4>{{info['display_name']}}</h4>
+    <table class="lectures">
+      <tr>
+        <th style = "margin-top: -80px">Lecture</th>
+        <th "margin-top: -80px">Date Posted</th>
+      </tr>
       {% for lec in lectures %}
         <tr>
           <td><a href={{ url_for('lecture', cls=lec['cls'], lecture_number=lec['lecture_number'])}}>{{ lec['name'] }}</a></td>
+          &nbsp; &nbsp;
           <td>{{lec['date']}}</td>
         </tr>
       {% endfor %}
     </table>
-
+  </th>
+  <th class = "classsections" style = "margin-top: -80px">
     {% if role == consts.INSTRUCTOR %}
       <form action="" method="post">
+          <h4 style = "margin-top: -260px">Create a Lecture</h4>
           {{ form.csrf }}
-          <p>{{ form.title }}</p>
-          <p>{{ form.date }}</p>
-          <p>{{ form.link }}</p>
-          <p>{{ form.submit() }}</p>
+          <p>Lecture Title {{ form.title }}</p>
+          <p>Lecture Date {{ form.date }}</p>
+          <p>Youtube Link to Lecture {{ form.link }}</p>
+          <p id="submit">{{ form.submit() }}</p>
       </form>
     {% endif %}
     {% with messages = get_flashed_messages() %}
@@ -32,8 +41,17 @@
         </ul>
       {% endif %}
     {% endwith %}
+  </th>
+  </tr>
+  </table>
 
 </div>
+
+<script>
+    // $('submit').onclick = function () {
+    //     $('#lectures').load(window.location.href + '#lectures');
+    // };
+</script>
 {% endblock %}
 {% block footer %}
 {{ super() }}
