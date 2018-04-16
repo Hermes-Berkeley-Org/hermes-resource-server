@@ -166,6 +166,14 @@ class Lecture(DBObject):
             upsert=False
         )
 
+    @staticmethod
+    def delete_lecture(data, db):
+        db[Lecture.collection].delete_one(
+            {
+                '_id': ObjectId(data['lectureid'])
+            }
+        )
+
 
 
 class Question(DBObject):

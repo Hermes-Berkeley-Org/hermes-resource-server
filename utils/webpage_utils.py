@@ -1,10 +1,11 @@
 from wtforms import Form, BooleanField, StringField, SubmitField, validators
 from wtforms.fields.html5 import DateField
 from wtforms.validators import DataRequired
+from datetime import datetime
 
 class CreateLectureForm(Form):
     title = StringField('Title', validators=[DataRequired()])
-    date = DateField('Date of Lecture', validators=[DataRequired()])
+    date = DateField('Date of Lecture', default=datetime.today(), validators=[DataRequired()])
     link = StringField('Link to the Lecture', validators=[DataRequired()])
     submit = SubmitField('Create')
 

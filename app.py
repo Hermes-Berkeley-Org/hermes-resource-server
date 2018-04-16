@@ -12,6 +12,7 @@ import logging
 
 from utils.webpage_utils import CreateLectureForm, CreateClassForm
 from utils import db_utils
+from utils.app_utils import get_curr_semester, partition
 from utils.db_utils import User, Class, Lecture, Note, Question, Answer
 from utils.transcribe_utils import transcribe, get_youtube_id
 
@@ -193,17 +194,6 @@ def create_client(app):
 
     @app.route('/home/')
     def home():
-        def get_curr_semester():
-            today = datetime.today()
-            month, year = today.month, today.year
-            def get_season(month):
-                if month < 6:
-                    return 'SP'
-                elif month < 8:
-                    return 'SU'
-                else:
-                    return 'FA'
-            return '{0}{1}'.format(get_season(month), str(year)[-2:])
         user = get_user_data()
         def validate(participation):
             participation['semester'] = Class.get_semester(participation['offering'])
@@ -227,46 +217,7 @@ def create_client(app):
         cls_obj = db['Classes'].find_one({'ok_id': int(cls)})
         lecture_obj = db['Lectures'].find_one({'cls': cls, 'lecture_number': int(lecture_number)})
         user = get_user_data()
-        def partition(cursor, questions_interval):
-            def convert_seconds_to_timestamp(ts):
-                return '%d:%02d' % (ts // 60, ts % 60)
-            partitions = []
-            curr_time = 0
-            curr_partition = []
-            i = 0
-            questions = list(cursor)
-            while i < len(questions):
-                question = questions[i]
-                print(question)
-                if curr_time <= question['seconds'] < curr_time + questions_interval:
-                    curr_partition.append(question)
-                    i += 1
-                else:
-                    if curr_partition:
-                        partitions.append(
-                            (
-                                curr_partition,
-                                (
-                                    convert_seconds_to_timestamp(curr_time),
-                                    convert_seconds_to_timestamp(curr_time + questions_interval)
-                                )
-                            )
-                        )
-                    curr_time += questions_interval
-                    curr_partition = []
-            partitions.append(
-                (
-                    curr_partition,
-                    (
-                        convert_seconds_to_timestamp(curr_time),
-                        convert_seconds_to_timestamp(curr_time + questions_interval)
-                    )
-                )
-            )
-            print(partitions)
-            return partitions
         questions_interval = 2
-        # partition(db['Questions'].find({'lecture_id': lecture}).sort([('seconds', 1)]))
         if lecture_obj and cls_obj:
             return render_template(
                 'lecture.html',
@@ -369,6 +320,16 @@ def create_client(app):
         else:
             logger.info("Error: user access level is %s", role)
             return redirect(url_for('error'), code=403)
+
+    @app.route('/delete_lecture', methods=['GET', 'POST'])
+    def delete_lecture():
+        if request.method == 'POST':
+            Lecture.delete_lecture(request.form.to_dict(), db)
+            logger.info("Successfully deleted lecture.")
+            return jsonify(success=True), 200
+        else:
+            logger.info("Illegal request type: %s", request.method)
+            return redirect(url_for('error', code=500))
 
     @app.route('/write_question', methods=['GET', 'POST'])
     def write_question():
