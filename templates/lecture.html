@@ -38,9 +38,18 @@
         <!-- </form> -->
       </div>
       <section id="questions_table">
-          {% for question_set, interval in partition(db['Questions'].find({'lecture_id': lecture}).sort([('seconds', 1)])) %}
-            <a data-toggle="collapse" onclick="toggleResponses('partition-icon-{{loop.index}}')" data-target="#partition-{{loop.index}}"><span style="font-size: 18px" id="partition-icon-{{loop.index}}" class="fa fa-chevron-down qa-entry" aria-hidden="true"></span> {{interval[0]}} - {{interval[1]}}</a>
+
+
+          {% for question_set, interval in partition(db['Questions'].find({'lecture_id': lecture}).sort([('seconds', 1), ('upvotes', 1)])) %}
+            {% if loop.index == 1 %}
+                <a data-toggle="collapse" onclick="toggleResponses('partition-icon-{{loop.index}}')" data-target="#partition-{{loop.index}}"><span style="font-size: 18px" id="partition-icon-{{loop.index}}" class="fa fa-chevron-down qa-entry" aria-hidden="true"></span><strong>Top Questions</strong></a>
+            {% else %}
+                <a data-toggle="collapse" onclick="toggleResponses('partition-icon-{{loop.index}}')" data-target="#partition-{{loop.index}}"><span style="font-size: 18px" id="partition-icon-{{loop.index}}" class="fa fa-chevron-down qa-entry" aria-hidden="true"></span> {{interval[0]}} - {{interval[1]}}</a>
+            {% endif %}
+
+            <span style="display: block">
             <div id="partition-{{loop.index}}" class="collapse">
+
 
             {% for question in question_set %}
 
@@ -96,11 +105,12 @@
                   </div>
                   <!-- </form> -->
             </div>
-          </div>
+            </div>
             <!-- <div class="clear"></div> -->
 
             {% endfor %}
           </div>
+        </span>
           <!-- </td> -->
         <!-- </tr> -->
 
@@ -114,6 +124,8 @@
 </div>
 
 <script>
+  // document.getElementById('partition-1').classList.remove('in');
+
   // Load the IFrame Player API code asynchronously.
 
   // https://www.youtube.com/watch?v=JPb1k6JdGvg
@@ -139,6 +151,8 @@
   }
 
   function onPlayerReady() {
+      $('#partition-1').collapse("show");
+
       var convertToSeconds = function(timestamp) {
           var data = timestamp.split(':');
           var hours = data[0];

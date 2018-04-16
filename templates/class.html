@@ -6,25 +6,30 @@
   <table class = "classtable">
     <tr>
     <th class = "classsections">
-    <h4>{{info['display_name']}}</h4>
-    <table class="lectures">
+    <h4 style = "margin-top: -60px">{{info['display_name']}}</h4>
+    <table class ="lecture_table" id = "lec_table">
       <tr>
         <th style = "margin-top: -80px">Lecture</th>
         <th "margin-top: -80px">Date Posted</th>
       </tr>
       {% for lec in lectures %}
+        <div id= lecture-{{lec['_id']}}>
         <tr>
           <td><a href={{ url_for('lecture', cls=lec['cls'], lecture_number=lec['lecture_number'])}}>{{ lec['name'] }}</a></td>
           &nbsp; &nbsp;
           <td>{{lec['date']}}</td>
+          {% if role == consts.INSTRUCTOR %}
+            <td><button class="btn btn-primary" type=submit onclick="deleteLecture('{{lec['_id']}}')">Delete Lecture</button></td>
+          {% endif %}
         </tr>
+      </div>
       {% endfor %}
     </table>
   </th>
   <th class = "classsections" style = "margin-top: -80px">
     {% if role == consts.INSTRUCTOR %}
       <form action="" method="post">
-          <h4 style = "margin-top: -260px">Create a Lecture</h4>
+          <h4>Create a Lecture</h4>
           {{ form.csrf }}
           <p>Lecture Title {{ form.title }}</p>
           <p>Lecture Date {{ form.date }}</p>
@@ -48,9 +53,20 @@
 </div>
 
 <script>
-    // $('submit').onclick = function () {
-    //     $('#lectures').load(window.location.href + '#lectures');
-    // };
+    function deleteLecture(lectureid){
+      var data ={
+        lectureid
+      };
+      console.log(`${JSON.stringify(data)}`)
+      $.ajax({
+        type: "POST",
+        url: "{{ url_for('delete_lecture') }}",
+        data,
+        success: function (data) {
+          $('#lec_table').load(window.location.href + ' #lec_table');
+        }
+      });
+    }
 </script>
 {% endblock %}
 {% block footer %}
