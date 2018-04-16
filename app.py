@@ -231,31 +231,39 @@ def create_client(app):
             def convert_seconds_to_timestamp(ts):
                 return '%d:%02d' % (ts // 60, ts % 60)
             partitions = []
-            curr_time = questions_interval
+            curr_time = 0
             curr_partition = []
-            for question in cursor:
-                if question['seconds'] > curr_time:
-                    partitions.append(
-                        (
-                            curr_partition,
+            i = 0
+            questions = list(cursor)
+            while i < len(questions):
+                question = questions[i]
+                print(question)
+                if curr_time <= question['seconds'] < curr_time + questions_interval:
+                    curr_partition.append(question)
+                    i += 1
+                else:
+                    if curr_partition:
+                        partitions.append(
                             (
-                                convert_seconds_to_timestamp(curr_time - questions_interval),
-                                convert_seconds_to_timestamp(curr_time)
+                                curr_partition,
+                                (
+                                    convert_seconds_to_timestamp(curr_time),
+                                    convert_seconds_to_timestamp(curr_time + questions_interval)
+                                )
                             )
                         )
-                    )
                     curr_time += questions_interval
                     curr_partition = []
-                curr_partition.append(question)
             partitions.append(
                 (
                     curr_partition,
                     (
-                        convert_seconds_to_timestamp(curr_time - questions_interval),
-                        convert_seconds_to_timestamp(curr_time)
+                        convert_seconds_to_timestamp(curr_time),
+                        convert_seconds_to_timestamp(curr_time + questions_interval)
                     )
                 )
             )
+            print(partitions)
             return partitions
         questions_interval = 2
         # partition(db['Questions'].find({'lecture_id': lecture}).sort([('seconds', 1)]))
