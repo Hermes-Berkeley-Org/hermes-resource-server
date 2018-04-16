@@ -12,9 +12,9 @@ import logging
 
 from utils.webpage_utils import CreateLectureForm, CreateClassForm
 from utils import db_utils
-from utils.app_utils import get_curr_semester, partition
+from utils.app_utils import get_curr_semester, partition, generate_partition_titles
 from utils.db_utils import User, Class, Lecture, Note, Question, Answer
-from utils.transcribe_utils import transcribe, get_youtube_id
+from utils.transcribe_utils import transcribe, get_youtube_id, get_video_duration
 
 import consts
 
@@ -217,7 +217,7 @@ def create_client(app):
         cls_obj = db['Classes'].find_one({'ok_id': int(cls)})
         lecture_obj = db['Lectures'].find_one({'cls': cls, 'lecture_number': int(lecture_number)})
         user = get_user_data()
-        questions_interval = 2
+        questions_interval = 5
         if lecture_obj and cls_obj:
             return render_template(
                 'lecture.html',
@@ -227,7 +227,10 @@ def create_client(app):
                 transcript=lecture_obj['transcript'],
                 cls_name=lecture_obj['cls'],
                 user=user,
-                partition=lambda questions: partition(questions, questions_interval),
+                questions_interval=questions_interval,
+                partition=partition,
+                partition_titles=list(generate_partition_titles(lecture_obj['duration'], questions_interval)),
+                duration=lecture_obj['duration'],
                 user_id=str(user['_id']),
                 role=get_role(cls)[0],
                 consts=consts,
@@ -277,6 +280,7 @@ def create_client(app):
                     date=request.form['date'],
                     link=request.form['link'],
                     lecture_number=num_lectures,
+                    duration=get_video_duration(request.form['link']),
                     cls=class_ok_id
                 )
                 id = Class.add_lecture(cls, lecture, db)
