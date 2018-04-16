@@ -19,14 +19,16 @@ def partition(cursor, questions_interval):
     curr_time = 0
     curr_partition = []
 
-    top_questions = list(cursor.clone().limit(5))
+    questions = list(cursor)
+
+    top_questions = questions[:5]
     if top_questions:
         partitions.append((top_questions, ('0:00', '0:00')))
 
     i = 0
-    questions = list(cursor)
-    while i < len(questions):
-        question = questions[i]
+    low_questions = questions[5:]
+    while i < len(low_questions):
+        question = low_questions[i]
         if curr_time <= question['seconds'] < curr_time + questions_interval:
             curr_partition.append(question)
             i += 1

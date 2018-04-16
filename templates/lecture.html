@@ -42,10 +42,8 @@
 
           {% for question_set, interval in partition(db['Questions'].find({'lecture_id': lecture}).sort([('seconds', 1), ('upvotes', 1)])) %}
             {% if loop.index == 1 %}
-                {% set top = True %}
                 <a data-toggle="collapse" onclick="toggleResponses('partition-icon-{{loop.index}}')" data-target="#partition-{{loop.index}}"><span style="font-size: 18px" id="partition-icon-{{loop.index}}" class="fa fa-chevron-down qa-entry" aria-hidden="true"></span><strong>Top Questions</strong></a>
             {% else %}
-                {% set top = False %}
                 <a data-toggle="collapse" onclick="toggleResponses('partition-icon-{{loop.index}}')" data-target="#partition-{{loop.index}}"><span style="font-size: 18px" id="partition-icon-{{loop.index}}" class="fa fa-chevron-down qa-entry" aria-hidden="true"></span> {{interval[0]}} - {{interval[1]}}</a>
             {% endif %}
 
@@ -243,7 +241,10 @@
           url: "{{ url_for('write_question') }}",
           data,
           success: function (data) {
-            $('#questions_table').load(window.location.href + ' #questions_table');
+            $('#questions_table').load(window.location.href + ' #questions_table', function () {
+                $('#partition-1').collapse("show");
+            });
+
           }
         });
       }
@@ -259,7 +260,9 @@
       url: "{{ url_for('delete_question') }}",
       data: data,
       success: function (data) {
-        $('#questions_table').load(window.location.href + ' #questions_table');
+        $('#questions_table').load(window.location.href + ' #questions_table', function () {
+            $('#partition-1').collapse("show");
+        });
       }
     })
   }
@@ -278,7 +281,9 @@
       data,
       success: function (data) {
         $(`#answers-container-${question}`).load(window.location.href + ` #answers-container-${question}`, function () {
-            $(`#show-answers-${question}`).trigger("click");
+            $(`#show-answers-${question}`).trigger("click", function () {
+                $('#partition-1').collapse("show");
+            });
         });
       }
     })
@@ -297,7 +302,9 @@
       data,
       success: function (data) {
 
-        $(`#upvotes-${answer}`).load(window.location.href + ` #upvotes-${answer}`);
+        $(`#upvotes-${answer}`).load(window.location.href + ` #upvotes-${answer}`, function () {
+            $('#partition-1').collapse("show");
+        });
       }
     });
   }
@@ -327,9 +334,10 @@
             url: "{{ url_for('write_answer') }}",
             data,
             success: function (data) {
-              // $(`#answers-${questionId}`).find("p").remove()
               $(`#answers-container-${questionId}`).load(window.location.href + ` #answers-container-${questionId}`, function () {
-                  $(`#show-answers-${questionId}`).trigger("click");
+                  $(`#show-answers-${questionId}`).trigger("click", function () {
+                      $('#partition-1').collapse("show");
+                  });
               });
 
 
