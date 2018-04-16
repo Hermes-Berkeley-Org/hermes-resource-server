@@ -1,15 +1,15 @@
-section#questions_table {
+table#questions_table {
   padding: 1rem 0;
   overflow-y: auto;
   height: 80vh;
 }
 
-section#questions_table div {
+table#questions_table div {
   word-wrap: break-word;
   /*margin-bottom: 12px;*/
   line-height: 12px;
 }
-section#questions_table div:after {
+table#questions_table div:after {
   content: "";
   display: table;
   clear: both;
