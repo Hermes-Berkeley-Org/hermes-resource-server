@@ -38,15 +38,12 @@
         <!-- </form> -->
       </div>
       <section id="questions_table">
-        <!--<table id='questions_table'>-->
-          {% for question_set in partition(db['Questions'].find({'lecture_id': lecture}).sort([('seconds', 1)])) %}
-            <!-- {{question['anon']}} -->
-
-            <p>Partition:</p>
+          {% for question_set, interval in partition(db['Questions'].find({'lecture_id': lecture}).sort([('seconds', 1)])) %}
+            <a data-toggle="collapse" onclick="toggleResponses('partition-icon-{{loop.index}}')" data-target="#partition-{{loop.index}}"><span style="font-size: 18px" id="partition-icon-{{loop.index}}" class="fa fa-chevron-down qa-entry" aria-hidden="true"></span> {{interval[0]}} - {{interval[1]}}</a>
+            <div id="partition-{{loop.index}}" class="collapse">
 
             {% for question in question_set %}
 
-            <!-- <div class="from-me"> -->
               <a id="show-answers-{{question['_id']}}" data-toggle="collapse" onclick="toggleResponses('toggle-icon-{{question['_id']}}')" data-target="#answers-{{question['_id']}}">
                 <p><span class="fa fa-chevron-down qa-entry" id="toggle-icon-{{question['_id']}}" aria-hidden="true"></span>
                 {% if question['anon'] == "true" and role == consts.STUDENT %}
@@ -56,7 +53,6 @@
                 {% endif %}
                 <span class="qa-entry-lg"> {{question['text']}}</span></p>
               </a>
-            <!-- </div> -->
             <div id="answers-container-{{question['_id']}}">
             <!--<div class="clear"></div>-->
             <div id="answers-{{question['_id']}}" class="collapse">
@@ -101,13 +97,17 @@
                   <!-- </form> -->
             </div>
           </div>
-            <div class="clear"></div>
+            <!-- <div class="clear"></div> -->
 
             {% endfor %}
+          </div>
+          <!-- </td> -->
+        <!-- </tr> -->
+
           {% endfor %}
-        <!-- </section>
-      </div> -->
-        <!--</table>-->
+        </section>
+      <!-- </div> -->
+        <!-- </table> -->
       </div>
     </div>
   </div>

@@ -228,17 +228,37 @@ def create_client(app):
         lecture_obj = db['Lectures'].find_one({'cls': cls, 'lecture_number': int(lecture_number)})
         user = get_user_data()
         def partition(cursor, questions_interval):
+            def convert_seconds_to_timestamp(ts):
+                return '%d:%02d' % (ts // 60, ts % 60)
             partitions = []
             curr_time = questions_interval
             curr_partition = []
             for question in cursor:
                 if question['seconds'] > curr_time:
-                    partitions.append(curr_partition)
+                    partitions.append(
+                        (
+                            curr_partition,
+                            (
+                                convert_seconds_to_timestamp(curr_time - questions_interval),
+                                convert_seconds_to_timestamp(curr_time)
+                            )
+                        )
+                    )
                     curr_time += questions_interval
                     curr_partition = []
                 curr_partition.append(question)
+            partitions.append(
+                (
+                    curr_partition,
+                    (
+                        convert_seconds_to_timestamp(curr_time - questions_interval),
+                        convert_seconds_to_timestamp(curr_time)
+                    )
+                )
+            )
             return partitions
-        questions_interval = 30
+        questions_interval = 2
+        # partition(db['Questions'].find({'lecture_id': lecture}).sort([('seconds', 1)]))
         if lecture_obj and cls_obj:
             return render_template(
                 'lecture.html',
