@@ -40,7 +40,7 @@
       <section id="questions_table">
 
 
-          {% for question_set, interval in partition(db['Questions'].find({'lecture_id': lecture}).sort([('seconds', 1), ('upvotes', 1)])) %}
+          {% for question_set, interval in partition(db['Questions'].find({'lecture_id': lecture}).sort([('seconds', 1), ('upvotes', 1)]), questions_interval, duration) %}
             {% if loop.index == 1 %}
                 <a data-toggle="collapse" onclick="toggleResponses('partition-icon-{{loop.index}}')" data-target="#partition-{{loop.index}}"><span style="font-size: 18px" id="partition-icon-{{loop.index}}" class="fa fa-chevron-down qa-entry" aria-hidden="true"></span><strong>Top Questions</strong></a>
             {% else %}
@@ -54,14 +54,17 @@
             {% for question in question_set %}
 
               <a id="show-answers-{{question['_id']}}" data-toggle="collapse" onclick="toggleResponses('toggle-icon-{{question['_id']}}')" data-target="#answers-{{question['_id']}}">
-                <p><span class="fa fa-chevron-down qa-entry" id="toggle-icon-{{question['_id']}}" aria-hidden="true"></span>
+                <p><span class="fa fa-chevron-down qa-entry" id="toggle-icon-{{question['_id']}}" aria-hidden="true"></span></a>
                 {% if question['anon'] == "true" and role == consts.STUDENT %}
                   <span class="question-tag-lg"> Anonymous {{question['timestamp']}}</span>
                 {% else %}
                   <span class="question-tag-lg"> {{question['name']}} {{question['timestamp']}}</span>
                 {% endif %}
-                <span class="qa-entry-lg"> {{question['text']}}</span></p>
-              </a>
+                <span class="qa-entry-lg"> {{question['text']}}</span>
+                {% if role == consts.INSTRUCTOR %}
+                  <a onclick='deleteQuestion("{{question['_id']}}")'><span class="fa fa-close" style="color:red"></span></a>
+                {% endif %}
+                </p>
             <div id="answers-container-{{question['_id']}}">
             <!--<div class="clear"></div>-->
             <div id="answers-{{question['_id']}}" class="collapse">
@@ -86,6 +89,9 @@
                         <!-- <div class="from-them"> -->
                           <span class="qa-entry"> {{answer['text']}}</span>
                         <!-- </div> -->
+                    {% endif %}
+                    {% if role == consts.INSTRUCTOR %}
+                      <a onclick='deleteAnswer("{{answer['_id']}}", "{{question['_id']}}")'><span class="fa fa-close" style="color:red"></span></a>
                     {% endif %}
                     </p>
                   </div>
@@ -161,6 +167,13 @@
           return (parseInt(hours) * 360 + parseInt(minutes) * 60 + parseFloat(seconds))
       };
 
+      var convertToSecondsTiny = function(timestamp) {
+          var data = timestamp.split(':');
+          var minutes = data[0];
+          var seconds = data[1];
+          return (parseInt(minutes) * 60 + parseFloat(seconds))
+      };
+
       var cleanTimestamp = function(timestamp) {
           var data = timestamp.split(':');
           var hours = data[0];
@@ -200,6 +213,17 @@
           }
           {% endfor %}
       }, 3000);
+
+      setInterval(function() {
+          var currentTime = player.getCurrentTime();
+          {% for begin, end in partition_titles %}
+          if (currentTime >= convertToSecondsTiny("{{begin}}") && currentTime < convertToSecondsTiny("{{end}}")) {
+            $($("a:contains('{{begin}} - {{end}}')").attr('data-target')).collapse('show');
+          }
+          {% endfor %}
+      }, 1000);
+
+
 
 
   }

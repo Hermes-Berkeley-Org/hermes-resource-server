@@ -12,9 +12,18 @@ def get_curr_semester():
             return 'FA'
     return '{0}{1}'.format(get_season(month), str(year)[-2:])
 
-def partition(cursor, questions_interval):
-    def convert_seconds_to_timestamp(ts):
-        return '%d:%02d' % (ts // 60, ts % 60)
+def convert_seconds_to_timestamp(seconds):
+    return '%d:%02d' % (seconds // 60, seconds % 60)
+
+def convert_timestamp_to_seconds(ts):
+    data = ts.split(':')
+    hours = data[0]
+    minutes = data[1]
+    seconds = data[2]
+    return (int(hours) * 360 + int(minutes) * 60 + int(seconds))
+
+def partition(cursor, questions_interval, duration):
+    duration = convert_timestamp_to_seconds(duration)
     partitions = []
     curr_time = 0
     curr_partition = []
@@ -51,9 +60,17 @@ def partition(cursor, questions_interval):
                 curr_partition,
                 (
                     convert_seconds_to_timestamp(curr_time),
-                    convert_seconds_to_timestamp(curr_time + questions_interval)
+                    convert_seconds_to_timestamp(min(curr_time + questions_interval, duration))
                 )
             )
         )
-    print(partitions)
     return partitions
+
+
+def generate_partition_titles(duration, interval):
+    duration = convert_timestamp_to_seconds(duration)
+    curr = 0
+    while curr + interval < duration:
+        yield (convert_seconds_to_timestamp(curr), convert_seconds_to_timestamp(curr + interval))
+        curr = curr + interval
+    yield (convert_seconds_to_timestamp(curr), convert_seconds_to_timestamp(duration))

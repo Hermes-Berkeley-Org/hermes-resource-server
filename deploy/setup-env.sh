@@ -11,3 +11,4 @@ export OK_MODE=authenticate
 export TESTING_OK_ID=lejRej
 export TRANSCRIPTION_MODE=api
 export OAUTHLIB_INSECURE_TRANSPORT=1
+export PAFY_BACKEND=internal
