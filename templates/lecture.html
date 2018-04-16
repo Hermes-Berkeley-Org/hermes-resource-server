@@ -42,8 +42,10 @@
 
           {% for question_set, interval in partition(db['Questions'].find({'lecture_id': lecture}).sort([('seconds', 1), ('upvotes', 1)])) %}
             {% if loop.index == 1 %}
+                {% set top = True %}
                 <a data-toggle="collapse" onclick="toggleResponses('partition-icon-{{loop.index}}')" data-target="#partition-{{loop.index}}"><span style="font-size: 18px" id="partition-icon-{{loop.index}}" class="fa fa-chevron-down qa-entry" aria-hidden="true"></span><strong>Top Questions</strong></a>
             {% else %}
+                {% set top = False %}
                 <a data-toggle="collapse" onclick="toggleResponses('partition-icon-{{loop.index}}')" data-target="#partition-{{loop.index}}"><span style="font-size: 18px" id="partition-icon-{{loop.index}}" class="fa fa-chevron-down qa-entry" aria-hidden="true"></span> {{interval[0]}} - {{interval[1]}}</a>
             {% endif %}
 
@@ -246,6 +248,41 @@
         });
       }
     }
+
+  function deleteQuestion(question) {
+    var data = {
+      question_id: question
+    }
+
+    $.ajax({
+      type: "POST",
+      url: "{{ url_for('delete_question') }}",
+      data: data,
+      success: function (data) {
+        $('#questions_table').load(window.location.href + ' #questions_table');
+      }
+    })
+  }
+
+  function deleteAnswer(answer, question) {
+    var data = {
+      answer_id: answer
+    };
+
+    question_id = question;
+    console.log(question);
+
+    $.ajax({
+      type: "POST",
+      url: "{{ url_for('delete_answer') }}",
+      data,
+      success: function (data) {
+        $(`#answers-container-${question}`).load(window.location.href + ` #answers-container-${question}`, function () {
+            $(`#show-answers-${question}`).trigger("click");
+        });
+      }
+    })
+  }
 
   function upvoteAnswer(user, answer){
     var currentcount = document.getElementById(`upvotes-${answer}`).value;
