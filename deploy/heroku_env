@@ -8,3 +8,4 @@ export CLIENT_SECRET=vTh9ikI2Ev8Ja9Zjm3vZr87WYvSaEbG
 export OK_MODE=authenticate
 export TESTING_OK_ID=lejRej
 export TRANSCRIPTION_MODE=api
+export PAFY_BACKEND=internal
