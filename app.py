@@ -266,7 +266,7 @@ def create_client(app):
                     **user['google_credentials']
                 )
                 youtube = googleapiclient.discovery.build(
-                    API_SERVICE_NAME, API_VERSION, credentials=credentials)
+                    API_SERVICE_NAME, API_VERSION, credentials=credentials, cache_discovery=False))
 
         if request.method == 'POST':
             if role != consts.INSTRUCTOR:
