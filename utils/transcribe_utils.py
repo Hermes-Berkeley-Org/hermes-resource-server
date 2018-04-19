@@ -4,26 +4,45 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
 from selenium.common.exceptions import TimeoutException
 
+# from textbook_utils import get_words
+
 from bs4 import BeautifulSoup
 
 from urllib.parse import parse_qs, urlencode, urlparse
 
 import pafy
 
+LENGTH_REQUIRED = 100
+
 def get_youtube_id(link):
     url = urlparse(link)
     params = parse_qs(url.query)
     return params['v'][0] if 'v' in params else None
 
-def transcribe(link, mode, youtube=None):
+def transcribe(link, mode, youtube=None, transcription_classifier=None):
     try:
+        transcription = None
         if mode == 'api':
-            return read_from_youtube(link, youtube)
+            transcription = read_from_youtube(link, youtube)
         elif mode == 'scrape':
-            return scrape(link)
+            transcription = scrape(link)
+
+        preds = None
+        if transcription_classifier:
+            preds = classify(transcription, transcription_classifier)
+
+        return transcription, preds
+
     except:
         print('Transcribe failed') # @Kian: logger statement here!
         return []
+
+def classify(transcription, transcription_classifier):
+    curr_text = []
+    for i, transcript_elem in enumerate(transcription):
+        curr_text += get_words(transcript_elem['text'])
+        if len(curr_text) >= LENGTH_REQUIRED:
+            yield (transcription_classifier.predict(curr_text), i)
 
 def read_from_youtube(link, youtube):
     video_id = get_youtube_id(link)
@@ -33,7 +52,7 @@ def read_from_youtube(link, youtube):
             videoId=video_id
         ).execute()
 
-        print(results['items'])
+        # print(results['items'])
 
         for item in results["items"]:
             return item["id"]

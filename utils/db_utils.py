@@ -102,7 +102,7 @@ class Class(DBObject):
     def add_lecture(cls, lecture, db):
         def change_date_format(lecture):
             british_date = lecture.get('date')
-            print(british_date)
+            # print(british_date)
             date = datetime.strptime(british_date, "%Y-%m-%d")
             lecture.set('date', date.strftime("%m/%d/%y"))
         change_date_format(lecture)
@@ -153,7 +153,7 @@ class Lecture(DBObject):
 
 
     @staticmethod
-    def add_transcript(lecture_id, transcript, db):
+    def add_transcript(lecture_id, transcript, preds, db):
         db[Lecture.collection].update_one(
             {
               '_id': lecture_id
@@ -161,6 +161,7 @@ class Lecture(DBObject):
             {
               '$set': {
                 'transcript': transcript,
+                'preds': preds
               }
             },
             upsert=False
