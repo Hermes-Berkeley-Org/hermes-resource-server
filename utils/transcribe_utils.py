@@ -4,7 +4,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
 from selenium.common.exceptions import TimeoutException
 
-# from textbook_utils import get_words
+from utils.textbook_utils import get_words
 
 from bs4 import BeautifulSoup
 
@@ -12,14 +12,14 @@ from urllib.parse import parse_qs, urlencode, urlparse
 
 import pafy
 
-LENGTH_REQUIRED = 100
+LENGTH_REQUIRED = 20
 
 def get_youtube_id(link):
     url = urlparse(link)
     params = parse_qs(url.query)
     return params['v'][0] if 'v' in params else None
 
-def transcribe(link, mode, youtube=None, transcription_classifier=None):
+def transcribe(link, mode, youtube=None, transcription_classifier=None, error_on_failure=False):
     try:
         transcription = None
         if mode == 'api':
@@ -29,20 +29,29 @@ def transcribe(link, mode, youtube=None, transcription_classifier=None):
 
         preds = None
         if transcription_classifier:
-            preds = classify(transcription, transcription_classifier)
+            preds = list(classify(transcription, transcription_classifier))
+            print(preds)
 
         return transcription, preds
 
-    except:
-        print('Transcribe failed') # @Kian: logger statement here!
-        return []
+    except Exception as e:
+        if error_on_failure:
+            raise e
+        else:
+            print('Transcribe failed', e) # @Kian: logger statement here!
+            return [], []
 
 def classify(transcription, transcription_classifier):
     curr_text = []
+    last = 0
     for i, transcript_elem in enumerate(transcription):
         curr_text += get_words(transcript_elem['text'])
-        if len(curr_text) >= LENGTH_REQUIRED:
-            yield (transcription_classifier.predict(curr_text), i)
+        if len(curr_text) >= LENGTH_REQUIRED and ((i % 2 == 1) or i == len(transcription) - 1):
+            link, sim = transcription_classifier.predict(curr_text)
+            print(sim)
+            yield (link, (last, i // 2)) # note i is now the row number in the transcription table
+            last = (i // 2) + 1
+            curr_text = []
 
 def read_from_youtube(link, youtube):
     video_id = get_youtube_id(link)

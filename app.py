@@ -205,7 +205,7 @@ def create_client(app):
                 participation['class_exists']
         if user:
             classes = [participation for participation in user['classes'] if validate(participation)]
-            print(classes)
+            # print(classes)
             return render_template(
                 'home.html',
                 user=user,
@@ -228,6 +228,7 @@ def create_client(app):
                 lecture=str(lecture_obj['_id']),
                 name=lecture_obj['name'],
                 transcript=lecture_obj['transcript'],
+                preds=lecture_obj['preds'],
                 cls_name=lecture_obj['cls'],
                 user=user,
                 questions_interval=questions_interval,
@@ -291,7 +292,8 @@ def create_client(app):
                     request.form['link'],
                     app.config['TRANSCRIPTION_MODE'],
                     youtube=youtube,
-                    transcription_classifier=ts_classifier
+                    transcription_classifier=ts_classifier,
+                    error_on_failure=True
                 )
                 Lecture.add_transcript(id, transcript, preds, db)
             else:
