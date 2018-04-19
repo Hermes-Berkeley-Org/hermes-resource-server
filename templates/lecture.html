@@ -8,17 +8,20 @@
     <div class="col-md-7">
       <div id="ytplayer"></div>
       <div>
-          <table id='transcript'>
-            {% for i in range(transcript|length // 2 + 1) %}
-                <tr>
-                  <td>
-                    <span id="ts-{{2 * i}}"></span>
-                    <span id="text-{{2 * i}}"></span>
-                    <span id="text-{{2 * i + 1}}"></span>
-                  </td>
-                </tr>
+            {% for (link, (start, end)) in preds %}
+              <table onclick="sendToURL('{{link}}')" class='transcript-box'>
+              {% for i in range(start, end + 1) %}
+                  <tr>
+                    <td>
+                      <span id="ts-{{2 * i}}"></span>
+                      <span id="text-{{2 * i}}"></span>
+                      <span id="text-{{2 * i + 1}}"></span>
+                    </td>
+                  </tr>
+              {% endfor %}
+              </table>
+              </span>
             {% endfor %}
-          </table>
       </div>
     </div>
     <div class="col-md-4">
@@ -130,6 +133,7 @@
 </div>
 
 <script>
+
   // document.getElementById('partition-1').classList.remove('in');
 
   // Load the IFrame Player API code asynchronously.
@@ -378,6 +382,13 @@
             }
           });
       }
+  }
+
+  function sendToURL(url) {
+      window.open(
+        url,
+        '_blank' // <- This is what makes it open in a new window.
+      );
   }
 
 

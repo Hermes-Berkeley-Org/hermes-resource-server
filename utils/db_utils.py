@@ -1,7 +1,10 @@
-from pymongo import MongoClient
-from bson.objectid import ObjectId
 import os
 from datetime import datetime
+
+from pymongo import MongoClient
+from bson.objectid import ObjectId
+
+
 
 def insert(dbobj, db):
     return db[dbobj.collection].insert_one(dbobj.to_dict())

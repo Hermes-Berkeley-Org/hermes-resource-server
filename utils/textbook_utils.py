@@ -1,7 +1,8 @@
 import re
 
 from bs4 import BeautifulSoup
-from gensim.models import Doc2Vec, TaggedDocument
+from gensim.models import Doc2Vec
+from gensim.models.doc2vec import TaggedDocument
 import requests
 import nltk
 from nltk.corpus import stopwords
@@ -15,9 +16,9 @@ class TranscriptionClassifier:
     model_name = 'textbook.doc2vec'
 
     def __init__(self, retrain=False):
+        self.generate_documents()
         loaded = not retrain and self.load_model()
         if not loaded:
-            self.generate_documents()
             self.model = Doc2Vec(alpha=.025, min_alpha=.025, min_count=1)
             self.train()
 
@@ -56,8 +57,8 @@ class TranscriptionClassifier:
                 except:
                     print('Trying page', i, 'again')
 
-    def predict(self, paragraph):
-        new_doc_vector = self.model.infer_vector(paragraph.split(' '))
+    def predict(self, words):
+        new_doc_vector = self.model.infer_vector(words)
         arg_best, best = -1, -1
 
         try:
@@ -67,7 +68,7 @@ class TranscriptionClassifier:
                     arg_best, best = i, sim
         except:
             pass
-        return self.links[arg_best]
+        return (self.links[arg_best], best)
 
 
 def cosine_similarity(v1, v2):
@@ -90,3 +91,7 @@ def scrape(page_url):
         documents.append(div.get_text())
         links.append('{0}#{1}'.format(page_url, div['id']))
     return documents, links
+
+if __name__ == '__main__':
+    ts = TranscriptionClassifier()
+    print(ts.predict('hello my name is what'.split(' ')))

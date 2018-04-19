@@ -67,3 +67,7 @@ th {
   margin-bottom: 0px;
 	margin-top: 0px;
 }
+
+.transcript-box:hover {
+		background: #fefbd8;
+}
