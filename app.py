@@ -221,7 +221,7 @@ def create_client(app):
         questions_interval = 5
         preds = lecture_obj.get('preds')
         if not preds:
-            preds = (None, [0, len(lecture_obj['transcript'])])
+            preds = [(None, [0, len(lecture_obj['transcript'])])]
         if lecture_obj and cls_obj:
             return render_template(
                 'lecture.html',
