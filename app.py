@@ -12,8 +12,9 @@ import logging
 
 from utils.webpage_utils import CreateLectureForm, CreateClassForm
 from utils import db_utils
+from utils.app_utils import get_curr_semester, partition, generate_partition_titles
 from utils.db_utils import User, Class, Lecture, Note, Question, Answer
-from utils.transcribe_utils import transcribe, get_youtube_id
+from utils.transcribe_utils import transcribe, get_youtube_id, get_video_duration
 
 import consts
 
@@ -193,17 +194,6 @@ def create_client(app):
 
     @app.route('/home/')
     def home():
-        def get_curr_semester():
-            today = datetime.today()
-            month, year = today.month, today.year
-            def get_season(month):
-                if month < 6:
-                    return 'SP'
-                elif month < 8:
-                    return 'SU'
-                else:
-                    return 'FA'
-            return '{0}{1}'.format(get_season(month), str(year)[-2:])
         user = get_user_data()
         print(user)
         def validate(participation):
@@ -228,6 +218,7 @@ def create_client(app):
         cls_obj = db['Classes'].find_one({'ok_id': int(cls)})
         lecture_obj = db['Lectures'].find_one({'cls': cls, 'lecture_number': int(lecture_number)})
         user = get_user_data()
+        questions_interval = 5
         if lecture_obj and cls_obj:
             return render_template(
                 'lecture.html',
@@ -237,6 +228,10 @@ def create_client(app):
                 transcript=lecture_obj['transcript'],
                 cls_name=lecture_obj['cls'],
                 user=user,
+                questions_interval=questions_interval,
+                partition=partition,
+                partition_titles=list(generate_partition_titles(lecture_obj['duration'], questions_interval)),
+                duration=lecture_obj['duration'],
                 user_id=str(user['_id']),
                 role=get_role(cls)[0],
                 consts=consts,
@@ -272,7 +267,7 @@ def create_client(app):
                     **user['google_credentials']
                 )
                 youtube = googleapiclient.discovery.build(
-                    API_SERVICE_NAME, API_VERSION, credentials=credentials)
+                    API_SERVICE_NAME, API_VERSION, credentials=credentials, cache_discovery=False)
 
         if request.method == 'POST':
             if role != consts.INSTRUCTOR:
@@ -286,6 +281,7 @@ def create_client(app):
                     date=request.form['date'],
                     link=request.form['link'],
                     lecture_number=num_lectures,
+                    duration=get_video_duration(request.form['link']),
                     cls=class_ok_id
                 )
                 id = Class.add_lecture(cls, lecture, db)
@@ -297,17 +293,15 @@ def create_client(app):
                 Lecture.add_transcript(id, transcript, db)
             else:
                 flash('All fields required')
-        logger.info("Displaying class page.")
         return render_template(
             'class.html',
             info=cls,
-            lectures=[db['Lectures'].find_one({'_id': lecture_id}) for lecture_id in cls['lectures']],
+            lectures=db['Lectures'].find({'cls': class_ok_id}),
             form=form,
             user=user,
             role=role,
             consts=consts
         )
-
 
     @app.route('/create_class/<class_ok_id>', methods=['GET', 'POST'])
     def create_class(class_ok_id):
@@ -332,11 +326,31 @@ def create_client(app):
             logger.info("Error: user access level is %s", role)
             return redirect(url_for('error'), code=403)
 
+    @app.route('/delete_lecture', methods=['GET', 'POST'])
+    def delete_lecture():
+        if request.method == 'POST':
+            Lecture.delete_lecture(request.form.to_dict(), db)
+            logger.info("Successfully deleted lecture.")
+            return jsonify(success=True), 200
+        else:
+            logger.info("Illegal request type: %s", request.method)
+            return redirect(url_for('error', code=500))
+
     @app.route('/write_question', methods=['GET', 'POST'])
     def write_question():
         if request.method == 'POST':
             Question.write_question(request.form.to_dict(), db)
             logger.info("Successfully wrote question.")
+            return jsonify(success=True), 200
+        else:
+            logger.info("Illegal request type: %s", request.method)
+            return redirect(url_for('error', code=500))
+
+    @app.route('/delete_question', methods=['GET', 'POST'])
+    def delete_question():
+        if request.method == 'POST':
+            Question.delete_question(request.form.to_dict(), db)
+            logger.info("Successfully deleted question.")
             return jsonify(success=True), 200
         else:
             logger.info("Illegal request type: %s", request.method)
@@ -357,6 +371,16 @@ def create_client(app):
         if request.method == 'POST':
             Answer.write_answer(get_user_data(), request.form.to_dict(), db)
             logger.info("Successfully wrote answer.")
+            return jsonify(success=True), 200
+        else:
+            logger.info("Illegal request type: %s", request.method)
+            return redirect(url_for('error', code=500))
+
+    @app.route('/delete_answer', methods=['GET', 'POST'])
+    def delete_answer():
+        if request.method == 'POST':
+            Answer.delete_answer(request.form.to_dict(), db)
+            logger.info("Successfully deleted answer.")
             return jsonify(success=True), 200
         else:
             logger.info("Illegal request type: %s", request.method)

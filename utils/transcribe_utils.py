@@ -8,6 +8,8 @@ from bs4 import BeautifulSoup
 
 from urllib.parse import parse_qs, urlencode, urlparse
 
+import pafy
+
 def get_youtube_id(link):
     url = urlparse(link)
     params = parse_qs(url.query)
@@ -50,6 +52,9 @@ def read_from_youtube(link, youtube):
             'text': p.text
         })
     return transcript
+
+def get_video_duration(link):
+    return pafy.new(link).duration
 
 
 def scrape(link):
