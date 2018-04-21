@@ -1,7 +1,5 @@
 # Hermes
 
-Team: Ajay Raj
-
 To setup:
 
     pip3 install virtualenv
