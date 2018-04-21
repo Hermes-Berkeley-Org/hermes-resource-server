@@ -13,6 +13,7 @@ from urllib.parse import parse_qs, urlencode, urlparse
 import pafy
 
 LENGTH_REQUIRED = 20
+THRESHOLD = 0.5
 
 def get_youtube_id(link):
     url = urlparse(link)
@@ -48,6 +49,8 @@ def classify(transcription, transcription_classifier):
         curr_text += get_words(transcript_elem['text'])
         if len(curr_text) >= LENGTH_REQUIRED and ((i % 2 == 1) or i == len(transcription) - 1):
             link, sim = transcription_classifier.predict(curr_text)
+            if sim < THRESHOLD:
+                link = None
             print(sim)
             yield (link, (last, i // 2)) # note i is now the row number in the transcription table
             last = (i // 2) + 1

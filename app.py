@@ -15,7 +15,7 @@ from utils import db_utils
 from utils.app_utils import get_curr_semester, partition, generate_partition_titles
 from utils.db_utils import User, Class, Lecture, Note, Question, Answer
 from utils.transcribe_utils import transcribe, get_youtube_id, get_video_duration
-from utils.textbook_utils import TranscriptionClassifier
+from utils.textbook_utils import CLASSIFIERS
 
 import consts
 
@@ -34,8 +34,6 @@ app.config.from_object(Config)
 
 client = MongoClient(os.environ.get('MONGODB_URI'))
 db = client[os.environ.get('DATABASE_NAME')]
-
-ts_classifier = TranscriptionClassifier()
 
 CLIENT_SECRETS_FILE = 'keys/client_secret.json'
 
@@ -288,6 +286,9 @@ def create_client(app):
                     cls=class_ok_id
                 )
                 id = Class.add_lecture(cls, lecture, db)
+                ts_classifier = None
+                if cls['display_name'] in CLASSIFIERS:
+                    ts_classifier = CLASSIFIERS[cls['display_name']](db, cls['ok_id'])
                 transcript, preds = transcribe(
                     request.form['link'],
                     app.config['TRANSCRIPTION_MODE'],
