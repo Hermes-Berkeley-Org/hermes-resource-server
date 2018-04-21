@@ -37,7 +37,7 @@ class TranscriptionClassifier:
         else:
             return False
 
-    def generate_documents(self, db, cache=True):
+    def generate_documents(self, db):
         raise NotImplementedError
 
     def train(self):
@@ -66,7 +66,7 @@ class CS61ATranscriptionClassifier(TranscriptionClassifier):
         self.model_name = 'cs61a.doc2vec'
         super().__init__('http://composingprograms.com/', db, class_ok_id)
 
-    def generate_documents(self, db, cache=True):
+    def generate_documents(self, db):
         homesoup = BeautifulSoup(requests.get(self.base_url).text, 'html.parser')
         self.pages = [a for a in homesoup.find_all('a') if './pages/' in a['href']] # generalize later
         self.download_documents(db)
