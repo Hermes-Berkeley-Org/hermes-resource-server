@@ -9,11 +9,14 @@
       <div id="ytplayer"></div>
       <div>
           <table id='transcript'>
-            {% for transcript_element in transcript %}
-              <tr>
-                <td>{{transcript_element['begin']}}-{{transcript_element['end']}}</td>
-                <td>{{transcript_element['text']}}</td>
-              </tr>
+            {% for i in range(transcript|length // 2 + 1) %}
+                <tr>
+                  <td>
+                    <span id="ts-{{2 * i}}"></span>
+                    <span id="text-{{2 * i}}"></span>
+                    <span id="text-{{2 * i + 1}}"></span>
+                  </td>
+                </tr>
             {% endfor %}
           </table>
       </div>
@@ -35,21 +38,31 @@
         <!-- </form> -->
       </div>
       <section id="questions_table">
-        <!--<table id='questions_table'>-->
-          {% for question in db['Questions'].find({'lecture_id': lecture}).sort([('seconds', 1)]) %}
-            <!-- {{question['anon']}} -->
+          {% for question_set, interval in partition(db['Questions'].find({'lecture_id': lecture}).sort([('seconds', 1), ('upvotes', 1)]), questions_interval, duration) %}
+            {% if loop.index == 1 %}
+                <a data-toggle="collapse" onclick="toggleResponses('partition-icon-{{loop.index}}')" data-target="#partition-{{loop.index}}"><span style="font-size: 18px" id="partition-icon-{{loop.index}}" class="fa fa-chevron-down qa-entry" aria-hidden="true"></span><strong>Top Questions</strong></a>
+            {% else %}
+                <a data-toggle="collapse" onclick="toggleResponses('partition-icon-{{loop.index}}')" data-target="#partition-{{loop.index}}"><span style="font-size: 18px" id="partition-icon-{{loop.index}}" class="fa fa-chevron-down qa-entry" aria-hidden="true"></span> {{interval[0]}} - {{interval[1]}}</a>
+            {% endif %}
 
-            <!-- <div class="from-me"> -->
+            <span style="display: block">
+            <div id="partition-{{loop.index}}" class="collapse">
+
+
+            {% for question in question_set %}
+
               <a id="show-answers-{{question['_id']}}" data-toggle="collapse" onclick="toggleResponses('toggle-icon-{{question['_id']}}')" data-target="#answers-{{question['_id']}}">
-                <p><span class="fa fa-chevron-down qa-entry" id="toggle-icon-{{question['_id']}}" aria-hidden="true"></span>
+                <p><span class="fa fa-chevron-down qa-entry" id="toggle-icon-{{question['_id']}}" aria-hidden="true"></span></a>
                 {% if question['anon'] == "true" and role == consts.STUDENT %}
                   <span class="question-tag-lg"> Anonymous {{question['timestamp']}}</span>
                 {% else %}
                   <span class="question-tag-lg"> {{question['name']}} {{question['timestamp']}}</span>
                 {% endif %}
-                <span class="qa-entry-lg"> {{question['text']}}</span></p>
-              </a>
-            <!-- </div> -->
+                <span class="qa-entry-lg"> {{question['text']}}</span>
+                {% if role == consts.INSTRUCTOR %}
+                  <a onclick='deleteQuestion("{{question['_id']}}")'><span class="fa fa-close" style="color:red"></span></a>
+                {% endif %}
+                </p>
             <div id="answers-container-{{question['_id']}}">
             <!--<div class="clear"></div>-->
             <div id="answers-{{question['_id']}}" class="collapse">
@@ -75,6 +88,12 @@
                           <span class="qa-entry"> {{answer['text']}}</span>
                         <!-- </div> -->
                     {% endif %}
+<<<<<<< HEAD
+=======
+                    {% if role == consts.INSTRUCTOR %}
+                      <a onclick='deleteAnswer("{{answer['_id']}}", "{{question['_id']}}")'><span class="fa fa-close" style="color:red"></span></a>
+                    {% endif %}
+>>>>>>> 4edfa259c0136eac3758f6ea881d3e8acd5633ff
                     </p>
                   </div>
                 {% endfor %}
@@ -93,18 +112,27 @@
                   </div>
                   <!-- </form> -->
             </div>
+            </div>
+            <!-- <div class="clear"></div> -->
+
+            {% endfor %}
           </div>
-            <div class="clear"></div>
+        </span>
+          <!-- </td> -->
+        <!-- </tr> -->
+
           {% endfor %}
-        <!-- </section>
-      </div> -->
-        <!--</table>-->
+        </section>
+      <!-- </div> -->
+        <!-- </table> -->
       </div>
     </div>
   </div>
 </div>
 
 <script>
+  // document.getElementById('partition-1').classList.remove('in');
+
   // Load the IFrame Player API code asynchronously.
 
   // https://www.youtube.com/watch?v=JPb1k6JdGvg
@@ -122,26 +150,116 @@
       width: window.innerWidth / 2,
       videoId: '{{ id }}',
       events: {
-        'onStateChange': recordData
+        'onStateChange': stateChange,
+        'onReady': onPlayerReady
       }
     });
 
-    // player.at('')
+  }
+
+  function onPlayerReady() {
+      toggleTopQuestions();
+
+      var convertToSeconds = function(timestamp) {
+          var data = timestamp.split(':');
+          var hours = data[0];
+          var minutes = data[1];
+          var seconds = data[2];
+          return (parseInt(hours) * 360 + parseInt(minutes) * 60 + parseFloat(seconds))
+      };
+
+      var convertToSecondsTiny = function(timestamp) {
+          var data = timestamp.split(':');
+          var minutes = data[0];
+          var seconds = data[1];
+          return (parseInt(minutes) * 60 + parseFloat(seconds))
+      };
+
+      var cleanTimestamp = function(timestamp) {
+          var data = timestamp.split(':');
+          var hours = data[0];
+          var minutes = data[1];
+          var seconds = data[2];
+          var output = "";
+          if (parseInt(hours) > 0) {
+              output += hours.toString() + ":";
+          }
+          output += minutes.toString() + ':';
+          var roundedSeconds = Math.round(parseFloat(seconds));
+          if (roundedSeconds < 10) {
+              output += "0";
+          }
+          output += roundedSeconds.toString();
+          return output;
+      }
+
+      var timestamps = [];
+      {% for transcript_element in transcript %}
+      timestamps.push(convertToSeconds("{{transcript_element['begin']}}"));
+      {% endfor %}
+
+      setInterval(function() {
+          var currentTime = player.getCurrentTime();
+          var state = player.getPlayerState();
+          // alert(currentTime);
+          {% for transcript_element in transcript %}
+          if (currentTime >= timestamps[{{loop.index - 1}}]) {
+              if ($("#text-{{loop.index - 1}}").contents().length == 0) {
+                  var p1 = document.getElementById("ts-{{loop.index - 1}}");
+                  if (p1) {
+                      p1.innerHTML = cleanTimestamp("{{transcript_element['begin']}}")
+                  }
+                  var p2 = document.getElementById("text-{{loop.index - 1}}");
+                  p2.innerHTML = "{{transcript_element['text']}}";
+              }
+          }
+          {% endfor %}
+
+          {% for begin, end in partition_titles %}
+          if (currentTime >= convertToSecondsTiny("{{begin}}") && currentTime < convertToSecondsTiny("{{end}}")) {
+            if (state == 1) { // video is playing
+              var collapseButton = $("a:contains('{{begin}} - {{end}}')");
+              var div = $(collapseButton.attr('data-target'));
+              if (div.attr('class').split(' ').indexOf('show') == -1) {
+                console.log(collapseButton.children()[0].id);
+                toggleResponses(collapseButton.children()[0].id);
+                div.collapse('show');
+              }
+            }
+          }
+          {% endfor %}
+      }, {{questions_interval}} * 250);
 
   }
 
-  function recordData(event) {
-      // Send info for student tracking purposes
+  function stateChange() {
+      // recordData maybe
+  }
+
+  function toggleTopQuestions() {
+      toggleResponses('partition-icon-1');
+      $('#partition-1').collapse("show");
   }
 
   function toggleResponses(buttonId) {
     elem = document.getElementById(buttonId);
+<<<<<<< HEAD
     if (elem.classList.contains('fa-chevron-down')) {
       elem.classList.remove('fa-chevron-down');
       elem.classList.add('fa-chevron-up');
     } else {
       elem.classList.remove('fa-chevron-up');
       elem.classList.add('fa-chevron-down');
+=======
+    if (elem) {
+      if (elem.classList.contains('fa-chevron-down')) {
+        elem.classList.remove('fa-chevron-down');
+        elem.classList.add('fa-chevron-up');
+      } else {
+        elem.classList.remove('fa-chevron-up');
+        elem.classList.add('fa-chevron-down');
+      }
+>>>>>>> 4edfa259c0136eac3758f6ea881d3e8acd5633ff
     }
   }
 
@@ -167,11 +285,53 @@
           url: "{{ url_for('write_question') }}",
           data,
           success: function (data) {
-            $('#questions_table').load(window.location.href + ' #questions_table');
+            $('#questions_table').load(window.location.href + ' #questions_table', function () {
+                toggleTopQuestions()
+            });
+
           }
         });
       }
     }
+
+  function deleteQuestion(question) {
+    var data = {
+      question_id: question
+    }
+
+    $.ajax({
+      type: "POST",
+      url: "{{ url_for('delete_question') }}",
+      data: data,
+      success: function (data) {
+        $('#questions_table').load(window.location.href + ' #questions_table', function () {
+            toggleTopQuestions()
+        });
+      }
+    })
+  }
+
+  function deleteAnswer(answer, question) {
+    var data = {
+      answer_id: answer
+    };
+
+    question_id = question;
+    console.log(question);
+
+    $.ajax({
+      type: "POST",
+      url: "{{ url_for('delete_answer') }}",
+      data,
+      success: function (data) {
+        $(`#answers-container-${question}`).load(window.location.href + ` #answers-container-${question}`, function () {
+            $(`#show-answers-${question}`).trigger("click", function () {
+                toggleTopQuestions()
+            });
+        });
+      }
+    })
+  }
 
   function upvoteAnswer(user, answer){
     var currentcount = document.getElementById(`upvotes-${answer}`).value;
@@ -186,7 +346,9 @@
       data,
       success: function (data) {
 
-        $(`#upvotes-${answer}`).load(window.location.href + ` #upvotes-${answer}`);
+        $(`#upvotes-${answer}`).load(window.location.href + ` #upvotes-${answer}`, function () {
+            toggleTopQuestions()
+        });
       }
     });
   }
@@ -216,9 +378,10 @@
             url: "{{ url_for('write_answer') }}",
             data,
             success: function (data) {
-              // $(`#answers-${questionId}`).find("p").remove()
               $(`#answers-container-${questionId}`).load(window.location.href + ` #answers-container-${questionId}`, function () {
-                  $(`#show-answers-${questionId}`).trigger("click");
+                  $(`#show-answers-${questionId}`).trigger("click", function () {
+                      toggleTopQuestions()
+                  });
               });
 
 
