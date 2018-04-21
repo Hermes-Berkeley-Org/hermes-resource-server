@@ -7,3 +7,4 @@ node-modules/
 .DS_Store
 .idea/
 keys/
+.ipynb_checkpoints/
