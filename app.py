@@ -226,7 +226,7 @@ def create_client(app):
                 lecture=str(lecture_obj['_id']),
                 name=lecture_obj['name'],
                 transcript=lecture_obj['transcript'],
-                preds=lecture_obj['preds'],
+                preds=lecture_obj.get('preds'),
                 cls_name=lecture_obj['cls'],
                 user=user,
                 questions_interval=questions_interval,
