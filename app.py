@@ -15,6 +15,7 @@ from utils import db_utils
 from utils.app_utils import get_curr_semester, partition, generate_partition_titles
 from utils.db_utils import User, Class, Lecture, Note, Question, Answer
 from utils.transcribe_utils import transcribe, get_youtube_id, get_video_duration
+from utils.textbook_utils import CLASSIFIERS
 
 import consts
 
@@ -203,7 +204,7 @@ def create_client(app):
                 participation['class_exists']
         if user:
             classes = [participation for participation in user['classes'] if validate(participation)]
-            print(classes)
+            # print(classes)
             return render_template(
                 'home.html',
                 user=user,
@@ -226,6 +227,7 @@ def create_client(app):
                 lecture=str(lecture_obj['_id']),
                 name=lecture_obj['name'],
                 transcript=lecture_obj['transcript'],
+                preds=lecture_obj['preds'],
                 cls_name=lecture_obj['cls'],
                 user=user,
                 questions_interval=questions_interval,
@@ -285,12 +287,17 @@ def create_client(app):
                     cls=class_ok_id
                 )
                 id = Class.add_lecture(cls, lecture, db)
-                transcript = transcribe(
+                ts_classifier = None
+                if cls['display_name'] in CLASSIFIERS:
+                    ts_classifier = CLASSIFIERS[cls['display_name']](db, cls['ok_id'])
+                transcript, preds = transcribe(
                     request.form['link'],
                     app.config['TRANSCRIPTION_MODE'],
-                    youtube=youtube
+                    youtube=youtube,
+                    transcription_classifier=ts_classifier,
+                    error_on_failure=True
                 )
-                Lecture.add_transcript(id, transcript, db)
+                Lecture.add_transcript(id, transcript, preds, db)
             else:
                 flash('All fields required')
         return render_template(
