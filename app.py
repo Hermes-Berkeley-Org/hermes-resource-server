@@ -219,6 +219,9 @@ def create_client(app):
         lecture_obj = db['Lectures'].find_one({'cls': cls, 'lecture_number': int(lecture_number)})
         user = get_user_data()
         questions_interval = 5
+        preds = lecture_obj.get('preds')
+        if not preds:
+            preds = (None, [0, len(lecture_obj['transcript'])])
         if lecture_obj and cls_obj:
             return render_template(
                 'lecture.html',
@@ -226,7 +229,7 @@ def create_client(app):
                 lecture=str(lecture_obj['_id']),
                 name=lecture_obj['name'],
                 transcript=lecture_obj['transcript'],
-                preds=lecture_obj.get('preds'),
+                preds=preds,
                 cls_name=lecture_obj['cls'],
                 user=user,
                 questions_interval=questions_interval,
