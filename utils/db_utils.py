@@ -1,7 +1,10 @@
-from pymongo import MongoClient
-from bson.objectid import ObjectId
 import os
 from datetime import datetime
+
+from pymongo import MongoClient
+from bson.objectid import ObjectId
+
+
 
 def insert(dbobj, db):
     return db[dbobj.collection].insert_one(dbobj.to_dict())
@@ -102,7 +105,7 @@ class Class(DBObject):
     def add_lecture(cls, lecture, db):
         def change_date_format(lecture):
             british_date = lecture.get('date')
-            print(british_date)
+            # print(british_date)
             date = datetime.strptime(british_date, "%Y-%m-%d")
             lecture.set('date', date.strftime("%m/%d/%y"))
         change_date_format(lecture)
@@ -136,6 +139,19 @@ class Class(DBObject):
             db
         )
 
+    @staticmethod
+    def save_textbook(documents, links, db, class_ok_id):
+        db[Class.collection].update_one(
+            {
+                'ok_id': class_ok_id
+            },
+            {
+                '$set': {
+                    'documents': documents,
+                    'links': links
+                }
+            }
+        )
 
 class Note(DBObject):
 
@@ -153,7 +169,7 @@ class Lecture(DBObject):
 
 
     @staticmethod
-    def add_transcript(lecture_id, transcript, db):
+    def add_transcript(lecture_id, transcript, preds, db):
         db[Lecture.collection].update_one(
             {
               '_id': lecture_id
@@ -161,6 +177,7 @@ class Lecture(DBObject):
             {
               '$set': {
                 'transcript': transcript,
+                'preds': preds
               }
             },
             upsert=False
