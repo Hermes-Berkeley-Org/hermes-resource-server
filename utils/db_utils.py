@@ -139,6 +139,19 @@ class Class(DBObject):
             db
         )
 
+    @staticmethod
+    def save_textbook(documents, links, db, class_ok_id):
+        db[Class.collection].update_one(
+            {
+                'ok_id': class_ok_id
+            },
+            {
+                '$set': {
+                    'documents': documents,
+                    'links': links
+                }
+            }
+        )
 
 class Note(DBObject):
 

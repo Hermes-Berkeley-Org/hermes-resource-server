@@ -9,7 +9,11 @@
       <div id="ytplayer"></div>
       <div>
             {% for (link, (start, end)) in preds %}
+              {% if link %}
               <table onclick="sendToURL('{{link}}')" class='transcript-box'>
+              {% else %}
+              <table>
+              {% endif %}
               {% for i in range(start, end + 1) %}
                   <tr>
                     <td>
@@ -20,7 +24,6 @@
                   </tr>
               {% endfor %}
               </table>
-              </span>
             {% endfor %}
       </div>
     </div>
