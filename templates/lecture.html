@@ -61,6 +61,13 @@
 
               <a id="show-answers-{{question['_id']}}" data-toggle="collapse" onclick="toggleResponses('toggle-icon-{{question['_id']}}')" data-target="#answers-{{question['_id']}}">
                 <p><span class="fa fa-chevron-down qa-entry" id="toggle-icon-{{question['_id']}}" aria-hidden="true"></span></a>
+                    <button class="btn btn-default btn-sm likes" id = "upvotes-{{question['_id']}}" type=submit onclick='upvoteQuestion("{{user['_id']}}", "{{question['_id']}}")'>
+                      {% if user_id in question['upvotes'] %}
+                      <i class="fa fa-thumbs-up" aria-hidden="true"></i> Like  {{ question['upvotes']|length }}
+                      {% else %}
+                      <i class="fa fa-thumbs-o-up" aria-hidden="true"></i> Like  {{ question['upvotes']|length }}
+                      {% endif %}
+                  </button>
                 {% if question['anon'] == "true" and role == consts.STUDENT %}
                   <span class="question-tag-lg"> Anonymous {{question['timestamp']}}</span>
                 {% else %}
@@ -344,6 +351,24 @@
       success: function (data) {
 
         $(`#upvotes-${answer}`).load(window.location.href + ` #upvotes-${answer}`, function () {
+            toggleTopQuestions()
+        });
+      }
+    });
+  }
+
+  function upvoteQuestion(user, question){
+    var data ={
+      user_id:user,
+      question_id:question
+    };
+    console.log(`${JSON.stringify(data)}`)
+    $.ajax({
+      type: "POST",
+      url: "{{ url_for('upvote_question') }}",
+      data,
+      success: function (data) {
+        $(`#upvotes-${question}`).load(window.location.href + ` #upvotes-${question}`, function () {
             toggleTopQuestions()
         });
       }

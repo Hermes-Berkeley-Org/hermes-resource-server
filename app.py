@@ -375,6 +375,16 @@ def create_client(app):
             logger.info("Illegal request type: %s", request.method)
             return redirect(url_for('error', code=500))
 
+    @app.route('/upvote_question', methods=['GET', 'POST'])
+    def upvote_question():
+        if request.method == 'POST':
+            Question.upvote_question(request.form.to_dict(), db)
+            logger.info("Successfully upvoted question.")
+            return jsonify(success=True), 200
+        else:
+            logger.info("Illegal request type: %s", request.method)
+            return redirect(url_for('error', code=500))
+
     @app.route('/write_answer', methods=['GET', 'POST'])
     def write_answer():
         if request.method == 'POST':
