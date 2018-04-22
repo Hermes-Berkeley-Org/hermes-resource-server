@@ -13,7 +13,7 @@ from urllib.parse import parse_qs, urlencode, urlparse
 import pafy
 
 LENGTH_REQUIRED = 20
-THRESHOLD = 0.5
+THRESHOLD = 0.2
 
 def get_youtube_id(link):
     url = urlparse(link)
@@ -31,7 +31,6 @@ def transcribe(link, mode, youtube=None, transcription_classifier=None, error_on
         preds = None
         if transcription_classifier:
             preds = list(classify(transcription, transcription_classifier))
-            print(preds)
 
         return transcription, preds
 
@@ -39,7 +38,6 @@ def transcribe(link, mode, youtube=None, transcription_classifier=None, error_on
         if error_on_failure:
             raise e
         else:
-            print('Transcribe failed', e) # @Kian: logger statement here!
             return [], []
 
 def classify(transcription, transcription_classifier):
@@ -51,7 +49,6 @@ def classify(transcription, transcription_classifier):
             link, sim = transcription_classifier.predict(curr_text)
             if sim < THRESHOLD:
                 link = None
-            print(sim)
             yield (link, (last, i // 2)) # note i is now the row number in the transcription table
             last = (i // 2) + 1
             curr_text = []
@@ -63,8 +60,6 @@ def read_from_youtube(link, youtube):
             part="snippet",
             videoId=video_id
         ).execute()
-
-        # print(results['items'])
 
         for item in results["items"]:
             return item["id"]

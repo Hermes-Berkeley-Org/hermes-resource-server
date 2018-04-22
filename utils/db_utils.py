@@ -105,7 +105,6 @@ class Class(DBObject):
     def add_lecture(cls, lecture, db):
         def change_date_format(lecture):
             british_date = lecture.get('date')
-            # print(british_date)
             date = datetime.strptime(british_date, "%Y-%m-%d")
             lecture.set('date', date.strftime("%m/%d/%y"))
         change_date_format(lecture)
@@ -184,6 +183,25 @@ class Lecture(DBObject):
         )
 
     @staticmethod
+    def edit_transcript(data, db):
+        lecture = find_one_by_id(data['lecture_id'], Lecture.collection, db)
+        def replace_transcript_elem(lecture, index, text):
+            transcript = lecture['transcript']
+            transcript_elem = transcript[index]
+            transcript_elem['text'] = text
+            return transcript[:index] + [transcript_elem] + transcript[index+1:]
+        db[Lecture.collection].update_one(
+            {
+                '_id': ObjectId(data['lecture_id'])
+            },
+            {
+                '$set': {
+                    'transcript': replace_transcript_elem(lecture, int(data['index']), data['text'])
+                }
+            }
+        )
+
+    @staticmethod
     def delete_lecture(data, db):
         db[Lecture.collection].delete_one(
             {
@@ -214,6 +232,7 @@ class Question(DBObject):
                 name=question['name'],
                 ok_id=question['ok_id'],
                 lecture_id=question['lecture'],
+                upvotes =[],
                 anon = question['anon']
             ),
             db
@@ -233,11 +252,40 @@ class Question(DBObject):
     @staticmethod
     def delete_question(question, db):
         question_id = question['question_id']
-        print(question_id)
         result = db[Question.collection].delete_one(
         {'_id': ObjectId(question_id)}
         )
-        print(result.deleted_count)
+
+    @staticmethod
+    def upvote_question(data, db):
+
+        user_id = data['user_id']
+        upvotes =  find_one_by_id(data['question_id'], Question.collection, db)['upvotes']
+
+        if user_id not in upvotes:
+            return db[Question.collection].update_one(
+                {
+                    '_id': ObjectId(data['question_id'])
+                },
+                {
+                    '$addToSet': {
+                        'upvotes': user_id
+                    }
+                },
+                upsert=False
+            )
+        else:
+            return db[Question.collection].update_one(
+                {
+                    '_id': ObjectId(data['question_id'])
+                },
+                {
+                    '$pop': {
+                        'upvotes': user_id
+                    }
+                },
+                upsert=False
+            )
 
 class Answer(DBObject):
 
@@ -275,7 +323,6 @@ class Answer(DBObject):
     def upvote_answer(data, db):
 
         user_id = data['user_id']
-        print(user_id)
         upvotes =  find_one_by_id(data['answer_id'], Answer.collection, db)['upvotes']
 
         if user_id not in upvotes:
@@ -306,7 +353,6 @@ class Answer(DBObject):
     @staticmethod
     def delete_answer(answer, db):
         answer_id = answer['answer_id']
-        print(answer_id)
         return db[Answer.collection].delete_one(
         {'_id': ObjectId(answer_id)}
         )
