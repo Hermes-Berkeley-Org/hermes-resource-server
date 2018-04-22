@@ -21,9 +21,8 @@
                       <div class="dropdown" id="menu-{{i}}" style="visibility: hidden;">
                         <a data-toggle="dropdown"><i class="fa fa-bars" aria-hidden="true"></i></a>
                         <ul class="dropdown-menu">
-                          <!-- <li><a onclick="suggestChange()">Suggest a change</a></li> -->
                           {% if link %}
-                          <li><a onclick="toggleContextMenu('{{link}}')">View section in textbook</a></li>
+                          <li><a onclick="sendToURL('{{link}}')">View section in textbook</a></li>
                           {% endif %}
                           <li><a onclick="fillQuestion({{i}})">Ask a question</a></li>
                         </ul>

@@ -105,7 +105,6 @@ class Class(DBObject):
     def add_lecture(cls, lecture, db):
         def change_date_format(lecture):
             british_date = lecture.get('date')
-            # print(british_date)
             date = datetime.strptime(british_date, "%Y-%m-%d")
             lecture.set('date', date.strftime("%m/%d/%y"))
         change_date_format(lecture)
@@ -253,17 +252,14 @@ class Question(DBObject):
     @staticmethod
     def delete_question(question, db):
         question_id = question['question_id']
-        print(question_id)
         result = db[Question.collection].delete_one(
         {'_id': ObjectId(question_id)}
         )
-        print(result.deleted_count)
 
     @staticmethod
     def upvote_question(data, db):
 
         user_id = data['user_id']
-        print(user_id)
         upvotes =  find_one_by_id(data['question_id'], Question.collection, db)['upvotes']
 
         if user_id not in upvotes:
@@ -327,7 +323,6 @@ class Answer(DBObject):
     def upvote_answer(data, db):
 
         user_id = data['user_id']
-        print(user_id)
         upvotes =  find_one_by_id(data['answer_id'], Answer.collection, db)['upvotes']
 
         if user_id not in upvotes:
@@ -358,7 +353,6 @@ class Answer(DBObject):
     @staticmethod
     def delete_answer(answer, db):
         answer_id = answer['answer_id']
-        print(answer_id)
         return db[Answer.collection].delete_one(
         {'_id': ObjectId(answer_id)}
         )
