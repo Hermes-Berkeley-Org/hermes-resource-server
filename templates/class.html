@@ -55,7 +55,8 @@
 <script>
     function deleteLecture(lectureid){
       var data ={
-        lectureid
+        lectureid,
+        api_key: '{{ api_key }}'
       };
       console.log(`${JSON.stringify(data)}`)
       $.ajax({

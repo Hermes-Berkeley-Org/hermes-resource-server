@@ -33,7 +33,6 @@ class TranscriptionClassifier:
     def load_model(self):
         file_name = '{0}/{1}'.format(MODEL_DIR, self.model_name)
         if os.path.exists(file_name):
-            print('loading from file')
             self.model = Doc2Vec.load(file_name)
             return True
         else:
@@ -76,7 +75,6 @@ class CS61ATranscriptionClassifier(TranscriptionClassifier):
     def download_documents(self, db):
         cls = db[Class.collection].find_one({'ok_id': self.class_ok_id})
         if cls and 'documents' in cls and 'links' in cls:
-            print('found docs/links in db')
             self.documents = cls['documents']
             self.links = cls['links']
         else:
@@ -90,7 +88,7 @@ class CS61ATranscriptionClassifier(TranscriptionClassifier):
                         self.links.extend(new_links)
                         running = False
                     except:
-                        print('Trying page', i, 'again')
+                        pass
             Class.save_textbook(self.documents, self.links, db, self.class_ok_id)
 
     def scrape(self, page_url):
@@ -118,7 +116,3 @@ def get_words(document):
 CLASSIFIERS = {
     'CS 61A': CS61ATranscriptionClassifier
 }
-
-# if __name__ == '__main__':
-#     ts = CS61ATranscriptionClassifier()
-#     print(ts.predict('lists are mutable data types'.split(' ')))

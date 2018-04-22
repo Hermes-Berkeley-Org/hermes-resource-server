@@ -203,7 +203,6 @@ def create_client(app):
                 participation['class_exists']
         if user:
             classes = [participation for participation in user['classes'] if validate(participation)]
-            # print(classes)
             return render_template(
                 'home.html',
                 user=user,
@@ -310,7 +309,8 @@ def create_client(app):
             form=form,
             user=user,
             role=role,
-            consts=consts
+            consts=consts,
+            api_key=app.config['HERMES_API_KEY']
         )
 
     @app.route('/create_class/<class_ok_id>', methods=['GET', 'POST'])
