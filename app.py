@@ -217,7 +217,7 @@ def create_client(app):
         cls_obj = db['Classes'].find_one({'ok_id': int(cls)})
         lecture_obj = db['Lectures'].find_one({'cls': cls, 'lecture_number': int(lecture_number)})
         user = get_user_data()
-        questions_interval = 5
+        questions_interval = 30
         preds = lecture_obj.get('preds')
         if not preds:
             preds = [(None, [0, len(lecture_obj['transcript'])])]
