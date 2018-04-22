@@ -7,19 +7,27 @@
   <div class="row">
     <div class="col-md-7">
       <div id="ytplayer"></div>
-      <div>
+      <div id="transcript">
             {% for (link, (start, end)) in preds %}
-              {% if link %}
-              <table onclick="sendToURL('{{link}}')" class='transcript-box'>
-              {% else %}
-              <table>
-              {% endif %}
+              <table class='transcript-box'>
               {% for i in range(start, end + 1) %}
-                  <tr>
+                  <tr id="transcript-row-{{i}}" class="transcript-row">
                     <td>
                       <span id="ts-{{2 * i}}"></span>
                       <span id="text-{{2 * i}}"></span>
                       <span id="text-{{2 * i + 1}}"></span>
+                    </td>
+                    <td>
+                      <div class="dropdown" id="menu-{{i}}" style="visibility: hidden;">
+                        <a data-toggle="dropdown"><i class="fa fa-bars" aria-hidden="true"></i></a>
+                        <ul class="dropdown-menu">
+                          <!-- <li><a onclick="suggestChange()">Suggest a change</a></li> -->
+                          {% if link %}
+                          <li><a onclick="toggleContextMenu('{{link}}')">View section in textbook</a></li>
+                          {% endif %}
+                          <li><a onclick="fillQuestion({{i}})">Ask a question</a></li>
+                        </ul>
+                      </div>
                     </td>
                   </tr>
               {% endfor %}
@@ -144,18 +152,46 @@
 
 <script>
 
-  // document.getElementById('partition-1').classList.remove('in');
+  document.addEventListener('contextmenu', function(event) {
+      var selObj = window.getSelection();
+      var text = selObj.toString();
+      if (text.length > 0) {
+          event.preventDefault();
+          var suggestionInput = document.createElement('input');
+          suggestionInput.id = 'suggestion';
+          suggestionInput.value = text;
+          selObj.getRangeAt(0).surroundContents(suggestionInput);
+          suggestionInput.innerHTML = '';
+          $('#suggestion').keydown(function(event) {
+              if (event.keyCode == 13) { // enter key
+                  var parent = $(this).closest('span');
+                  $(this).replaceWith($(this).val());
+                  var text = parent.text();
+                  var index = parent.attr('id').split('-').pop();
 
-  // Load the IFrame Player API code asynchronously.
+                  var data = {
+                      text,
+                      index,
+                      lecture_id: '{{ lecture }}',
+                      api_key: '{{ api_key }}'
+                  }
 
-  // https://www.youtube.com/watch?v=JPb1k6JdGvg
+                  $.ajax({
+                    type: "POST",
+                    url: "{{ url_for('edit_transcript') }}",
+                    data
+                  });
+
+              }
+          });
+      }
+  });
+
   var tag = document.createElement('script');
   tag.src = "https://www.youtube.com/player_api";
   var firstScriptTag = document.getElementsByTagName('script')[0];
   firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
 
-  // Replace the 'ytplayer' element with an <iframe> and
-  // YouTube player after the API code downloads.
   var player;
   function onYouTubePlayerAPIReady() {
     player = new YT.Player('ytplayer', {
@@ -224,6 +260,7 @@
                   }
                   var p2 = document.getElementById("text-{{loop.index - 1}}");
                   p2.innerHTML = "{{transcript_element['text']}}";
+                  document.getElementById("menu-{{loop.index // 2}}").style.visibility = "visible";
               }
           }
           {% endfor %}
@@ -233,7 +270,7 @@
             if (state == 1) { // video is playing
               var collapseButton = $("a:contains('{{begin}} - {{end}}')");
               var div = $(collapseButton.attr('data-target'));
-              if (div.attr('class').split(' ').indexOf('show') == -1) {
+              if (div && div.attr('class') && div.attr('class').split(' ').indexOf('show') == -1) {
                 console.log(collapseButton.children()[0].id);
                 toggleResponses(collapseButton.children()[0].id);
                 div.collapse('show');
@@ -279,7 +316,8 @@
            ok_id: "{{ user['ok_id'] }}",
            lecture: "{{ lecture }}",
            cls: "{{ cls }}",
-           anon: anonymous
+           anon: anonymous,
+           api_key: "{{ api_key }}"
         }
 
         console.log(`${JSON.stringify(data)}`)
@@ -300,7 +338,8 @@
 
   function deleteQuestion(question) {
     var data = {
-      question_id: question
+      question_id: question,
+      api_key: "{{ api_key }}"
     }
 
     $.ajax({
@@ -317,7 +356,8 @@
 
   function deleteAnswer(answer, question) {
     var data = {
-      answer_id: answer
+      answer_id: answer,
+      api_key: "{{ api_key }}"
     };
 
     question_id = question;
@@ -341,7 +381,8 @@
     var currentcount = document.getElementById(`upvotes-${answer}`).value;
     var data ={
       user_id:user,
-      answer_id:answer
+      answer_id:answer,
+      api_key: "{{ api_key }}"
     };
     console.log(`${JSON.stringify(data)}`)
     $.ajax({
@@ -360,7 +401,8 @@
   function upvoteQuestion(user, question){
     var data ={
       user_id:user,
-      question_id:question
+      question_id:question,
+      api_key: "{{ api_key }}"
     };
     console.log(`${JSON.stringify(data)}`)
     $.ajax({
@@ -389,7 +431,8 @@
           var data = {
              question_id: questionId,
              text: answer,
-             anon: anonymous
+             anon: anonymous,
+             api_key: "{{ api_key }}"
           };
 
 
@@ -415,11 +458,13 @@
   function sendToURL(url) {
       window.open(
         url,
-        '_blank' // <- This is what makes it open in a new window.
+        '_blank'
       );
   }
 
-
+  function fillQuestion(rowIndex) {
+      document.getElementById('question').value = document.getElementById(`transcript-row-${rowIndex}`).textContent.replace(/\s+/g, ' ');
+  }
 
 
 

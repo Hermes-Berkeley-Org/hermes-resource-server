@@ -184,6 +184,25 @@ class Lecture(DBObject):
         )
 
     @staticmethod
+    def edit_transcript(data, db):
+        lecture = find_one_by_id(data['lecture_id'], Lecture.collection, db)
+        def replace_transcript_elem(lecture, index, text):
+            transcript = lecture['transcript']
+            transcript_elem = transcript[index]
+            transcript_elem['text'] = text
+            return transcript[:index] + [transcript_elem] + transcript[index+1:]
+        db[Lecture.collection].update_one(
+            {
+                '_id': ObjectId(data['lecture_id'])
+            },
+            {
+                '$set': {
+                    'transcript': replace_transcript_elem(lecture, int(data['index']), data['text'])
+                }
+            }
+        )
+
+    @staticmethod
     def delete_lecture(data, db):
         db[Lecture.collection].delete_one(
             {

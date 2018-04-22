@@ -240,7 +240,8 @@ def create_client(app):
                 role=get_role(cls)[0],
                 consts=consts,
                 cls=str(cls_obj['_id']),
-                db=db
+                db=db,
+                api_key=app.config['HERMES_API_KEY']
             )
         logger.info("Displaying lecture.")
         return redirect(url_for('error', code=404))
@@ -338,9 +339,12 @@ def create_client(app):
     @app.route('/delete_lecture', methods=['GET', 'POST'])
     def delete_lecture():
         if request.method == 'POST':
-            Lecture.delete_lecture(request.form.to_dict(), db)
-            logger.info("Successfully deleted lecture.")
-            return jsonify(success=True), 200
+            if request.form['api_key'] == app.config['HERMES_API_KEY']:
+                Lecture.delete_lecture(request.form.to_dict(), db)
+                logger.info("Successfully deleted lecture.")
+                return jsonify(success=True), 200
+            else:
+                return jsonify(success=False), 403
         else:
             logger.info("Illegal request type: %s", request.method)
             return redirect(url_for('error', code=500))
@@ -348,9 +352,12 @@ def create_client(app):
     @app.route('/write_question', methods=['GET', 'POST'])
     def write_question():
         if request.method == 'POST':
-            Question.write_question(request.form.to_dict(), db)
-            logger.info("Successfully wrote question.")
-            return jsonify(success=True), 200
+            if request.form['api_key'] == app.config['HERMES_API_KEY']:
+                Question.write_question(request.form.to_dict(), db)
+                logger.info("Successfully wrote question.")
+                return jsonify(success=True), 200
+            else:
+                return jsonify(success=False), 403
         else:
             logger.info("Illegal request type: %s", request.method)
             return redirect(url_for('error', code=500))
@@ -358,9 +365,12 @@ def create_client(app):
     @app.route('/delete_question', methods=['GET', 'POST'])
     def delete_question():
         if request.method == 'POST':
-            Question.delete_question(request.form.to_dict(), db)
-            logger.info("Successfully deleted question.")
-            return jsonify(success=True), 200
+            if request.form['api_key'] == app.config['HERMES_API_KEY']:
+                Question.delete_question(request.form.to_dict(), db)
+                logger.info("Successfully deleted question.")
+                return jsonify(success=True), 200
+            else:
+                return jsonify(success=False), 403
         else:
             logger.info("Illegal request type: %s", request.method)
             return redirect(url_for('error', code=500))
@@ -368,9 +378,12 @@ def create_client(app):
     @app.route('/edit_question', methods=['GET', 'POST'])
     def edit_question():
         if request.method == 'POST':
-            Question.edit_question(id, request.form.to_dict(), db)
-            logger.info("Successfully edited question.")
-            return jsonify(success=True), 200
+            if request.form['api_key'] == app.config['HERMES_API_KEY']:
+                Question.edit_question(id, request.form.to_dict(), db)
+                logger.info("Successfully edited question.")
+                return jsonify(success=True), 200
+            else:
+                return jsonify(success=False), 403
         else:
             logger.info("Illegal request type: %s", request.method)
             return redirect(url_for('error', code=500))
@@ -378,9 +391,12 @@ def create_client(app):
     @app.route('/upvote_question', methods=['GET', 'POST'])
     def upvote_question():
         if request.method == 'POST':
-            Question.upvote_question(request.form.to_dict(), db)
-            logger.info("Successfully upvoted question.")
-            return jsonify(success=True), 200
+            if request.form['api_key'] == app.config['HERMES_API_KEY']:
+                Question.upvote_question(request.form.to_dict(), db)
+                logger.info("Successfully upvoted question.")
+                return jsonify(success=True), 200
+            else:
+                return jsonify(success=False), 403
         else:
             logger.info("Illegal request type: %s", request.method)
             return redirect(url_for('error', code=500))
@@ -388,9 +404,12 @@ def create_client(app):
     @app.route('/write_answer', methods=['GET', 'POST'])
     def write_answer():
         if request.method == 'POST':
-            Answer.write_answer(get_user_data(), request.form.to_dict(), db)
-            logger.info("Successfully wrote answer.")
-            return jsonify(success=True), 200
+            if request.form['api_key'] == app.config['HERMES_API_KEY']:
+                Answer.write_answer(get_user_data(), request.form.to_dict(), db)
+                logger.info("Successfully wrote answer.")
+                return jsonify(success=True), 200
+            else:
+                return jsonify(success=False), 403
         else:
             logger.info("Illegal request type: %s", request.method)
             return redirect(url_for('error', code=500))
@@ -398,9 +417,12 @@ def create_client(app):
     @app.route('/delete_answer', methods=['GET', 'POST'])
     def delete_answer():
         if request.method == 'POST':
-            Answer.delete_answer(request.form.to_dict(), db)
-            logger.info("Successfully deleted answer.")
-            return jsonify(success=True), 200
+            if request.form['api_key'] == app.config['HERMES_API_KEY']:
+                Answer.delete_answer(request.form.to_dict(), db)
+                logger.info("Successfully deleted answer.")
+                return jsonify(success=True), 200
+            else:
+                return jsonify(success=False), 403
         else:
             logger.info("Illegal request type: %s", request.method)
             return redirect(url_for('error', code=500))
@@ -408,9 +430,25 @@ def create_client(app):
     @app.route('/edit_answer', methods=['GET', 'POST'])
     def edit_answer():
         if request.method == 'POST':
-            Answer.edit_answer(request.form.to_dict(), db)
-            logger.info("Successfully edited answer.")
-            return jsonify(success=True), 200
+            if request.form['api_key'] == app.config['HERMES_API_KEY']:
+                Answer.edit_answer(request.form.to_dict(), db)
+                logger.info("Successfully edited answer.")
+                return jsonify(success=True), 200
+            else:
+                return jsonify(success=False), 403
+        else:
+            logger.info("Illegal request type: %s", request.method)
+            return redirect(url_for('error', code=500))
+
+    @app.route('/edit_transcript', methods=['GET', 'POST'])
+    def edit_transcript():
+        if request.method == 'POST':
+            if request.form['api_key'] == app.config['HERMES_API_KEY']:
+                Lecture.edit_transcript(request.form.to_dict(), db)
+                logger.info("Successfully edited transcript.")
+                return jsonify(success=True), 200
+            else:
+                return jsonify(success=False), 403
         else:
             logger.info("Illegal request type: %s", request.method)
             return redirect(url_for('error', code=500))
@@ -418,9 +456,12 @@ def create_client(app):
     @app.route('/upvote_answer', methods=['GET', 'POST'])
     def upvote_answer():
         if request.method == 'POST':
-            Answer.upvote_answer(request.form.to_dict(), db)
-            logger.info("Successfully upvoted answer.")
-            return jsonify(success=True), 200
+            if request.form['api_key'] == app.config['HERMES_API_KEY']:
+                Answer.upvote_answer(request.form.to_dict(), db)
+                logger.info("Successfully upvoted answer.")
+                return jsonify(success=True), 200
+            else:
+                return jsonify(success=False), 403
         else:
             logger.info("Illegal request type: %s", request.method)
             return redirect(url_for('error', code=500))
