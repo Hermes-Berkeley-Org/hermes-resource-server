@@ -58,22 +58,37 @@ th {
 	padding-left: 5px; */
 }
 
-.classsections{
+.classsections {
 	width:50%;
 }
 
-.classtable{
+.classtable {
 	width: 100%;
-  margin-bottom: 0px;
-	margin-top: 0px;
+	margin-bottom: 3px;
+	margin-top: 3px;
+	text-align: center;
+}
+
+#lec_table th {
+	font-size: 1.5em;
+	color: white;
+	background-color: #18BC9C; 
+}
+
+#lec_table tr:nth-child(odd) {
+	background-color: #eee;
+}
+
+#lec_table tr.lec-row:hover {
+	background: #fefbd8;
 }
 
 .transcript-box:hover {
-		background: #fefbd8;
+	background: #fefbd8;
 }
 
 input#suggestion {
-		border:none;
+	border:none;
 }
 
 input#suggestion:focus {
@@ -81,6 +96,19 @@ input#suggestion:focus {
 }
 
 div.class-box {
+	display: table;
 	height: 100px;
+	width: 100%;
+	line-height: 100px;
 	background-color: #ddd;
+	text-align: center;
+}
+
+div.class-box:hover {
+	background-color: #ccc;
+}
+
+div.class-box h6 {
+	display: table-cell;
+	vertical-align: middle;
 }
