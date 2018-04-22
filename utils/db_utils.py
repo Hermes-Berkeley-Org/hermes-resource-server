@@ -214,6 +214,7 @@ class Question(DBObject):
                 name=question['name'],
                 ok_id=question['ok_id'],
                 lecture_id=question['lecture'],
+                upvotes =[],
                 anon = question['anon']
             ),
             db
@@ -238,6 +239,38 @@ class Question(DBObject):
         {'_id': ObjectId(question_id)}
         )
         print(result.deleted_count)
+
+    @staticmethod
+    def upvote_question(data, db):
+
+        user_id = data['user_id']
+        print(user_id)
+        upvotes =  find_one_by_id(data['question_id'], Question.collection, db)['upvotes']
+
+        if user_id not in upvotes:
+            return db[Question.collection].update_one(
+                {
+                    '_id': ObjectId(data['question_id'])
+                },
+                {
+                    '$addToSet': {
+                        'upvotes': user_id
+                    }
+                },
+                upsert=False
+            )
+        else:
+            return db[Question.collection].update_one(
+                {
+                    '_id': ObjectId(data['question_id'])
+                },
+                {
+                    '$pop': {
+                        'upvotes': user_id
+                    }
+                },
+                upsert=False
+            )
 
 class Answer(DBObject):
 
