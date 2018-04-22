@@ -13,25 +13,27 @@ import numpy as np
 sw = set(stopwords.words('english'))
 MODEL_DIR = 'transcription_models'
 
+EPOCHS = 100
+
 class TranscriptionClassifier:
 
     model_name = 'textbook.doc2vec'
 
-    def __init__(self, base_url, db, class_ok_id, retrain=True):
+    def __init__(self, base_url, db, class_ok_id, retrain=False):
         self.base_url = base_url
         self.class_ok_id = class_ok_id
         self.documents = []
         self.links = []
         self.generate_documents(db)
-        Class.save_textbook(self.documents, self.links, db, self.class_ok_id)
         loaded = not retrain and self.load_model()
         if not loaded:
-            self.model = Doc2Vec(alpha=.025, min_alpha=.025, min_count=1)
+            self.model = Doc2Vec(min_count=1, batch_words=20)
             self.train()
 
     def load_model(self):
         file_name = '{0}/{1}'.format(MODEL_DIR, self.model_name)
         if os.path.exists(file_name):
+            print('loading from file')
             self.model = Doc2Vec.load(file_name)
             return True
         else:
@@ -43,7 +45,7 @@ class TranscriptionClassifier:
     def train(self):
         it = generate_tagged_documents(self.documents, self.links)
         self.model.build_vocab(it)
-        self.model.train(it, total_examples=self.model.corpus_count, epochs=self.model.epochs)
+        self.model.train(it, total_examples=self.model.corpus_count, epochs=EPOCHS)
         self.model.save('{0}/{1}'.format(MODEL_DIR, self.model_name))
 
     def predict(self, words):
@@ -74,6 +76,7 @@ class CS61ATranscriptionClassifier(TranscriptionClassifier):
     def download_documents(self, db):
         cls = db[Class.collection].find_one({'ok_id': self.class_ok_id})
         if cls and 'documents' in cls and 'links' in cls:
+            print('found docs/links in db')
             self.documents = cls['documents']
             self.links = cls['links']
         else:
@@ -88,6 +91,7 @@ class CS61ATranscriptionClassifier(TranscriptionClassifier):
                         running = False
                     except:
                         print('Trying page', i, 'again')
+            Class.save_textbook(self.documents, self.links, db, self.class_ok_id)
 
     def scrape(self, page_url):
         soup = BeautifulSoup(requests.get(page_url).text, 'html.parser')

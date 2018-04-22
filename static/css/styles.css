@@ -71,3 +71,11 @@ th {
 .transcript-box:hover {
 		background: #fefbd8;
 }
+
+input#suggestion {
+		border:none;
+}
+
+input#suggestion:focus {
+    outline:none;
+}
