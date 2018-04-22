@@ -13,18 +13,17 @@
               {% for i in range(start, end + 1) %}
                   <tr id="transcript-row-{{i}}" class="transcript-row">
                     <td>
+                      <div class="dropdown" id="menu-{{i}}">
                       <span id="ts-{{2 * i}}"></span>
-                      <span id="text-{{2 * i}}"></span>
-                      <span id="text-{{2 * i + 1}}"></span>
-                    </td>
-                    <td>
-                      <div class="dropdown" id="menu-{{i}}" style="visibility: hidden;">
-                        <a data-toggle="dropdown"><i class="fa fa-bars" aria-hidden="true"></i></a>
+                        <a data-toggle="dropdown">
+                          <span id="text-{{2 * i}}"></span>
+                          <span id="text-{{2 * i + 1}}"></span>
+                        </a>
                         <ul class="dropdown-menu">
                           {% if link %}
-                          <li><a onclick="sendToURL('{{link}}')">View section in textbook</a></li>
+                          <li><a onclick="sendToURL('{{link}}')"> View section in textbook</a></li>
                           {% endif %}
-                          <li><a onclick="fillQuestion({{i}})">Ask a question</a></li>
+                          <li><a onclick="fillQuestion({{i}})"> Ask a question</a></li>
                         </ul>
                       </div>
                     </td>

@@ -83,6 +83,10 @@ th {
 	background: #fefbd8;
 }
 
+.transcript-box {
+	width: 50vw;
+}
+
 .transcript-box:hover {
 	background: #fefbd8;
 }
@@ -111,4 +115,18 @@ div.class-box:hover {
 div.class-box h6 {
 	display: table-cell;
 	vertical-align: middle;
+}
+
+.dropdown {
+	visibility: hidden;
+}
+
+ul.dropdown-menu li {
+	margin-left: 10px;
+	margin-right: 10px;
+}
+
+ul.dropdown-menu li:hover {
+	cursor: pointer;
+	background-color: #fefbd8;
 }
