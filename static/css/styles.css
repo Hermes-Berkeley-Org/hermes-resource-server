@@ -10,7 +10,7 @@ html,html *{box-sizing: border-box !important;}
 }
 
 .full-section-shifted {
-	height: 90vh;
+	height: 92.5vh;
 }
 
 .wrapper {
@@ -78,4 +78,9 @@ input#suggestion {
 
 input#suggestion:focus {
     outline:none;
+}
+
+div.class-box {
+	height: 100px;
+	background-color: #ddd;
 }
