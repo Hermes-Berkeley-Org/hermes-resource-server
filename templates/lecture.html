@@ -151,10 +151,11 @@
   document.addEventListener('contextmenu', function(event) {
       var selObj = window.getSelection();
       var text = selObj.toString();
-      if (text.length > 0) {
+      if (text.length > 0 && $('#suggestion').length == 0) {
           event.preventDefault();
           var suggestionInput = document.createElement('input');
           suggestionInput.id = 'suggestion';
+          suggestionInput.size = text.length;
           suggestionInput.value = text;
           selObj.getRangeAt(0).surroundContents(suggestionInput);
           suggestionInput.innerHTML = '';
