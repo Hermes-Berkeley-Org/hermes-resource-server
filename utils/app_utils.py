@@ -28,14 +28,16 @@ def partition(cursor, questions_interval, duration):
     curr_time = 0
     curr_partition = []
 
-    questions = list(cursor)
 
-    top_questions = questions[:5]
+    by_time = list(cursor.sort([('seconds', 1)]))
+    # by_time = time_cursor.sort([('seconds', 1)])
+
+    top_questions = sorted(by_time, key=lambda document: -len(document['upvotes']))[:5]
     if top_questions:
         partitions.append((top_questions, ('0:00', '0:00')))
 
     i = 0
-    low_questions = questions[5:]
+    low_questions = [question for question in by_time if question not in top_questions]
     while i < len(low_questions):
         question = low_questions[i]
         if curr_time <= question['seconds'] < curr_time + questions_interval:

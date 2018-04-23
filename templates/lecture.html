@@ -50,7 +50,7 @@
         <!-- </form> -->
       </div>
       <section id="questions_table">
-          {% for question_set, interval in partition(db['Questions'].find({'lecture_id': lecture}).sort([('seconds', 1), ('upvotes', 1)]), questions_interval, duration) %}
+          {% for question_set, interval in partition(db['Questions'].find({'lecture_id': lecture}), questions_interval, duration) %}
             {% if loop.index == 1 %}
                 <a data-toggle="collapse" onclick="toggleResponses('partition-icon-{{loop.index}}')" data-target="#partition-{{loop.index}}"><span style="font-size: 18px" id="partition-icon-{{loop.index}}" class="fa fa-chevron-down qa-entry" aria-hidden="true"></span><strong>Top Questions</strong></a>
             {% else %}
