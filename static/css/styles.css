@@ -87,7 +87,7 @@ th {
 #lec_table th {
 	font-size: 1.5em;
 	color: white;
-	background-color: #18BC9C; 
+	background-color: #18BC9C;
 }
 
 #lec_table tr:nth-child(odd) {
