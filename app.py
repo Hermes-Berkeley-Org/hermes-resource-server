@@ -196,6 +196,7 @@ def create_client(app):
     @app.route('/home/')
     def home():
         user = get_user_data()
+        print(user)
         def validate(participation):
             participation['semester'] = Class.get_semester(participation['offering'])
             participation['class_exists'] = db[Class.collection].find({'ok_id': participation['ok_id']}).count() > 0
@@ -465,6 +466,19 @@ def create_client(app):
         else:
             logger.info("Illegal request type: %s", request.method)
             return redirect(url_for('error', code=500))
+
+    @app.template_filter('exclude')
+    def exclude(lst, excl):
+        ret = []
+        for elem in lst:
+            flag = True
+            for tup in excl:
+                if elem[tup[0]] == tup[1]:
+                    flag = False
+                    break
+            if flag:
+                ret.append(elem)
+        return ret
 
     @app.errorhandler(404)
     def page_not_found(e):
