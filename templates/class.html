@@ -14,7 +14,7 @@
       </tr>
       {% for lec in lectures %}
         <div id= lecture-{{lec['_id']}}>
-        <tr>
+        <tr class="lec-row">
           <td><a href={{ url_for('lecture', cls=lec['cls'], lecture_number=lec['lecture_number'])}}>{{ lec['name'] }}</a></td>
           &nbsp; &nbsp;
           <td>{{lec['date']}}</td>

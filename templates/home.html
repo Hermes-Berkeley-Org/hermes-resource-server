@@ -8,49 +8,126 @@
     <br />
     <h3>Classes</h3>
     <h4>{{curr_semester}}</h4>
-    <h5>Staff Classes</h5>
-    <ul>
+    {% if classes|exclude([('role', 'student')])|selectattr('semester', curr_semester) %}
+        <h5>Staff Classes</h5>
+    {% endif %}
+    <div>
+    {% set counter = [0] %}
     {% for class in classes %}
         {% if class['role'] != 'student' and class['semester'] == curr_semester %}
             {% if class['class_exists'] %}
-                <li><a href="{{ url_for('classpage', class_ok_id=class['ok_id']) }}">{{class['display_name']}} ({{class['role'].capitalize()}})</a></li>
+                {% if counter == [0] %}
+                    <div class="row"> <!-- Start row -->
+                {% endif %}
+                <div class="col-md-4"><a href="{{ url_for('classpage', class_ok_id=class['ok_id']) }}"><div class="class-box"><h6>{{class['display_name']}} ({{class['role'].capitalize()}})</h6></div></a></div>
+                {% if counter.append(counter.pop() + 1) %}{% endif %}
+                {% if counter == [3] %} 
+                    </div> <!-- End row -->
+                    {% if counter.pop() %}{% endif %}
+                    {% if counter.append(0) %}{% endif %}
+                {% endif %}
             {% else %}
-                <li><a href="{{ url_for('create_class', class_ok_id=class['ok_id']) }}">{{class['display_name']}} ({{class['role'].capitalize()}})</a></li>
+                {% if counter == [0] %}
+                    <div class="row"> <!-- Start row -->
+                {% endif %}
+                <div class="col-md-4"><a href="{{ url_for('create_class', class_ok_id=class['ok_id']) }}"><div class="class-box"><h6>{{class['display_name']}} ({{class['role'].capitalize()}})</h6></div></a></div>
+                {% if counter.append(counter.pop() + 1) %}{% endif %}
+                {% if counter == [3] %} 
+                    </div> <!-- End row -->
+                    {% if counter.pop() %}{% endif %}
+                    {% if counter.append(0) %}{% endif %}
+                {% endif %}
             {% endif %}
         {% endif %}
     {% endfor %}
-    </ul>
-    <h5>Student Classes</h5>
-    <ul>
+    {% if counter != [0] %}
+        </div> <!-- No more classes, but finish row -->
+    {% endif %}
+    </div>
+    {% if classes|selectattr('role', 'student') and classes|selectattr('semester', curr_semester) %}
+        <br><h5>Student Classes</h5>
+    {% endif %}
+    <div>
+    {% set counter = [0] %}
     {% for class in classes %}
         {% if class['role'] == 'student' and class['semester'] == curr_semester %}
-            <li><a href="{{ url_for('classpage', class_ok_id=class['ok_id']) }}">{{class['display_name']}}</a></li>
+            {% if counter == [0] %}
+                <div class="row"> <!-- Start row -->
+            {% endif %}
+            <div class="col-md-4"><a href="{{ url_for('classpage', class_ok_id=class['ok_id']) }}"><div class="class-box"><h6>{{class['display_name']}}</h6></div></a></div>
+            {% if counter.append(counter.pop() + 1) %}{% endif %}
+            {% if counter == [3] %} 
+                </div> <!-- End row -->
+                {% if counter.pop() %}{% endif %}
+                {% if counter.append(0) %}{% endif %}
+            {% endif %}
         {% endif %}
     {% endfor %}
-    </ul>
-    <h5>Previous Classes</h5>
-    <h5>Staff Classes</h5>
-    <ul>
+    {% if counter != [0] %}
+        </div> <!-- No more classes, but finish row -->
+    {% endif %}
+    </div>
+    <br><br>
+    <h4>Previous Classes</h4>
+    {% if classes|exclude([('role', 'student'), ('semester', curr_semester)]) %}
+        <br><h5>Staff Classes</h5>
+    {% endif %}
+    <div>
+    {% set counter = [0] %}
     {% for class in classes %}
         {% if class['role'] != 'student' and class['semester'] != curr_semester %}
             {% if class['class_exists'] %}
-                <li><a href="{{ url_for('classpage', class_ok_id=class['ok_id']) }}">{{class['display_name']}} ({{class['semester']}}) ({{class['role'].capitalize()}})</a></li>
+                {% if counter == [0] %}
+                    <div class="row"> <!-- Start row -->
+                {% endif %}
+                <div class="col-md-4"><a href="{{ url_for('classpage', class_ok_id=class['ok_id']) }}"><div class="class-box"><h6>{{class['display_name']}} ({{class['semester']}}) ({{class['role'].capitalize()}})</h6></div></a></div>
+                {% if counter.append(counter.pop() + 1) %}{% endif %}
+                {% if counter == [3] %} 
+                    </div> <!-- End row -->
+                {% endif %}
             {% else %}
-                <li><a href="{{ url_for('create_class', class_ok_id=class['ok_id']) }}">{{class['display_name']}} ({{class['semester']}}) ({{class['role'].capitalize()}})</a></li>
+                {% if counter == [0] %}
+                    <div class="row"> <!-- Start row -->
+                {% endif %}
+                <div class="col-md-4"><a href="{{ url_for('create_class', class_ok_id=class['ok_id']) }}"><div class="class-box"><h6>{{class['display_name']}} ({{class['semester']}}) ({{class['role'].capitalize()}})</h6></div></a></div>
+                {% if counter.append(counter.pop() + 1) %}{% endif %}
+                {% if counter == [3] %} 
+                    </div> <!-- End row -->
+                {% endif %}
             {% endif %}
         {% endif %}
     {% endfor %}
-    </ul>
-    <h5>Student Classes</h5>
-    <ul>
+    {% if counter != [0] %}
+        </div> <!-- No more classes, but finish row -->
+    {% endif %}
+    </div>
+    {% if classes|exclude([('semester', curr_semester)])|selectattr('role', 'student') %}
+        <br><h5>Student Classes</h5>
+    {% endif %}
+    <div>
+    {% set counter = [0] %}
     {% for class in classes %}
         {% if class['role'] == 'student' and class['semester'] != curr_semester %}
-            <li><a href="{{ url_for('classpage', class_ok_id=class['ok_id']) }}">{{class['display_name']}} ({{class['semester']}}) ({{class['role'].capitalize()}}) </a></li>
+            {% if counter == [0] %}
+                <div class="row"> <!-- Start row -->
+            {% endif %}
+            <div class="col-md-4"><a href="{{ url_for('classpage', class_ok_id=class['ok_id']) }}"><div class="class-box"><h6>{{class['display_name']}} ({{class['semester']}}) ({{class['role'].capitalize()}})</h6></div></a></div>
+            {% if counter.append(counter.pop() + 1) %}{% endif %}
+            {% if counter == [3] %} 
+                </div> <!-- End row -->
+            {% endif %}
         {% endif %}
     {% endfor %}
-    </ul>
+    {% if counter != [0] %}
+        </div> <!-- No more classes, but finish row -->
+    {% endif %}
+    </div>
 
 </div>
+
+<script>
+/* For code refactoring of creating these class boxes */
+</script>
 
 {% endblock %}
 {% block footer %}
