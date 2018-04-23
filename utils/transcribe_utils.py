@@ -12,8 +12,8 @@ from urllib.parse import parse_qs, urlencode, urlparse
 
 import pafy
 
-LENGTH_REQUIRED = 20
-THRESHOLD = 0.2
+LENGTH_REQUIRED = 100
+THRESHOLD = 0.0
 
 def get_youtube_id(link):
     url = urlparse(link)
