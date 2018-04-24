@@ -48,9 +48,15 @@
             </div>
           </div>
         <!-- </form> -->
+        <div class="row">
+            <p>
+            <button type="button" class="btn btn-default btn-sm" type=submit onclick='refreshQuestions()'>
+              <span class="glyphicon glyphicon-refresh"></span> Refresh
+            </button>
+          </p>
       </div>
       <section id="questions_table">
-          {% for question_set, interval in partition(db['Questions'].find({'lecture_id': lecture}).sort([('seconds', 1), ('upvotes', 1)]), questions_interval, duration) %}
+          {% for question_set, interval in partition(db['Questions'].find({'lecture_id': lecture}), questions_interval, duration) %}
             {% if loop.index == 1 %}
                 <a data-toggle="collapse" onclick="toggleResponses('partition-icon-{{loop.index}}')" data-target="#partition-{{loop.index}}"><span style="font-size: 18px" id="partition-icon-{{loop.index}}" class="fa fa-chevron-down qa-entry" aria-hidden="true"></span><strong>Top Questions</strong></a>
             {% else %}
@@ -151,10 +157,11 @@
   document.addEventListener('contextmenu', function(event) {
       var selObj = window.getSelection();
       var text = selObj.toString();
-      if (text.length > 0) {
+      if (text.length > 0 && $('#suggestion').length == 0) {
           event.preventDefault();
           var suggestionInput = document.createElement('input');
           suggestionInput.id = 'suggestion';
+          suggestionInput.size = text.length;
           suggestionInput.value = text;
           selObj.getRangeAt(0).surroundContents(suggestionInput);
           suggestionInput.innerHTML = '';
@@ -450,12 +457,17 @@
           });
       }
   }
-
   function sendToURL(url) {
       window.open(
         url,
         '_blank'
       );
+  }
+
+  function refreshQuestions(){
+    $('#questions_table').load(window.location.href + ' #questions_table', function () {
+        toggleTopQuestions()
+    });
   }
 
   function fillQuestion(rowIndex) {
