@@ -70,6 +70,14 @@ def create_client(app):
         logger.info("Successfully routed to index.")
         return render_template('index.html')
 
+    @app.route('/about')
+    def about():
+        if not get_user_data():
+            session['logged_in'] = False
+        logger.info("Successfully routed to index.")
+        return render_template('about.html')
+
+
     @app.route('/login')
     def login():
         if app.config['OK_MODE'] == 'bypass':

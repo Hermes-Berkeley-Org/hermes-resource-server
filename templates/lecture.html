@@ -48,6 +48,12 @@
             </div>
           </div>
         <!-- </form> -->
+        <div class="row">
+            <p>
+            <button type="button" class="btn btn-default btn-sm" type=submit onclick='refreshQuestions()'>
+              <span class="glyphicon glyphicon-refresh"></span> Refresh
+            </button>
+          </p>
       </div>
       <section id="questions_table">
           {% for question_set, interval in partition(db['Questions'].find({'lecture_id': lecture}).sort([('seconds', 1), ('upvotes', 1)]), questions_interval, duration) %}
@@ -450,12 +456,17 @@
           });
       }
   }
-
   function sendToURL(url) {
       window.open(
         url,
         '_blank'
       );
+  }
+
+  function refreshQuestions(){
+    $('#questions_table').load(window.location.href + ' #questions_table', function () {
+        toggleTopQuestions()
+    });
   }
 
   function fillQuestion(rowIndex) {
