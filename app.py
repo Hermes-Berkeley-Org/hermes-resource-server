@@ -280,27 +280,39 @@ def create_client(app):
                 redirect(url_for('error', code=403))
             num_lectures = len(cls['lectures'])
             if form.validate():
+                if(request.form['playlist']):
+                    youtubevid=youtube.playlists().list(
+                        part='snippet,localizations',
+                        id= request.form['link'].split("=")[1]
+                    ).execute()
+                else:
+                    youtubevid= request.form['link']
+
                 lecture = Lecture(
                     name=request.form['title'],
                     url_name=db_utils.encode_url(request.form['title']),
                     date=request.form['date'],
                     link=request.form['link'],
                     lecture_number=num_lectures,
+                    playlist=request.form['playlist'],
                     duration=get_video_duration(request.form['link']),
-                    cls=class_ok_id
+                    cls=class_ok_id,
+                    videos = youtubevid
                 )
                 id = Class.add_lecture(cls, lecture, db)
+
                 ts_classifier = None
-                if cls['display_name'] in CLASSIFIERS:
-                    ts_classifier = CLASSIFIERS[cls['display_name']](db, cls['ok_id'])
-                transcript, preds = transcribe(
-                    request.form['link'],
-                    app.config['TRANSCRIPTION_MODE'],
-                    youtube=youtube,
-                    transcription_classifier=ts_classifier,
-                    error_on_failure=True
-                )
-                Lecture.add_transcript(id, transcript, preds, db)
+                if(not request.form['playlist']):
+                    if cls['display_name'] in CLASSIFIERS:
+                        ts_classifier = CLASSIFIERS[cls['display_name']](db, cls['ok_id'])
+                    transcript, preds = transcribe(
+                        request.form['link'],
+                        app.config['TRANSCRIPTION_MODE'],
+                        youtube=youtube,
+                        transcription_classifier=ts_classifier,
+                        error_on_failure=True
+                    )
+                    Lecture.add_transcript(id, transcript, preds, db)
             else:
                 flash('All fields required')
         return render_template(
