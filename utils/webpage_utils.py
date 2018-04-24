@@ -7,6 +7,7 @@ class CreateLectureForm(Form):
     title = StringField('Title', validators=[DataRequired()])
     date = DateField('Date of Lecture', default=datetime.today(), validators=[DataRequired()])
     link = StringField('Link to the Lecture', validators=[DataRequired()])
+    playlist = BooleanField('Is this a playlist', validators=[DataRequired()])
     submit = SubmitField('Create')
 
 class QuestionForm(Form):

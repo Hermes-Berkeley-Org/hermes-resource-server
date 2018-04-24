@@ -33,7 +33,8 @@
           {{ form.csrf }}
           <p>Lecture Title {{ form.title }}</p>
           <p>Lecture Date {{ form.date }}</p>
-          <p>Youtube Link to Lecture {{ form.link }}</p>
+          <p>Youtube Lecture/Playlist Link {{ form.link }}</p>
+          <p>Is this a playlist {{form.playlist}}
           <p id="submit">{{ form.submit() }}</p>
       </form>
     {% endif %}
