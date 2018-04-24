@@ -1,4 +1,18 @@
-html,html *{box-sizing: border-box !important;}
+html,html *{
+	box-sizing: border-box !important;
+}
+
+html {
+	position: relative;
+	min-height: 100%;
+}
+
+#footer {
+	position: absolute;
+    left: 0;
+    bottom: 0;
+    width: 100%;
+}
 
 .navbar-btn {
 	background-color: #18BC9C;
@@ -16,6 +30,7 @@ html,html *{box-sizing: border-box !important;}
 .wrapper {
 	padding-top: 110px;
 	padding-left: 5%;
+	padding-bottom: 40px;
 }
 @media (max-width: 979px) {
   .wrapper {
@@ -72,7 +87,7 @@ th {
 #lec_table th {
 	font-size: 1.5em;
 	color: white;
-	background-color: #18BC9C; 
+	background-color: #18BC9C;
 }
 
 #lec_table tr:nth-child(odd) {
@@ -81,6 +96,11 @@ th {
 
 #lec_table tr.lec-row:hover {
 	background: #fefbd8;
+}
+
+#transcript {
+	height: 20vh;
+	overflow-y: scroll;
 }
 
 .transcript-box {
