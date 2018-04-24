@@ -238,7 +238,7 @@ def create_client(app):
                 name=lecture_obj['name'],
                 transcript=lecture_obj['transcript'],
                 preds=preds,
-                cls_name=lecture_obj['cls'],
+                cls_name=cls_obj['display_name'],
                 user=user,
                 questions_interval=questions_interval,
                 partition=partition,

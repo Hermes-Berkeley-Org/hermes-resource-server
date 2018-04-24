@@ -1,13 +1,10 @@
 section#questions_table {
   padding: 1rem 0;
-  overflow-y: auto;
-  height: 80vh;
 }
 
 section#questions_table div {
   word-wrap: break-word;
-  /*margin-bottom: 12px;*/
-  line-height: 12px;
+  line-height: 2px;
 }
 section#questions_table div:after {
   content: "";
