@@ -79,7 +79,9 @@ def read_from_youtube(link, youtube):
         })
     return transcript
 
-def get_video_duration(link):
+def get_video_duration(link, playlist):
+    if(playlist):
+        return [pafy.new(vid["contentDetails"]["videoId"]).duration for vid in link["items"]]
     return pafy.new(link).duration
 
 
