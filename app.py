@@ -287,15 +287,21 @@ def create_client(app):
                 logger.info("Error: user access level is %s", role)
                 redirect(url_for('error', code=403))
             num_lectures = len(cls['lectures'])
+            ses = requests.Session()
+            url = ses.head(request.form["link"], allow_redirects=True).url
+            print(url)
             if form.validate():
                 if(request.form['playlist']):
-                    youtubevid=youtube.playlists().list(
-                        part='snippet,localizations',
-                        id= request.form['link'].split("=")[1]
+                    youtubeid = url.split("=")[1]
+                    print(youtubeid)
+                    youtubevid=youtube.playlistItems().list(
+                        part='contentDetails',
+                        maxResults=25,
+                        playlistId= youtubeid
                     ).execute()
+                    print(youtubevid)
                 else:
                     youtubevid= request.form['link']
-
                 lecture = Lecture(
                     name=request.form['title'],
                     url_name=db_utils.encode_url(request.form['title']),
@@ -303,7 +309,7 @@ def create_client(app):
                     link=request.form['link'],
                     lecture_number=num_lectures,
                     playlist=request.form['playlist'],
-                    duration=get_video_duration(request.form['link']),
+                    duration=get_video_duration(youtubevid, request.form['playlist']),
                     cls=class_ok_id,
                     videos = youtubevid
                 )
