@@ -51,7 +51,7 @@
         <div class="row">
             <p>
             <button type="button" class="btn btn-default btn-sm" type=submit onclick='refreshQuestions()'>
-              <span class="glyphicon glyphicon-refresh"></span> Refresh
+              <i class="fa fa-refresh" aria-hidden="true"></i> Refresh
             </button>
           </p>
       </div>
@@ -171,7 +171,7 @@
   document.addEventListener('contextmenu', function(event) {
       var selObj = window.getSelection();
       var text = selObj.toString();
-      if (text.length > 0 && $('#suggestion').length == 0) {
+      if (text.length > 0 && $('#suggestion').length == 0 && selObj.baseNode.parentElement.id.indexOf('text') != -1) {
           event.preventDefault();
           var suggestionInput = document.createElement('input');
           suggestionInput.id = 'suggestion';
@@ -381,22 +381,22 @@
 
       var data = {
        text,
-       api_key = "{{ api_key }}",
+       api_key: "{{ api_key }}",
        answerId
-     }
+      };
 
-    // $.ajax.({
-    //    type: "POST",
-    //    url: "{{ url_for('edit_answer') }}",
-    //    data,
-    //    success: function (data) {
-    //      $(`#answers-container-${questionId}`).load(window.location.href + ` #answers-container-${questionId}`, function () {
-    //          $(`#show-answers-${questionId}`).trigger("click", function () {
-    //              toggleTopQuestions()
-    //          });
-    //      });
-    //    }
-    //  })
+      $.ajax({
+          type: "POST",
+          url: "{{ url_for('edit_answer') }}",
+          data,
+          success: function (data) {
+            $(`#answers-container-${questionId}`).load(window.location.href + ` #answers-container-${questionId}`, function () {
+               $(`#show-answers-${questionId}`).trigger("click", function () {
+                   toggleTopQuestions()
+               });
+           });
+         }
+       });
   }
 
   function deleteAnswer(answer, question) {
