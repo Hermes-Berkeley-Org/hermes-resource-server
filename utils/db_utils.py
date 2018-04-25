@@ -309,15 +309,15 @@ class Answer(DBObject):
         ).inserted_id
 
     @staticmethod
-    def edit_answer(answer_id, answer, db):
+    def edit_answer(data, db):
         return db[Answer.collection].update_one({
-            {'_id': answer_id},
+            {'_id': ObjectId(data['answerId'])},
             {
               '$set': {
-                'text': answer["text"],
+                'text': data['text'],
               }
-            },
-        }, upsert = False).inserted_id
+            }
+        }).inserted_id
 
     @staticmethod
     def upvote_answer(data, db):
