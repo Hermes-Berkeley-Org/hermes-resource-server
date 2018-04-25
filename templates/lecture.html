@@ -117,6 +117,20 @@
                       <a onclick='deleteAnswer("{{answer['_id']}}", "{{question['_id']}}")'><span class="fa fa-close" style="color:red"></span></a>
                     {% endif %}
                     </p>
+                    {% if answer['user'] == user['_id'] %}
+                        <div>
+                         <a onclick=''><span class="fa fa-close" style="color:blue"></span></a>
+                           <div class="form-group">
+                             <input id="edit-{{answer['_id']}}" class="form-control qa-entry" value="{{answer['text']}}"></input>
+                           </div>
+                           <div class="row">
+                             <div class="col-md-3"></div>
+                             <div class="form-group col-md-3">
+                             <button class="btn btn-primary btn-sm qa-entry submission" type="submit" onclick='editAnswer("{{answer['_id']}}", "{{answer['question_id']}}")'>Edit Answer</button>
+                           </div>
+                         </div>
+                       </div>
+                     {% endif %}
                   </div>
                 {% endfor %}
                   <!-- <form class="form-horizontal"> -->
@@ -355,6 +369,34 @@
         });
       }
     })
+  }
+
+  //NOTE: not sure about the success function
+
+  function editAnswer(answerId, questionId) {
+      var text = document.getElementById(`edit-${answerId}`).value;
+      console.log("IN HERE BOY");
+      console.log("THIS IS TEXT");
+      console.log(text);
+
+      var data = {
+       text,
+       api_key = "{{ api_key }}",
+       answerId
+     }
+
+    // $.ajax.({
+    //    type: "POST",
+    //    url: "{{ url_for('edit_answer') }}",
+    //    data,
+    //    success: function (data) {
+    //      $(`#answers-container-${questionId}`).load(window.location.href + ` #answers-container-${questionId}`, function () {
+    //          $(`#show-answers-${questionId}`).trigger("click", function () {
+    //              toggleTopQuestions()
+    //          });
+    //      });
+    //    }
+    //  })
   }
 
   function deleteAnswer(answer, question) {
