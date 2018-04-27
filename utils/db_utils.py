@@ -133,6 +133,7 @@ class Class(DBObject):
             Class(
                 lectures=[],
                 semester=Class.get_semester(data['offering']),
+                students=[],
                 **data
             ),
             db
