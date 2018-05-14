@@ -20,11 +20,11 @@ def get_youtube_id(link):
     params = parse_qs(url.query)
     return params['v'][0] if 'v' in params else None
 
-def transcribe(link, mode, youtube=None, transcription_classifier=None, error_on_failure=False):
+def transcribe(link, mode, alreadyId = False,youtube=None, transcription_classifier=None, error_on_failure=False, ):
     try:
         transcription = None
         if mode == 'api':
-            transcription = read_from_youtube(link, youtube)
+            transcription = read_from_youtube(link, youtube, alreadyId)
         elif mode == 'scrape':
             transcription = scrape(link)
 
@@ -53,12 +53,16 @@ def classify(transcription, transcription_classifier):
             last = (i // 2) + 1
             curr_text = []
 
-def read_from_youtube(link, youtube):
-    video_id = get_youtube_id(link)
+def read_from_youtube(link, youtube, alreadyId):
+    print(link)
+    if alreadyId:
+        video_id = get_youtube_id("https://www.youtube.com/watch?v="+str(link))
+    else:
+        video_id = get_youtube_id(link)
     def get_caption_id(video_id):
         results = youtube.captions().list(
             part="snippet",
-            videoId=video_id
+            videoId= video_id
         ).execute()
 
         for item in results["items"]:
@@ -79,9 +83,14 @@ def read_from_youtube(link, youtube):
         })
     return transcript
 
+
+
+"""If passed in link is a playlist then get a list of the durations
+otherwise just return the duration of the video
+"""
 def get_video_duration(link, playlist):
     if(playlist):
-        return [pafy.new(vid["contentDetails"]["videoId"]).duration for vid in link["items"]]
+        return ([pafy.new(vid["contentDetails"]["videoId"]).duration for vid in link["items"]])
     return pafy.new(link).duration
 
 

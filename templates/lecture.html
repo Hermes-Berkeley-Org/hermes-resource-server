@@ -8,7 +8,12 @@
     <div class="col-md-7">
       <div id="ytplayer"></div>
       <div id="transcript">
+          {% if playlist %}
+            {% for (link, (start, end)) in preds[playlist_number] %}
+          {% endif %}
+          {% if not playlist %}
             {% for (link, (start, end)) in preds %}
+          {% endif %}
               <table class='transcript-box'>
               {% for i in range(start, end + 1) %}
                   <tr id="transcript-row-{{i}}" class="transcript-row">
@@ -246,8 +251,13 @@
       }
 
       var timestamps = [];
-      {% for transcript_element in transcript %}
-      timestamps.push(convertToSeconds("{{transcript_element['begin']}}"));
+      {% if playlist%}
+        {% for transcript_element in transcript %}
+      {% endif %}
+      {% if not playlist %}
+          {% for transcript_element in transcript[playlist_number] %}
+      {% endif %}
+        timestamps.push(convertToSeconds("{{transcript_element['begin']}}"));
       {% endfor %}
 
       setInterval(function() {
