@@ -71,13 +71,13 @@
 
               <a id="show-answers-{{question['_id']}}" data-toggle="collapse" onclick="toggleResponses('toggle-icon-{{question['_id']}}')" data-target="#answers-{{question['_id']}}">
                 <p><span class="fa fa-chevron-down qa-entry" id="toggle-icon-{{question['_id']}}" aria-hidden="true"></span></a>
-                    <button class="btn btn-default btn-sm likes" id = "upvotes-{{question['_id']}}" type=submit onclick='upvoteQuestion("{{user['_id']}}", "{{question['_id']}}")'>
+                    <span id="upvotes-{{question['_id']}}"><button class="btn btn-default btn-sm likes"  type=submit onclick='upvoteQuestion("{{user['_id']}}", "{{question['_id']}}")'>
                       {% if user_id in question['upvotes'] %}
                       <i class="fa fa-thumbs-up" aria-hidden="true"></i> Like  {{ question['upvotes']|length }}
                       {% else %}
                       <i class="fa fa-thumbs-o-up" aria-hidden="true"></i> Like  {{ question['upvotes']|length }}
                       {% endif %}
-                  </button>
+                  </button></span>
                 {% if question['anon'] == "true" and role == consts.STUDENT %}
                   <span class="question-tag-lg"> Anonymous {{question['timestamp']}}</span>
                 {% else %}
