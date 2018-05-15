@@ -56,9 +56,13 @@ def classify(transcription, transcription_classifier):
 def read_from_youtube(link, youtube, alreadyId):
     print(link)
     if alreadyId:
-        video_id = get_youtube_id("https://www.youtube.com/watch?v="+str(link))
+        # video_id = get_youtube_id("https://www.youtube.com/watch?v="+str(link))
+        video_id = link
     else:
         video_id = get_youtube_id(link)
+    print(type(video_id))
+    print(video_id)
+
     def get_caption_id(video_id):
         results = youtube.captions().list(
             part="snippet",

@@ -368,11 +368,11 @@ def create_client(app):
                     Lecture.add_transcript(id, transcript, preds, db)
                 else:
                     transcriptlist = []
-                    predsList = []
+                    predslist = []
                     for vid in youtubevid["items"]:
                         print(vid["contentDetails"]["videoId"])
                         transcript, preds = transcribe(
-                            vid,
+                            vid["contentDetails"]["videoId"],
                             app.config['TRANSCRIPTION_MODE'],
                             alreadyId = True,
                             youtube=youtube,
@@ -381,7 +381,7 @@ def create_client(app):
                         )
                         transcriptlist.append(transcript)
                         predslist.append(preds)
-                    Lecture.add_transcript(id, transcript, preds, None, db)
+                    Lecture.add_transcript(id, transcript, preds, db)
 
             else:
                 flash('All fields required')
