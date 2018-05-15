@@ -94,7 +94,7 @@ otherwise just return the duration of the video
 """
 def get_video_duration(link, playlist):
     if(playlist):
-        return ([pafy.new(vid["contentDetails"]["videoId"]).duration for vid in link["items"]])
+        return ([pafy.new(vid).duration for vid in link])
     return pafy.new(link).duration
 
 

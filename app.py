@@ -260,31 +260,34 @@ def create_client(app):
         lecture_obj = db['Lectures'].find_one({'cls': cls, 'lecture_number': int(lecture_number)})
         user = get_user_data()
         questions_interval = 30
-        preds = lecture_obj.get('preds')
+        play_num = int(playlist_number)
+        link = "https://www.youtube.com/watch?v=" + lecture_obj["videos"][play_num]
+        preds = lecture_obj.get('preds')[play_num]
         if not preds:
             preds = [(None, [0, len(lecture_obj['transcript'])])]
         if lecture_obj and cls_obj:
             return render_template(
                 'lecture.html',
-                id=get_youtube_id(lecture_obj['link']),
+                id=get_youtube_id(link),
                 lecture=str(lecture_obj['_id']),
                 name=lecture_obj['name'],
-                transcript=lecture_obj['transcript'],
+                transcript=lecture_obj['transcript'][play_num],
                 preds=preds,
                 cls_name=cls_obj['display_name'],
                 user=user,
                 questions_interval=questions_interval,
                 partition=partition,
-                partition_titles=list(generate_partition_titles(lecture_obj['duration'], questions_interval)),
-                duration=lecture_obj['duration'],
+                partition_titles=list(generate_partition_titles(lecture_obj['duration'][play_num], questions_interval)),
+                duration=lecture_obj['duration'][play_num],
                 user_id=str(user['_id']),
                 role=get_role(cls)[0],
                 consts=consts,
                 cls=str(cls_obj['_id']),
+                playlist_number=playlist_number,
                 db=db,
                 api_key=app.config['HERMES_API_KEY']
             )
-        logger.info("Displaying lecture.")
+        logger.info("Displaying Playlist lecture. It is the ", play_num, " video in the playlist")
         return redirect(url_for('error', code=404))
 
 
@@ -334,6 +337,7 @@ def create_client(app):
                         maxResults=25,
                         playlistId= youtubeid
                     ).execute()
+                    youtubevid= [vid["contentDetails"]["videoId"] for vid in youtubevid["items"]]
                 elif("v=" in url):
                     youtubevid= request.form['link']
                     playlist = False
@@ -369,10 +373,9 @@ def create_client(app):
                 else:
                     transcriptlist = []
                     predslist = []
-                    for vid in youtubevid["items"]:
-                        print(vid["contentDetails"]["videoId"])
+                    for vid in youtubevid:
                         transcript, preds = transcribe(
-                            vid["contentDetails"]["videoId"],
+                            vid,
                             app.config['TRANSCRIPTION_MODE'],
                             alreadyId = True,
                             youtube=youtube,
@@ -381,7 +384,7 @@ def create_client(app):
                         )
                         transcriptlist.append(transcript)
                         predslist.append(preds)
-                    Lecture.add_transcript(id, transcript, preds, db)
+                    Lecture.add_transcript(id, transcriptlist, predslist, db)
 
             else:
                 flash('All fields required')
