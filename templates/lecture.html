@@ -8,12 +8,7 @@
     <div class="col-md-7">
       <div id="ytplayer"></div>
       <div id="transcript">
-          {% if playlist %}
-            {% for (link, (start, end)) in preds[playlist_number] %}
-          {% endif %}
-          {% if not playlist %}
             {% for (link, (start, end)) in preds %}
-          {% endif %}
               <table class='transcript-box'>
               {% for i in range(start, end + 1) %}
                   <tr id="transcript-row-{{i}}" class="transcript-row">
@@ -55,9 +50,9 @@
         <!-- </form> -->
         <div class="row">
             <p>
-            <button type="button" class="btn btn-default btn-sm" type=submit onclick='refreshQuestions()'>
-              <span class="glyphicon glyphicon-refresh"></span> Refresh
-            </button>
+              <button type="button" class="btn btn-default btn-sm" type=submit onclick='refreshQuestions()'>
+                <span class="glyphicon glyphicon-refresh"></span> Refresh
+              </button>
           </p>
       </div>
       <section id="questions_table">
@@ -78,9 +73,9 @@
                 <p><span class="fa fa-chevron-down qa-entry" id="toggle-icon-{{question['_id']}}" aria-hidden="true"></span></a>
                     <button class="btn btn-default btn-sm likes" id = "upvotes-{{question['_id']}}" type=submit onclick='upvoteQuestion("{{user['_id']}}", "{{question['_id']}}")'>
                       {% if user_id in question['upvotes'] %}
-                      <i class="fa fa-thumbs-up" aria-hidden="true"></i> Like  {{ question['upvotes']|length }}
+                      <i class="fa fa-thumbs-up" aria-hidden="true"></i> Like  <span id = "upvotes-{{question['_id']}}-count" class ="clicked">{{ question['upvotes']|length }}</span>
                       {% else %}
-                      <i class="fa fa-thumbs-o-up" aria-hidden="true"></i> Like  {{ question['upvotes']|length }}
+                      <i class="fa fa-thumbs-o-up" aria-hidden="true"></i> Like <span id = "upvotes-{{question['_id']}}-count" class = "notclicked"> {{ question['upvotes']|length }}</span>
                       {% endif %}
                   </button>
                 {% if question['anon'] == "true" and role == consts.STUDENT %}
@@ -101,9 +96,10 @@
                       <p><span id="upvotes-{{answer['_id']}}" class="qa-entry">
                       <button class="btn btn-default btn-sm likes" type=submit onclick='upvoteAnswer("{{user['_id']}}", "{{answer['_id']}}")'>
                           {% if user_id in answer['upvotes'] %}
-                          <i class="fa fa-thumbs-up" aria-hidden="true"></i> Like  {{ answer['upvotes']|length }}
+                          <span id = "upvotes-{{answer['_id']}}-count" class = "notclicked">
+                          <i class="fa fa-thumbs-up" aria-hidden="true"></i> Like <span id = "upvotes-{{answer['_id']}}-count" class = "notclicked"> {{ answer['upvotes']|length }}</span>
                           {% else %}
-                          <i class="fa fa-thumbs-o-up" aria-hidden="true"></i> Like  {{ answer['upvotes']|length }}
+                          <i class="fa fa-thumbs-o-up" aria-hidden="true"></i> Like  <span id = "upvotes-{{answer['_id']}}-count" class = "clicked"> {{ answer['upvotes']|length }} </span>
                           {% endif %}
                       </button>
                     </span>
@@ -251,13 +247,8 @@
       }
 
       var timestamps = [];
-      {% if playlist%}
-        {% for transcript_element in transcript %}
-      {% endif %}
-      {% if not playlist %}
-          {% for transcript_element in transcript[playlist_number] %}
-      {% endif %}
-        timestamps.push(convertToSeconds("{{transcript_element['begin']}}"));
+      {% for transcript_element in transcript %}
+      timestamps.push(convertToSeconds("{{transcript_element['begin']}}"));
       {% endfor %}
 
       setInterval(function() {
@@ -391,7 +382,15 @@
   }
 
   function upvoteAnswer(user, answer){
-    var currentcount = document.getElementById(`upvotes-${answer}`).value;
+    var span = document.getElementById(`upvotes-${answer}-count`);
+    alert(span.innerHTML)
+    var currentcount = parseInt(span.innerHTML);
+    if(span.innerHTML.className == "notclicked"){
+      span.innerHTML =  currentcount + 1;
+    }
+    else{
+      span.innerHTML = currentcount - 1;
+    }
     var data ={
       user_id:user,
       answer_id:answer,
@@ -412,6 +411,15 @@
   }
 
   function upvoteQuestion(user, question){
+    var span = document.getElementById(`upvotes-${question}-count`)
+    var currentcount = parseInt(span.innerHTML);
+    if(span.innerHTML.className == "notclicked"){
+      span.innerHTML =  currentcount + 1;
+    }
+    else{
+      span.innerHTML = currentcount - 1;
+    }
+
     var data ={
       user_id:user,
       question_id:question,
@@ -423,7 +431,7 @@
       url: "{{ url_for('upvote_question') }}",
       data,
       success: function (data) {
-        $(`#upvotes-${question}`).load(window.location.href + ` #upvotes-${question}`, function () {
+        $(`#upvotes-${question}`).load(window.location.href + `#upvotes-${question}`, function () {
             toggleTopQuestions()
         });
       }
@@ -482,6 +490,11 @@
 
   function fillQuestion(rowIndex) {
       document.getElementById('question').value = document.getElementById(`transcript-row-${rowIndex}`).textContent.replace(/\s+/g, ' ');
+  }
+
+  function addResource(){
+    var seconds = player.getCurrentTime();
+
   }
 
 

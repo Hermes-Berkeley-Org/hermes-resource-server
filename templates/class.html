@@ -15,11 +15,9 @@
       {% for lec in lectures %}
         <div id= lecture-{{lec['_id']}}>
         <tr class="lec-row">
-          {% if lec[playlist] %}
-            alert("hi")
+          {% if lec['playlist'] %}
             <td><a href={{ url_for('playlistLecture', cls=lec['cls'], lecture_number=lec['lecture_number'], playlist_number=0)}}>{{ lec['name'] }}</a></td>
-          {% endif %}
-          {% if not lec[playlist] %}
+          {% else %}
             <td><a href={{ url_for('lecture', cls=lec['cls'], lecture_number=lec['lecture_number'])}}>{{ lec['name'] }}</a></td>
           {% endif %}
           &nbsp; &nbsp;
