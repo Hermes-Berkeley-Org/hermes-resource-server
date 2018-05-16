@@ -284,6 +284,9 @@ def create_client(app):
                 consts=consts,
                 cls=str(cls_obj['_id']),
                 playlist_number=playlist_number,
+                num_videos = len(lecture_obj['videos']),
+                lecture_num = lecture_number,
+                cls_num = cls,
                 db=db,
                 api_key=app.config['HERMES_API_KEY']
             )
