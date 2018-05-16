@@ -119,7 +119,6 @@
                     </p>
                     {% if answer['user'] == user['_id'] %}
                         <div>
-                         <a onclick=''><span class="fa fa-close" style="color:blue"></span></a>
                            <div class="form-group">
                              <input id="edit-{{answer['_id']}}" class="form-control qa-entry" value="{{answer['text']}}"></input>
                            </div>
@@ -375,9 +374,6 @@
 
   function editAnswer(answerId, questionId) {
       var text = document.getElementById(`edit-${answerId}`).value;
-      console.log("IN HERE BOY");
-      console.log("THIS IS TEXT");
-      console.log(text);
 
       var data = {
        text,

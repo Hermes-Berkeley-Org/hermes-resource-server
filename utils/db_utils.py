@@ -310,14 +310,16 @@ class Answer(DBObject):
 
     @staticmethod
     def edit_answer(data, db):
-        return db[Answer.collection].update_one({
+        edit = data['text']
+
+        return db[Answer.collection].update_one(
             {'_id': ObjectId(data['answerId'])},
             {
               '$set': {
-                'text': data['text'],
+                'text': edit,
               }
             }
-        }).inserted_id
+        )
 
     @staticmethod
     def upvote_answer(data, db):
