@@ -92,7 +92,7 @@
             <!--<div class="clear"></div>-->
             <div id="answers-{{question['_id']}}" class="collapse">
                 {% for answer in db['Answers'].find({'question_id': question['_id']}) %}
-                    <div id="each-answer">
+                    <div id="each-answer-{{answer['_id']}}">
                       <p><span id="upvotes-{{answer['_id']}}" class="qa-entry">
                       <button class="btn btn-default btn-sm likes" type=submit onclick='upvoteAnswer("{{user['_id']}}", "{{answer['_id']}}")'>
                           {% if user_id in answer['upvotes'] %}
@@ -110,25 +110,19 @@
                     {% else %}
                         <span class="question-tag"> {{answer['name']}}</span>
                         <!-- <div class="from-them"> -->
-                          <span class="qa-entry"> {{answer['text']}}</span>
+                          <span class="qa-entry">
+                            <div id = "answer-text-{{answer['_id']}}">{{answer['text']}}
+                            </div>
+                            </span>
+
                         <!-- </div> -->
                     {% endif %}
                     {% if role == consts.INSTRUCTOR %}
                       <a onclick='deleteAnswer("{{answer['_id']}}", "{{question['_id']}}")'><span class="fa fa-close" style="color:red"></span></a>
                     {% endif %}
                     </p>
-                    {% if answer['user'] == user['_id'] %}
-                        <div>
-                           <div class="form-group">
-                             <input id="edit-{{answer['_id']}}" class="form-control qa-entry" value="{{answer['text']}}"></input>
-                           </div>
-                           <div class="row">
-                             <div class="col-md-3"></div>
-                             <div class="form-group col-md-3">
-                             <button class="btn btn-primary btn-sm qa-entry submission" type="submit" onclick='editAnswer("{{answer['_id']}}", "{{answer['question_id']}}")'>Edit Answer</button>
-                           </div>
-                         </div>
-                       </div>
+                    {% if answer['user'] == user['_id'] or role == consts.INSTRUCTOR%}
+                        <button class="btn btn-primary btn-sm qa-entry submission" type="submit" onclick='convertAnswerToInput("{{answer['_id']}}", "{{question['_id']}}")'>Edit Answer</button>
                      {% endif %}
                   </div>
                 {% endfor %}
@@ -141,7 +135,7 @@
                         <input id='anona-{{question['_id']}}' type="checkbox"></input><span class="qa-entry">  Answer anonymously</span>
                       </div>
                       <div class="col-md-3"></div>
-                      <div class="form-group col-md-3">
+                       <div class="form-group col-md-3">
                       <button class="btn btn-primary btn-sm qa-entry submission" type="submit" onclick='sendAnswer("{{question['_id']}}")'>Submit Answer</button>
                     </div>
                   </div>
@@ -203,6 +197,7 @@
       }
   });
 
+
   var tag = document.createElement('script');
   tag.src = "https://www.youtube.com/player_api";
   var firstScriptTag = document.getElementsByTagName('script')[0];
@@ -221,6 +216,7 @@
     });
 
   }
+
 
   function onPlayerReady() {
       toggleTopQuestions();
@@ -302,6 +298,12 @@
       // recordData maybe
   }
 
+  function convertAnswerToInput(answer, question){
+    var currentVal = document.getElementById(`each-answer-${answer}`);
+    var txt = document.getElementById(`answer-text-${answer}`).innerHTML;
+    currentVal.innerHTML = `<input id= edit-answer-${answer} class="form-control qa-entry" value= ${txt}></input> <button class="btn btn-primary btn-sm qa-entry submission" type="submit" onclick='editAnswer("${answer}", "${question}")'>Submit Edit</button>`
+
+  }
   function toggleTopQuestions() {
       toggleResponses('partition-icon-1');
       $('#partition-1').collapse("show");
@@ -373,8 +375,7 @@
   //NOTE: not sure about the success function
 
   function editAnswer(answerId, questionId) {
-      var text = document.getElementById(`edit-${answerId}`).value;
-
+      var text = document.getElementById(`edit-answer-${answerId}`).value;
       var data = {
        text,
        api_key: "{{ api_key }}",
@@ -511,6 +512,7 @@
   function fillQuestion(rowIndex) {
       document.getElementById('question').value = document.getElementById(`transcript-row-${rowIndex}`).textContent.replace(/\s+/g, ' ');
   }
+
 
 
 
