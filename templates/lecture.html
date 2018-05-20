@@ -2,20 +2,36 @@
 {% block title %}Hermes | {{ cls_name }} - {{ name }}{% endblock %}
 {% block head %}{{ super() }}{% endblock %}
 {% block content %}
-
+<style>
+ul#menu li {
+    display:inline;
+}
+</style>
 <div class="wrapper text-primary">
   <div class="row">
     <div class="col-md-7">
       <div id="ytplayer"></div>
-      <tr>
       {% if playlist_number %}
-      <tr>
-      {% for lec in range(num_videos) %}
-        <a href={{ url_for('playlistLecture', cls= cls_num, lecture_number= lecture_num, playlist_number= lec)}}>{{lec}}</a>
-      {% endfor %}
-      <button class="btn btn-primary submission" type=submit onclick="nextVideo()">Next Video</button>
+      <div class="navbar">
+      {% if playlist_number|int != 0|int %}
+      <a href={{ url_for('lecture', cls= cls_num, lecture_number= lecture_num, playlist_number= ((playlist_number|int - 1|int)|string)) }}>
+        <button class="btn btn-primary submission" >Previous Video</button>
+      </a>
       {% endif %}
-    </tr>
+      {% for lec in range(num_videos) %}
+      {% if playlist_number|int == lec|int %}
+        <b><font size ="3" color="black"> Video {{lec}}</font></b>
+      {% else %}
+        <font size ="3"><a href={{ url_for('lecture', cls= cls_num, lecture_number= lecture_num, playlist_number= lec) }}>Video {{lec}}</a></font>
+      {% endif %}
+      {% endfor %}
+      {% if playlist_number|int < (num_videos-1)|int %}
+        <a href={{ url_for('lecture', cls= cls_num, lecture_number= lecture_num, playlist_number= ((playlist_number|int + 1|int)|string)) }}>
+          <button class="btn btn-primary submission" >Next Video</button>
+        </a>
+      {% endif %}
+      </div>
+      {% endif %}
       <div id="transcript">
 
             {% for (link, (start, end)) in preds %}
@@ -264,7 +280,6 @@
       setInterval(function() {
           var currentTime = player.getCurrentTime();
           var state = player.getPlayerState();
-          // alert(currentTime);
           {% for transcript_element in transcript %}
           if (currentTime >= timestamps[{{loop.index - 1}}]) {
               if ($("#text-{{loop.index - 1}}").contents().length == 0) {
@@ -393,7 +408,6 @@
 
   function upvoteAnswer(user, answer){
     var span = document.getElementById(`upvotes-${answer}-count`);
-    alert(span.innerHTML)
     var currentcount = parseInt(span.innerHTML);
     if(span.innerHTML.className == "notclicked"){
       span.innerHTML =  currentcount + 1;
