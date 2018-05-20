@@ -234,6 +234,7 @@ class Question(DBObject):
                 ok_id=question['ok_id'],
                 lecture_id=question['lecture'],
                 upvotes =[],
+                playlist_number= question['playlist_num'],
                 anon = question['anon']
             ),
             db

@@ -249,6 +249,7 @@ def create_client(app):
                     user_id=str(user['_id']),
                     role=get_role(cls)[0],
                     consts=consts,
+                    playlist_number= None,
                     cls=str(cls_obj['_id']),
                     db=db,
                     api_key=app.config['HERMES_API_KEY']

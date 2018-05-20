@@ -20,7 +20,7 @@ ul#menu li {
       {% endif %}
       {% for lec in range(num_videos) %}
       {% if playlist_number|int == lec|int %}
-        <b><font size ="3" color="black"> Video {{lec}}</font></b>
+        <b><u><font size ="3" color="black"> Video {{lec}}</font></u></b>
       {% else %}
         <font size ="3"><a href={{ url_for('lecture', cls= cls_num, lecture_number= lecture_num, playlist_number= lec) }}>Video {{lec}}</a></font>
       {% endif %}
@@ -82,7 +82,7 @@ ul#menu li {
           </p>
       </div>
       <section id="questions_table">
-          {% for question_set, interval in partition(db['Questions'].find({'lecture_id': lecture}), questions_interval, duration) %}
+          {% for question_set, interval in partition(db['Questions'].find({'$and':[{'lecture_id': lecture}, {'playlist_number': playlist_number|string }]}), questions_interval, duration) %}
             {% if loop.index == 1 %}
                 <a data-toggle="collapse" onclick="toggleResponses('partition-icon-{{loop.index}}')" data-target="#partition-{{loop.index}}"><span style="font-size: 18px" id="partition-icon-{{loop.index}}" class="fa fa-chevron-down qa-entry" aria-hidden="true"></span><strong>Top Questions</strong></a>
             {% else %}
@@ -346,6 +346,7 @@ ul#menu li {
            lecture: "{{ lecture }}",
            cls: "{{ cls }}",
            anon: anonymous,
+           playlist_num: "{{ playlist_number }}",
            api_key: "{{ api_key }}"
         }
 
