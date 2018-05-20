@@ -14,10 +14,10 @@
       </tr>
       {% for lec in lectures %}
         <tr id = lecture-{{lec['_id']}} class="lec-row">
-          {% if lec['playlist'] %}
+          {% if lec['is_playlist'] %}
           <a id="show-playlist-{{lec['_id']}}" data-toggle="collapse" onclick="toggleResponses('toggle-icon-{{lec['_id']}}')" data-target="#playlist-{{lec['_id']}}">
             <p><span class="fa fa-chevron-down qa-entry" id="toggle-icon-{{lec['_id']}}" aria-hidden="true"></span></a>
-            <td><a href={{ url_for('playlistLecture', cls=lec['cls'], lecture_number=lec['lecture_number'], playlist_number=0)}}>{{ lec['name'] }}</a></td>
+            <td><a href={{ url_for('lecture', cls=lec['cls'], lecture_number=lec['lecture_number'], playlist_number=0)}}>{{ lec['name'] }}</a></td>
           {% else %}
             <td><a href={{ url_for('lecture', cls=lec['cls'], lecture_number=lec['lecture_number'])}}>{{ lec['name'] }}</a></td>
           {% endif %}
@@ -29,10 +29,10 @@
         </div>
         </tr>
         {% if lec['playlist'] %}
-        <div id="playlist-{{lec['_id']}}" class="collapse">
+        <td><div id="playlist-{{lec['_id']}}" class="collapse">
           <div class="dropdown show">
       <a class="btn btn-secondary dropdown-toggle" href="#" role="button" id="dropdownMenuLink" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-        Dropdown link
+        Dropdown link</td>
       </a>
 
       <div class="dropdown-menu" aria-labelledby="dropdownMenuLink">
