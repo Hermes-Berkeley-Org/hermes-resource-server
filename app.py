@@ -274,7 +274,7 @@ def create_client(app):
                 api_key=app.config['HERMES_API_KEY']
             )
             logger.info("Displaying Playlist lecture. It is the ", play_num, " video in the playlist")
-            return redirect(url_for('error', code=404))
+        return redirect(url_for('error', code=404))
 
     def get_role(class_ok_id):
         user = get_user_data()
