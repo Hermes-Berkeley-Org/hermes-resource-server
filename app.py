@@ -232,61 +232,47 @@ def create_client(app):
             preds = lecture_obj.get('preds')
             if not preds:
                 preds = [(None, [0, len(lecture_obj['transcript'])])]
-            if lecture_obj and cls_obj:
-                return render_template(
-                    'lecture.html',
-                    id=get_youtube_id(lecture_obj['link']),
-                    lecture=str(lecture_obj['_id']),
-                    name=lecture_obj['name'],
-                    transcript=lecture_obj['transcript'],
-                    preds=preds,
-                    cls_name=cls_obj['display_name'],
-                    user=user,
-                    questions_interval=questions_interval,
-                    partition=partition,
-                    partition_titles=list(generate_partition_titles(lecture_obj['duration'], questions_interval)),
-                    duration=lecture_obj['duration'],
-                    user_id=str(user['_id']),
-                    role=get_role(cls)[0],
-                    consts=consts,
-                    playlist_number= None,
-                    cls=str(cls_obj['_id']),
-                    db=db,
-                    api_key=app.config['HERMES_API_KEY']
-                )
-            logger.info("Displaying lecture.")
-            return redirect(url_for('error', code=404))
+            id=get_youtube_id(lecture_obj['link'])
+            transcript = lecture_obj['transcript']
+            partition_titles = list(generate_partition_titles(lecture_obj['duration'], questions_interval))
+            duration=lecture_obj['duration']
+            num_videos = 1
         else:
             play_num = int(playlist_number)
             link = "https://www.youtube.com/watch?v=" + lecture_obj["videos"][play_num]
             preds = lecture_obj.get('preds')[play_num]
             if not preds:
                 preds = [(None, [0, len(lecture_obj['transcript'])])]
-            if lecture_obj and cls_obj:
-                return render_template(
-                    'lecture.html',
-                    id=get_youtube_id(link),
-                    lecture=str(lecture_obj['_id']),
-                    name=lecture_obj['name'],
-                    transcript=lecture_obj['transcript'][play_num],
-                    preds=preds,
-                    cls_name=cls_obj['display_name'],
-                    user=user,
-                    questions_interval=questions_interval,
-                    partition=partition,
-                    partition_titles=list(generate_partition_titles(lecture_obj['duration'][play_num], questions_interval)),
-                    duration=lecture_obj['duration'][play_num],
-                    user_id=str(user['_id']),
-                    role=get_role(cls)[0],
-                    consts=consts,
-                    cls=str(cls_obj['_id']),
-                    playlist_number=playlist_number,
-                    num_videos = len(lecture_obj['videos']),
-                    lecture_num = lecture_number,
-                    cls_num = cls,
-                    db=db,
-                    api_key=app.config['HERMES_API_KEY']
-                )
+            id=get_youtube_id(link)
+            transcript = lecture_obj['transcript'][play_num]
+            partition_titles= list(generate_partition_titles(lecture_obj['duration'][play_num], questions_interval))
+            duration = lecture_obj['duration'][play_num]
+            num_videos = len(lecture_obj['videos'])
+        if lecture_obj and cls_obj:
+            return render_template(
+                'lecture.html',
+                id=id,
+                lecture=str(lecture_obj['_id']),
+                name=lecture_obj['name'],
+                transcript=transcript,
+                preds=preds,
+                cls_name=cls_obj['display_name'],
+                user=user,
+                questions_interval=questions_interval,
+                partition=partition,
+                partition_titles=partition_titles,
+                duration=duration,
+                user_id=str(user['_id']),
+                role=get_role(cls)[0],
+                consts=consts,
+                cls=str(cls_obj['_id']),
+                playlist_number=playlist_number,
+                num_videos = num_videos,
+                lecture_num = lecture_number,
+                cls_num = cls,
+                db=db,
+                api_key=app.config['HERMES_API_KEY']
+            )
             logger.info("Displaying Playlist lecture. It is the ", play_num, " video in the playlist")
             return redirect(url_for('error', code=404))
 
