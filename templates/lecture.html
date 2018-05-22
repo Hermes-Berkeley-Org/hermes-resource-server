@@ -327,8 +327,8 @@ ul#menu li {
   function convertAnswerToInput(answer, question){
     var currentVal = document.getElementById(`each-answer-${answer}`);
     var txt = document.getElementById(`answer-text-${answer}`).innerHTML;
+    txt = txt.replace(/ /g, '&nbsp;');
     currentVal.innerHTML = `<input id= edit-answer-${answer} class="form-control qa-entry" value= ${txt}></input> <button class="btn btn-primary btn-sm qa-entry submission" type="submit" onclick='editAnswer("${answer}", "${question}")'>Submit Edit</button>`
-
   }
   function toggleTopQuestions() {
       toggleResponses('partition-icon-1');
