@@ -14,7 +14,7 @@ from utils.webpage_utils import CreateLectureForm, CreateClassForm
 from utils import db_utils
 from utils.app_utils import get_curr_semester, partition, generate_partition_titles
 from utils.db_utils import User, Class, Lecture, Note, Question, Answer
-from utils.transcribe_utils import transcribe, get_youtube_id, get_video_duration
+from utils.transcribe_utils import transcribe, get_youtube_id, get_video_duration, get_titles
 from utils.textbook_utils import CLASSIFIERS
 
 import consts
@@ -248,6 +248,7 @@ def create_client(app):
             partition_titles= list(generate_partition_titles(lecture_obj['duration'][play_num], questions_interval))
             duration = lecture_obj['duration'][play_num]
             num_videos = len(lecture_obj['videos'])
+
         if lecture_obj and cls_obj:
             return render_template(
                 'lecture.html',
@@ -269,11 +270,12 @@ def create_client(app):
                 playlist_number=playlist_number,
                 num_videos = num_videos,
                 lecture_num = lecture_number,
+                vid_titles = lecture_obj['vid_title'],
                 cls_num = cls,
                 db=db,
                 api_key=app.config['HERMES_API_KEY']
             )
-            logger.info("Displaying Playlist lecture. It is the ", play_num, " video in the playlist")
+            logger.info("Displaying lecture. It is the ", play_num, " video in the playlist")
         return redirect(url_for('error', code=404))
 
     def get_role(class_ok_id):
@@ -317,18 +319,19 @@ def create_client(app):
                     youtube_id = url.split("list=")[1]
                     youtube_id = youtube_id.split("&")[0]
                     logger.info("youtube_id " + youtube_id)
-                    youtube_vid=youtube.playlistItems().list(
+                    youtube_vids=youtube.playlistItems().list(
                         part='contentDetails',
                         maxResults=25,
                         playlistId= youtube_id
                     ).execute()
-                    youtube_vid= [vid["contentDetails"]["videoId"] for vid in youtube_vid["items"]]
+                    youtube_vid= [vid["contentDetails"]["videoId"] for vid in youtube_vids["items"]]
                 elif "v=" in url:
                     youtube_vid= request.form['link']
                     is_playlist = False
                 else:
                     logger.info("Enter a valid link")
                     redirect(url_for('error', code=403))
+                title = get_titles(youtube_vid, is_playlist, youtube)
                 lecture = Lecture(
                     name=request.form['title'],
                     url_name=db_utils.encode_url(request.form['title']),
@@ -338,7 +341,8 @@ def create_client(app):
                     is_playlist= is_playlist,
                     duration=get_video_duration(youtube_vid, is_playlist),
                     cls=class_ok_id,
-                    videos = youtube_vid
+                    videos = youtube_vid,
+                    vid_title = title
                 )
                 id = Class.add_lecture(cls, lecture, db)
 
