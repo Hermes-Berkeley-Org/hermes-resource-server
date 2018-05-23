@@ -130,6 +130,14 @@ def scrape(link):
         driver.quit()
         return []
 
+def get_titles(video_id, is_playlist, youtube):
+    if is_playlist:
+        title_lst = []
+        for vid in video_id:
+            title_lst.append(youtube.videos().list(part="snippet", id = vid).execute()["items"][0]["snippet"]["title"])
+        return title_lst
+    return youtube.videos().list(part="snippet", id= video_id).execute()["items"][0]["snippet"]["title"]
+
 def clean_link(link):
     res = link.split('?')
     qs = parse_qs(res[1])

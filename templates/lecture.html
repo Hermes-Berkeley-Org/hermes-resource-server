@@ -20,9 +20,9 @@ ul#menu li {
       {% endif %}
       {% for lec in range(num_videos) %}
       {% if playlist_number|int == lec|int %}
-        <b><u><font size ="3" color="black"> Video {{lec}}</font></u></b>
+        <b><u><font size ="2" color="black"> {{lec}}. {{vid_titles[lec]}}</font></u></b>
       {% else %}
-        <font size ="3"><a href={{ url_for('lecture', cls= cls_num, lecture_number= lecture_num, playlist_number= lec) }}>Video {{lec}}</a></font>
+        <font size ="2"><a href={{ url_for('lecture', cls= cls_num, lecture_number= lecture_num, playlist_number= lec) }}>{{lec}}.{{vid_titles[lec]}}</a></font>
       {% endif %}
       {% endfor %}
       {% if playlist_number|int < (num_videos-1)|int %}
@@ -138,19 +138,19 @@ ul#menu li {
                         <span class="question-tag"> {{answer['name']}}</span>
                         <!-- <div class="from-them"> -->
                           <span class="qa-entry">
-                            <div id = "answer-text-{{answer['_id']}}">{{answer['text']}}
-                            </div>
+                            <span id = "answer-text-{{answer['_id']}}">{{answer['text']}}
                             </span>
+                          </span>
 
                         <!-- </div> -->
                     {% endif %}
+                    {% if answer['user'] == user['_id'] or role == consts.INSTRUCTOR%}
+                        <i class="fa fa-pencil" aria-hidden="true" type="submit" onclick='convertAnswerToInput("{{answer['_id']}}", "{{question['_id']}}")'></i>
+                     {% endif %}
                     {% if role == consts.INSTRUCTOR %}
-                      <a onclick='deleteAnswer("{{answer['_id']}}", "{{question['_id']}}")'><span class="fa fa-close" style="color:red"></span></a>
+                      <i class="fa fa-close" style="color:red" onclick='deleteAnswer("{{answer['_id']}}", "{{question['_id']}}")'></i>
                     {% endif %}
                     </p>
-                    {% if answer['user'] == user['_id'] or role == consts.INSTRUCTOR%}
-                        <button class="btn btn-primary btn-sm qa-entry submission" type="submit" onclick='convertAnswerToInput("{{answer['_id']}}", "{{question['_id']}}")'>Edit Answer</button>
-                     {% endif %}
                   </div>
                 {% endfor %}
                   <!-- <form class="form-horizontal"> -->
