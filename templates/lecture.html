@@ -2,12 +2,38 @@
 {% block title %}Hermes | {{ cls_name }} - {{ name }}{% endblock %}
 {% block head %}{{ super() }}{% endblock %}
 {% block content %}
-
+<style>
+ul#menu li {
+    display:inline;
+}
+</style>
 <div class="wrapper text-primary">
   <div class="row">
     <div class="col-md-7">
       <div id="ytplayer"></div>
+      {% if playlist_number %}
+      <div class="navbar">
+      {% if playlist_number|int != 0|int %}
+      <a href={{ url_for('lecture', cls= cls_num, lecture_number= lecture_num, playlist_number= ((playlist_number|int - 1|int)|string)) }}>
+        <button class="btn btn-primary submission" >Previous Video</button>
+      </a>
+      {% endif %}
+      {% for lec in range(num_videos) %}
+      {% if playlist_number|int == lec|int %}
+        <b><u><font size ="2" color="black"> {{lec}}. {{vid_titles[lec]}}</font></u></b>
+      {% else %}
+        <font size ="2"><a href={{ url_for('lecture', cls= cls_num, lecture_number= lecture_num, playlist_number= lec) }}>{{lec}}.{{vid_titles[lec]}}</a></font>
+      {% endif %}
+      {% endfor %}
+      {% if playlist_number|int < (num_videos-1)|int %}
+        <a href={{ url_for('lecture', cls= cls_num, lecture_number= lecture_num, playlist_number= ((playlist_number|int + 1|int)|string)) }}>
+          <button class="btn btn-primary submission" >Next Video</button>
+        </a>
+      {% endif %}
+      </div>
+      {% endif %}
       <div id="transcript">
+
             {% for (link, (start, end)) in preds %}
               <table class='transcript-box'>
               {% for i in range(start, end + 1) %}
@@ -50,13 +76,13 @@
         <!-- </form> -->
         <div class="row">
             <p>
-            <button type="button" class="btn btn-default btn-sm" type=submit onclick='refreshQuestions()'>
-              <span class="glyphicon glyphicon-refresh"></span> Refresh
-            </button>
+              <button type="button" class="btn btn-default btn-sm" type=submit onclick='refreshQuestions()'>
+                <i class="fa fa-refresh" aria-hidden="true">Refresh </i>
+              </button>
           </p>
       </div>
       <section id="questions_table">
-          {% for question_set, interval in partition(db['Questions'].find({'lecture_id': lecture}), questions_interval, duration) %}
+          {% for question_set, interval in partition(db['Questions'].find({'$and':[{'lecture_id': lecture}, {'playlist_number': playlist_number|string }]}), questions_interval, duration) %}
             {% if loop.index == 1 %}
                 <a data-toggle="collapse" onclick="toggleResponses('partition-icon-{{loop.index}}')" data-target="#partition-{{loop.index}}"><span style="font-size: 18px" id="partition-icon-{{loop.index}}" class="fa fa-chevron-down qa-entry" aria-hidden="true"></span><strong>Top Questions</strong></a>
             {% else %}
@@ -71,13 +97,13 @@
 
               <a id="show-answers-{{question['_id']}}" data-toggle="collapse" onclick="toggleResponses('toggle-icon-{{question['_id']}}')" data-target="#answers-{{question['_id']}}">
                 <p><span class="fa fa-chevron-down qa-entry" id="toggle-icon-{{question['_id']}}" aria-hidden="true"></span></a>
-                    <button class="btn btn-default btn-sm likes" id = "upvotes-{{question['_id']}}" type=submit onclick='upvoteQuestion("{{user['_id']}}", "{{question['_id']}}")'>
+                    <span id="upvotes-{{question['_id']}}"><button class="btn btn-default btn-sm likes"  type=submit onclick='upvoteQuestion("{{user['_id']}}", "{{question['_id']}}")'>
                       {% if user_id in question['upvotes'] %}
                       <i class="fa fa-thumbs-up" aria-hidden="true"></i> Like  <span id = "upvotes-{{question['_id']}}-count" class ="clicked">{{ question['upvotes']|length }}</span>
                       {% else %}
                       <i class="fa fa-thumbs-o-up" aria-hidden="true"></i> Like <span id = "upvotes-{{question['_id']}}-count" class = "notclicked"> {{ question['upvotes']|length }}</span>
                       {% endif %}
-                  </button>
+                  </button></span>
                 {% if question['anon'] == "true" and role == consts.STUDENT %}
                   <span class="question-tag-lg"> Anonymous {{question['timestamp']}}</span>
                 {% else %}
@@ -92,7 +118,7 @@
             <!--<div class="clear"></div>-->
             <div id="answers-{{question['_id']}}" class="collapse">
                 {% for answer in db['Answers'].find({'question_id': question['_id']}) %}
-                    <div id="each-answer">
+                    <div id="each-answer-{{answer['_id']}}">
                       <p><span id="upvotes-{{answer['_id']}}" class="qa-entry">
                       <button class="btn btn-default btn-sm likes" type=submit onclick='upvoteAnswer("{{user['_id']}}", "{{answer['_id']}}")'>
                           {% if user_id in answer['upvotes'] %}
@@ -111,11 +137,18 @@
                     {% else %}
                         <span class="question-tag"> {{answer['name']}}</span>
                         <!-- <div class="from-them"> -->
-                          <span class="qa-entry"> {{answer['text']}}</span>
+                          <span class="qa-entry">
+                            <span id = "answer-text-{{answer['_id']}}">{{answer['text']}}
+                            </span>
+                          </span>
+
                         <!-- </div> -->
                     {% endif %}
+                    {% if answer['user'] == user['_id'] or role == consts.INSTRUCTOR%}
+                        <i class="fa fa-pencil" aria-hidden="true" type="submit" onclick='convertAnswerToInput("{{answer['_id']}}", "{{question['_id']}}")'></i>
+                     {% endif %}
                     {% if role == consts.INSTRUCTOR %}
-                      <a onclick='deleteAnswer("{{answer['_id']}}", "{{question['_id']}}")'><span class="fa fa-close" style="color:red"></span></a>
+                      <i class="fa fa-close" style="color:red" onclick='deleteAnswer("{{answer['_id']}}", "{{question['_id']}}")'></i>
                     {% endif %}
                     </p>
                   </div>
@@ -129,7 +162,7 @@
                         <input id='anona-{{question['_id']}}' type="checkbox"></input><span class="qa-entry">  Answer anonymously</span>
                       </div>
                       <div class="col-md-3"></div>
-                      <div class="form-group col-md-3">
+                       <div class="form-group col-md-3">
                       <button class="btn btn-primary btn-sm qa-entry submission" type="submit" onclick='sendAnswer("{{question['_id']}}")'>Submit Answer</button>
                     </div>
                   </div>
@@ -158,7 +191,7 @@
   document.addEventListener('contextmenu', function(event) {
       var selObj = window.getSelection();
       var text = selObj.toString();
-      if (text.length > 0 && $('#suggestion').length == 0) {
+      if (text.length > 0 && $('#suggestion').length == 0 && selObj.baseNode.parentElement.id.indexOf('text') != -1) {
           event.preventDefault();
           var suggestionInput = document.createElement('input');
           suggestionInput.id = 'suggestion';
@@ -191,6 +224,7 @@
       }
   });
 
+
   var tag = document.createElement('script');
   tag.src = "https://www.youtube.com/player_api";
   var firstScriptTag = document.getElementsByTagName('script')[0];
@@ -209,6 +243,7 @@
     });
 
   }
+
 
   function onPlayerReady() {
       toggleTopQuestions();
@@ -254,7 +289,6 @@
       setInterval(function() {
           var currentTime = player.getCurrentTime();
           var state = player.getPlayerState();
-          // alert(currentTime);
           {% for transcript_element in transcript %}
           if (currentTime >= timestamps[{{loop.index - 1}}]) {
               if ($("#text-{{loop.index - 1}}").contents().length == 0) {
@@ -290,6 +324,12 @@
       // recordData maybe
   }
 
+  function convertAnswerToInput(answer, question){
+    var currentVal = document.getElementById(`each-answer-${answer}`);
+    var txt = document.getElementById(`answer-text-${answer}`).innerHTML;
+    txt = txt.replace(/ /g, '&nbsp;');
+    currentVal.innerHTML = `<input id= edit-answer-${answer} class="form-control qa-entry" value= ${txt}></input> <button class="btn btn-primary btn-sm qa-entry submission" type="submit" onclick='editAnswer("${answer}", "${question}")'>Submit Edit</button>`
+  }
   function toggleTopQuestions() {
       toggleResponses('partition-icon-1');
       $('#partition-1').collapse("show");
@@ -321,6 +361,7 @@
            lecture: "{{ lecture }}",
            cls: "{{ cls }}",
            anon: anonymous,
+           playlist_num: "{{ playlist_number }}",
            api_key: "{{ api_key }}"
         }
 
@@ -358,6 +399,30 @@
     })
   }
 
+  //NOTE: not sure about the success function
+
+  function editAnswer(answerId, questionId) {
+      var text = document.getElementById(`edit-answer-${answerId}`).value;
+      var data = {
+       text,
+       api_key: "{{ api_key }}",
+       answerId
+      };
+
+      $.ajax({
+          type: "POST",
+          url: "{{ url_for('edit_answer') }}",
+          data,
+          success: function (data) {
+            $(`#answers-container-${questionId}`).load(window.location.href + ` #answers-container-${questionId}`, function () {
+               $(`#show-answers-${questionId}`).trigger("click", function () {
+                   toggleTopQuestions()
+               });
+           });
+         }
+       });
+  }
+
   function deleteAnswer(answer, question) {
     var data = {
       answer_id: answer,
@@ -383,7 +448,6 @@
 
   function upvoteAnswer(user, answer){
     var span = document.getElementById(`upvotes-${answer}-count`);
-    alert(span.innerHTML)
     var currentcount = parseInt(span.innerHTML);
     if(span.innerHTML.className == "notclicked"){
       span.innerHTML =  currentcount + 1;
@@ -496,6 +560,7 @@
     var seconds = player.getCurrentTime();
 
   }
+
 
 
 

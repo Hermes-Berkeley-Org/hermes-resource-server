@@ -14,7 +14,7 @@ from utils.webpage_utils import CreateLectureForm, CreateClassForm
 from utils import db_utils
 from utils.app_utils import get_curr_semester, partition, generate_partition_titles
 from utils.db_utils import User, Class, Lecture, Note, Question, Answer
-from utils.transcribe_utils import transcribe, get_youtube_id, get_video_duration
+from utils.transcribe_utils import transcribe, get_youtube_id, get_video_duration, get_titles
 from utils.textbook_utils import CLASSIFIERS
 
 import consts
@@ -204,7 +204,6 @@ def create_client(app):
     @app.route('/home/')
     def home():
         user = get_user_data()
-        print(user)
         def validate(participation):
             participation['semester'] = Class.get_semester(participation['offering'])
             participation['class_exists'] = db[Class.collection].find({'ok_id': participation['ok_id']}).count() > 0
@@ -221,37 +220,62 @@ def create_client(app):
         logger.info("Displaying home.")
         return redirect(url_for('index'))
 
-    @app.route('/class/<cls>/lecture/<lecture_number>')
-    def lecture(cls, lecture_number):
+    @app.route('/class/<cls>/lecture/<lecture_number>/', defaults={'playlist_number': None})
+    @app.route('/class/<cls>/lecture/<lecture_number>/<playlist_number>')
+    def lecture(cls, lecture_number, playlist_number=None):
+        logger.info(playlist_number)
         cls_obj = db['Classes'].find_one({'ok_id': int(cls)})
         lecture_obj = db['Lectures'].find_one({'cls': cls, 'lecture_number': int(lecture_number)})
         user = get_user_data()
         questions_interval = 30
-        preds = lecture_obj.get('preds')
-        if not preds:
-            preds = [(None, [0, len(lecture_obj['transcript'])])]
+        if playlist_number is None:
+            preds = lecture_obj.get('preds')
+            if not preds:
+                preds = [(None, [0, len(lecture_obj['transcript'])])]
+            id=get_youtube_id(lecture_obj['link'])
+            transcript = lecture_obj['transcript']
+            partition_titles = list(generate_partition_titles(lecture_obj['duration'], questions_interval))
+            duration=lecture_obj['duration']
+            num_videos = 1
+        else:
+            play_num = int(playlist_number)
+            link = "https://www.youtube.com/watch?v=" + lecture_obj["videos"][play_num]
+            preds = lecture_obj.get('preds')[play_num]
+            if not preds:
+                preds = [(None, [0, len(lecture_obj['transcript'])])]
+            id=get_youtube_id(link)
+            transcript = lecture_obj['transcript'][play_num]
+            partition_titles= list(generate_partition_titles(lecture_obj['duration'][play_num], questions_interval))
+            duration = lecture_obj['duration'][play_num]
+            num_videos = len(lecture_obj['videos'])
+
         if lecture_obj and cls_obj:
             return render_template(
                 'lecture.html',
-                id=get_youtube_id(lecture_obj['link']),
+                id=id,
                 lecture=str(lecture_obj['_id']),
                 name=lecture_obj['name'],
-                transcript=lecture_obj['transcript'],
+                transcript=transcript,
                 preds=preds,
                 cls_name=cls_obj['display_name'],
                 user=user,
                 questions_interval=questions_interval,
                 partition=partition,
-                partition_titles=list(generate_partition_titles(lecture_obj['duration'], questions_interval)),
-                duration=lecture_obj['duration'],
+                partition_titles=partition_titles,
+                duration=duration,
                 user_id=str(user['_id']),
                 role=get_role(cls)[0],
                 consts=consts,
                 cls=str(cls_obj['_id']),
+                playlist_number=playlist_number,
+                num_videos = num_videos,
+                lecture_num = lecture_number,
+                vid_titles = lecture_obj['vid_title'],
+                cls_num = cls,
                 db=db,
                 api_key=app.config['HERMES_API_KEY']
             )
-        logger.info("Displaying lecture.")
+            logger.info("Displaying lecture. It is the ", play_num, " video in the playlist")
         return redirect(url_for('error', code=404))
 
     def get_role(class_ok_id):
@@ -286,29 +310,72 @@ def create_client(app):
             if role != consts.INSTRUCTOR:
                 logger.info("Error: user access level is %s", role)
                 redirect(url_for('error', code=403))
-            num_lectures = len(cls['lectures'])
             if form.validate():
+                num_lectures = len(cls['lectures'])
+                ses = requests.Session()
+                url = ses.head(request.form["link"], allow_redirects=True).url
+                if "list=" in url:
+                    is_playlist = True
+                    youtube_id = url.split("list=")[1]
+                    youtube_id = youtube_id.split("&")[0]
+                    logger.info("youtube_id " + youtube_id)
+                    youtube_vids=youtube.playlistItems().list(
+                        part='contentDetails',
+                        maxResults=25,
+                        playlistId= youtube_id
+                    ).execute()
+                    youtube_vid= [vid["contentDetails"]["videoId"] for vid in youtube_vids["items"]]
+                elif "v=" in url:
+                    youtube_vid= request.form['link']
+                    is_playlist = False
+                else:
+                    logger.info("Enter a valid link")
+                    redirect(url_for('error', code=403))
+                title = get_titles(youtube_vid, is_playlist, youtube)
                 lecture = Lecture(
                     name=request.form['title'],
                     url_name=db_utils.encode_url(request.form['title']),
                     date=request.form['date'],
                     link=request.form['link'],
                     lecture_number=num_lectures,
-                    duration=get_video_duration(request.form['link']),
-                    cls=class_ok_id
+                    is_playlist= is_playlist,
+                    duration=get_video_duration(youtube_vid, is_playlist),
+                    cls=class_ok_id,
+                    videos = youtube_vid,
+                    vid_title = title
                 )
                 id = Class.add_lecture(cls, lecture, db)
+
                 ts_classifier = None
                 if cls['display_name'] in CLASSIFIERS:
                     ts_classifier = CLASSIFIERS[cls['display_name']](db, cls['ok_id'])
-                transcript, preds = transcribe(
-                    request.form['link'],
-                    app.config['TRANSCRIPTION_MODE'],
-                    youtube=youtube,
-                    transcription_classifier=ts_classifier,
-                    error_on_failure=True
-                )
-                Lecture.add_transcript(id, transcript, preds, db)
+                if(not is_playlist):
+                    transcript, preds = transcribe(
+                        request.form['link'],
+                        app.config['TRANSCRIPTION_MODE'],
+                        is_playlist = False,
+                        youtube=youtube,
+                        transcription_classifier=ts_classifier,
+                        error_on_failure=True
+                    )
+                    Lecture.add_transcript(id, transcript, preds, db)
+                else:
+                    transcript_lst = []
+                    preds_lst = []
+                    for vid in youtube_vid:
+                        transcript, preds = transcribe(
+                            vid,
+                            app.config['TRANSCRIPTION_MODE'],
+                            is_playlist = True,
+                            youtube=youtube,
+                            transcription_classifier=ts_classifier,
+                            error_on_failure = True
+                        )
+                        transcript_lst.append(transcript)
+                        preds_lst.append(preds)
+                    Lecture.add_transcript(id, transcript_lst, preds_lst, db)
+
+
             else:
                 flash('All fields required')
         return render_template(
@@ -325,7 +392,6 @@ def create_client(app):
     @app.route('/create_class/<class_ok_id>', methods=['GET', 'POST'])
     def create_class(class_ok_id):
         form = CreateClassForm(request.form)
-
         role, data = get_role(class_ok_id)
         if role == consts.INSTRUCTOR:
             if request.method == 'POST':

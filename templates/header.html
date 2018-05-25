@@ -11,11 +11,7 @@
         <title>{% block title %}{% endblock %}</title>
 
         <!-- Bootstrap core CSS -->
-        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
-        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
-        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
         <link href="{{ url_for('static', filename='vendor/bootstrap/css/bootstrap.min.css') }}" rel="stylesheet">
-        <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.4.0/css/font-awesome.min.css" rel="stylesheet">
 
         <!-- Custom fonts for this template -->
         <link href="{{ url_for('static', filename='vendor/font-awesome/css/font-awesome.min.css') }}" rel="stylesheet" type="text/css">
@@ -34,7 +30,6 @@
         <!-- Custom style sheet for lecture question bubbles -->
         <link href="{{ url_for('static', filename='css/lecture-questions.css') }}" rel="stylesheet">
         <link href="{{ url_for('static', filename='css/class.css') }}" rel="stylesheet">
-        <meta name="viewport" content="width=device-width, initial-scale=1">
         {% endblock %}
     </head>
     <body>
@@ -71,7 +66,7 @@
     </div>
     <div id="footer">
         {% block footer %}
-        <div class="copyright py-2 text-center text-white">
+        <div class="copyright py-4 text-center text-white">
             <div class="container">
                 <small>Copyright &copy; Hermes 2018</small>
             </div>
