@@ -468,7 +468,7 @@ def create_client(app):
     def edit_question():
         if request.method == 'POST':
             if request.form['api_key'] == app.config['HERMES_API_KEY']:
-                Question.edit_question(id, request.form.to_dict(), db)
+                Question.edit_question(request.form.to_dict(), db)
                 logger.info("Successfully edited question.")
                 return jsonify(success=True), 200
             else:
