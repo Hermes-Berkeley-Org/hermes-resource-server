@@ -133,6 +133,7 @@ class Class(DBObject):
             Class(
                 lectures=[],
                 semester=Class.get_semester(data['offering']),
+                students=[],
                 **data
             ),
             db
@@ -233,6 +234,7 @@ class Question(DBObject):
                 ok_id=question['ok_id'],
                 lecture_id=question['lecture'],
                 upvotes =[],
+                playlist_number= question['playlist_num'],
                 anon = question['anon']
             ),
             db

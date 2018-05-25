@@ -20,11 +20,11 @@ def get_youtube_id(link):
     params = parse_qs(url.query)
     return params['v'][0] if 'v' in params else None
 
-def transcribe(link, mode, youtube=None, transcription_classifier=None, error_on_failure=False):
+def transcribe(link, mode, is_playlist = False,youtube=None, transcription_classifier=None, error_on_failure=False, ):
     try:
         transcription = None
         if mode == 'api':
-            transcription = read_from_youtube(link, youtube)
+            transcription = read_from_youtube(link, youtube, is_playlist)
         elif mode == 'scrape':
             transcription = scrape(link)
 
@@ -53,14 +53,24 @@ def classify(transcription, transcription_classifier):
             last = (i // 2) + 1
             curr_text = []
 
-def read_from_youtube(link, youtube):
-    video_id = get_youtube_id(link)
+def read_from_youtube(link, youtube, is_playlist):
+    """ Gets the transcript from a youtube video
+    :param str link: Either a video id if the initial link was a playlist
+    or video link if a video link was passed in
+    :param youtube: Youtube API
+    :param boolean is_playlist: Tells if link passed in is an id or video link
+    based off if it came from a list of ids (playlist) or not
+    :return: A list of dictionaries used as the transcript for a video
+    """
+    if is_playlist:
+        video_id = link
+    else:
+        video_id = get_youtube_id(link)
     def get_caption_id(video_id):
         results = youtube.captions().list(
             part="snippet",
-            videoId=video_id
+            videoId= video_id
         ).execute()
-
         for item in results["items"]:
             return item["id"]
     caption_id = get_caption_id(video_id)
@@ -79,7 +89,16 @@ def read_from_youtube(link, youtube):
         })
     return transcript
 
-def get_video_duration(link):
+def get_video_duration(link, is_playlist):
+    """Gets the duration of a video
+    :param: str link: Either a video id if the initial link was a playlist
+    or video link if a video link was passed in
+    :param boolean is_playlist: Tells if link passed in is an id or video link
+    based off if it came from a list of ids (playlist) or not
+    :return: Duration of the video
+    """
+    if(is_playlist):
+        return ([pafy.new(vid).duration for vid in link])
     return pafy.new(link).duration
 
 
@@ -110,6 +129,14 @@ def scrape(link):
     except TimeoutException:
         driver.quit()
         return []
+
+def get_titles(video_id, is_playlist, youtube):
+    if is_playlist:
+        title_lst = []
+        for vid in video_id:
+            title_lst.append(youtube.videos().list(part="snippet", id = vid).execute()["items"][0]["snippet"]["title"])
+        return title_lst
+    return youtube.videos().list(part="snippet", id= video_id).execute()["items"][0]["snippet"]["title"]
 
 def clean_link(link):
     res = link.split('?')
