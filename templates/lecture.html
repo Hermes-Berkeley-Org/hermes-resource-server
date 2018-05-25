@@ -87,6 +87,9 @@
                 {% if role == consts.INSTRUCTOR %}
                   <a onclick='deleteQuestion("{{question['_id']}}")'><span class="fa fa-close" style="color:red"></span></a>
                 {% endif %}
+                {% if role == consts.INSTRUCTOR or True %}
+                  <button class="btn btn-primary btn-sm qa-entry submission" type="submit" onclick='convertAnswerToInputQ("{{question['_id']}}", "{{question['text']}}")'>Edit Question</button>
+                {% endif %}
                 </p>
             <div id="answers-container-{{question['_id']}}">
             <!--<div class="clear"></div>-->
@@ -123,7 +126,7 @@
                     </p>
                     {% if answer['user'] == user['_id'] or role == consts.INSTRUCTOR%}
                         <button class="btn btn-primary btn-sm qa-entry submission" type="submit" onclick='convertAnswerToInput("{{answer['_id']}}", "{{question['_id']}}")'>Edit Answer</button>
-                     {% endif %}
+                    {% endif %}
                   </div>
                 {% endfor %}
                   <!-- <form class="form-horizontal"> -->
@@ -304,6 +307,15 @@
     currentVal.innerHTML = `<input id= edit-answer-${answer} class="form-control qa-entry" value= ${txt}></input> <button class="btn btn-primary btn-sm qa-entry submission" type="submit" onclick='editAnswer("${answer}", "${question}")'>Submit Edit</button>`
 
   }
+
+  function convertAnswerToInputQ(questionId, text){
+    var currentVal = document.getElementById(`show-answers-${questionId}`);
+    //var txt = document.getElementById(`show-answers-${questionId}`).innerHTML;
+    currentVal.innerHTML = `<input id= show-answers-${questionId} class="form-control qa-entry" value= ${text}></input> <button class="btn btn-primary btn-sm qa-entry submission" type="submit" onclick='editQuestion("${questionId}")'>Submit Edit</button>`
+    //var txt = document.getElementById(`answer-text-${answer}`).innerHTML;
+    //currentVal.innerHTML = `<input id= edit-answer-${answer} class="form-control qa-entry" value= ${txt}></input> <button class="btn btn-primary btn-sm qa-entry submission" type="submit" onclick='editAnswer("${answer}", "${question}")'>Submit Edit</button>`
+  }
+
   function toggleTopQuestions() {
       toggleResponses('partition-icon-1');
       $('#partition-1').collapse("show");
@@ -373,6 +385,22 @@
   }
 
   //NOTE: not sure about the success function
+
+  function editQuestion(questionId) {
+    //var text = document.getElementById(`show-answers-${questionId}`).innerHTML.value;
+    var text = "FIX ABOVE"; // FIXME
+    var data = {
+      text,
+      api_key: "{{ api_key }}",
+      questionId
+    }
+
+    $.ajax({
+      type: "POST",
+      url: "{{ url_for('edit_question') }}",
+      data
+    })
+  }
 
   function editAnswer(answerId, questionId) {
       var text = document.getElementById(`edit-answer-${answerId}`).value;
