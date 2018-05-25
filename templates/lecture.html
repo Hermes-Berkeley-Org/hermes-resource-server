@@ -16,10 +16,10 @@
                       <div class="dropdown" id="menu-{{i}}">
                       <span id="ts-{{2 * i}}"></span>
                         <a data-toggle="dropdown">
-                          <span id="text-{{2 * i}}"></span>
-                          <span id="text-{{2 * i + 1}}"></span>
+                          <span id="transcript-text-{{2 * i}}"></span>
+                          <span id="transcript-text-{{2 * i + 1}}"></span>
                         </a>
-                        <ul class="dropdown-menu">
+                        <ul id="transcript-dropdown-{{i}}" class="dropdown-menu">
                           {% if link %}
                           <li><a onclick="sendToURL('{{link}}')"> View section in textbook</a></li>
                           {% endif %}
@@ -155,40 +155,89 @@
 
 <script>
 
-  document.addEventListener('contextmenu', function(event) {
-      var selObj = window.getSelection();
-      var text = selObj.toString();
-      if (text.length > 0 && $('#suggestion').length == 0) {
+  var substringMatcher = function(strs) {
+    return function findMatches(q, cb) {
+
+      if (q == '') {
+        cb(strs);
+      } else {
+        var matches, substringRegex;
+        matches = [];
+        substrRegex = new RegExp(q, 'i');
+        $.each(strs, function(i, str) {
+          if (substrRegex.test(str)) {
+            matches.push(str);
+          }
+        });
+        cb(matches);
+      }
+
+
+    };
+  };
+
+
+
+  $("span[id*='transcript-text']").on('contextmenu', function(event) {
+      var index = parseInt($(this).attr('id').split('-').pop());
+      var oldText = $(this).text();
+      document.getElementById(`transcript-dropdown-${Math.floor(index / 2)}`).style.visibility = "hidden";
+      if ($('[id*="suggestion"]').length == 0) {
           event.preventDefault();
           var suggestionInput = document.createElement('input');
-          suggestionInput.id = 'suggestion';
-          suggestionInput.size = text.length;
-          suggestionInput.value = text;
-          selObj.getRangeAt(0).surroundContents(suggestionInput);
-          suggestionInput.innerHTML = '';
-          $('#suggestion').keydown(function(event) {
-              if (event.keyCode == 13) { // enter key
-                  var parent = $(this).closest('span');
-                  $(this).replaceWith($(this).val());
-                  var text = parent.text();
-                  var index = parent.attr('id').split('-').pop();
+          suggestionInput.id = `suggestion-${index}`;
+          suggestionInput.size = oldText.length;
+          suggestionInput.value = oldText;
 
-                  var data = {
-                      text,
-                      index,
-                      lecture_id: '{{ lecture }}',
-                      api_key: '{{ api_key }}'
-                  }
+          var choices = [oldText];
 
-                  $.ajax({
-                    type: "POST",
-                    url: "{{ url_for('edit_transcript') }}",
-                    data
-                  });
-
+          {% for transcript_elem in transcript %}
+              if ({{loop.index - 1}} == index) {
+                  {% for suggestion in sort_suggestions(transcript_elem['suggestions'] if 'suggestions' in transcript_elem else []) %}
+                      choices.push("{{suggestion}}");
+                  {% endfor %}
               }
+          {% endfor %}
+
+          $(this).html(suggestionInput);
+
+          $(`#suggestion-${index}`).typeahead(
+            {
+                hint: true,
+                highlight: true,
+                minLength: 0
+            },
+            {
+                name: 'suggestions',
+                source: substringMatcher(choices)
+            }
+          );
+
+          $(`#suggestion-${index}`).keydown(function(event) {
+            if (event.keyCode == 13) { // enter key
+              var parent = $(this).closest('span');
+              var text = $(this).val();
+
+              parent.html(oldText);
+
+              var data = {
+                  text,
+                  index,
+                  lecture_id: '{{ lecture }}',
+                  api_key: '{{ api_key }}'
+              }
+
+                $.ajax({
+                  type: "POST",
+                  url: "{{ url_for('edit_transcript') }}",
+                  data
+                });
+
+            }
+            document.getElementById(`transcript-dropdown-${Math.floor(index / 2)}`).style.visibility = "visible";
           });
       }
+
   });
 
   var tag = document.createElement('script');
@@ -254,17 +303,17 @@
       setInterval(function() {
           var currentTime = player.getCurrentTime();
           var state = player.getPlayerState();
-          // alert(currentTime);
           {% for transcript_element in transcript %}
           if (currentTime >= timestamps[{{loop.index - 1}}]) {
-              if ($("#text-{{loop.index - 1}}").contents().length == 0) {
+              if ($("#transcript-text-{{loop.index - 1}}").contents().length == 0) {
                   var p1 = document.getElementById("ts-{{loop.index - 1}}");
                   if (p1) {
                       p1.innerHTML = cleanTimestamp("{{transcript_element['begin']}}")
                   }
-                  var p2 = document.getElementById("text-{{loop.index - 1}}");
+                  var p2 = document.getElementById("transcript-text-{{loop.index - 1}}");
                   p2.innerHTML = "{{transcript_element['text']}}";
                   document.getElementById("menu-{{loop.index // 2}}").style.visibility = "visible";
+
               }
           }
           {% endfor %}
@@ -383,7 +432,6 @@
 
   function upvoteAnswer(user, answer){
     var span = document.getElementById(`upvotes-${answer}-count`);
-    alert(span.innerHTML)
     var currentcount = parseInt(span.innerHTML);
     if(span.innerHTML.className == "notclicked"){
       span.innerHTML =  currentcount + 1;

@@ -4,7 +4,9 @@ from datetime import datetime
 from pymongo import MongoClient
 from bson.objectid import ObjectId
 
+from utils.app_utils import edit_distance
 
+EDIT_DISTANCE_PER_WORD = 5
 
 def insert(dbobj, db):
     return db[dbobj.collection].insert_one(dbobj.to_dict())
@@ -182,13 +184,27 @@ class Lecture(DBObject):
             upsert=False
         )
 
+
+
     @staticmethod
-    def edit_transcript(data, db):
+    def suggest_transcript(data, db):
         lecture = find_one_by_id(data['lecture_id'], Lecture.collection, db)
         def replace_transcript_elem(lecture, index, text):
+            def insert(text, suggestions):
+                for i, (suggestion, votes) in enumerate(suggestions[:]):
+                    if suggestion == text:
+                        suggestions[i] = (suggestion, votes + 1)
+                        return
+                suggestions.append((text, 1))
             transcript = lecture['transcript']
             transcript_elem = transcript[index]
-            transcript_elem['text'] = text
+            if 'suggestions' not in transcript_elem:
+                transcript_elem['suggestions'] = list()
+            num_words = len(transcript_elem['text'].split(' '))
+            if edit_distance(text, transcript_elem['text']) < (num_words * EDIT_DISTANCE_PER_WORD):
+                insert(text, transcript_elem['suggestions'])
+            else:
+                print('REJECTED') # logger statement needed
             return transcript[:index] + [transcript_elem] + transcript[index+1:]
         db[Lecture.collection].update_one(
             {

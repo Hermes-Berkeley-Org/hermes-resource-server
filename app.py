@@ -12,7 +12,7 @@ import logging
 
 from utils.webpage_utils import CreateLectureForm, CreateClassForm
 from utils import db_utils
-from utils.app_utils import get_curr_semester, partition, generate_partition_titles
+from utils.app_utils import get_curr_semester, partition, generate_partition_titles, sort_suggestions
 from utils.db_utils import User, Class, Lecture, Note, Question, Answer
 from utils.transcribe_utils import transcribe, get_youtube_id, get_video_duration
 from utils.textbook_utils import CLASSIFIERS
@@ -242,6 +242,7 @@ def create_client(app):
                 user=user,
                 questions_interval=questions_interval,
                 partition=partition,
+                sort_suggestions=sort_suggestions,
                 partition_titles=list(generate_partition_titles(lecture_obj['duration'], questions_interval)),
                 duration=lecture_obj['duration'],
                 user_id=str(user['_id']),
@@ -453,7 +454,7 @@ def create_client(app):
     def edit_transcript():
         if request.method == 'POST':
             if request.form['api_key'] == app.config['HERMES_API_KEY']:
-                Lecture.edit_transcript(request.form.to_dict(), db)
+                Lecture.suggest_transcript(request.form.to_dict(), db)
                 logger.info("Successfully edited transcript.")
                 return jsonify(success=True), 200
             else:
