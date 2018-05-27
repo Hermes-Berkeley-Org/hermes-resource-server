@@ -13,17 +13,38 @@
         <th "margin-top: -80px">Date Posted</th>
       </tr>
       {% for lec in lectures %}
-        <div id= lecture-{{lec['_id']}}>
-        <tr class="lec-row">
-          <td><a href={{ url_for('lecture', cls=lec['cls'], lecture_number=lec['lecture_number'])}}>{{ lec['name'] }}</a></td>
+        <tr id = lecture-{{lec['_id']}} class="lec-row">
+          {% if lec['is_playlist'] %}
+          <a id="show-playlist-{{lec['_id']}}" data-toggle="collapse" onclick="toggleResponses('toggle-icon-{{lec['_id']}}')" data-target="#playlist-{{lec['_id']}}">
+            <p><span class="fa fa-chevron-down qa-entry" id="toggle-icon-{{lec['_id']}}" aria-hidden="true"></span></a>
+            <td><a href={{ url_for('lecture', cls=lec['cls'], lecture_number=lec['lecture_number'], playlist_number=0)}}>{{ lec['name'] }}</a></td>
+          {% else %}
+            <td><a href={{ url_for('lecture', cls=lec['cls'], lecture_number=lec['lecture_number'])}}>{{ lec['name'] }}</a></td>
+          {% endif %}
           &nbsp; &nbsp;
           <td>{{lec['date']}}</td>
           {% if role == consts.INSTRUCTOR %}
             <td><button class="btn btn-primary" type=submit onclick="deleteLecture('{{lec['_id']}}')">Delete Lecture</button></td>
           {% endif %}
+        </div>
         </tr>
+        {% if lec['playlist'] %}
+        <td><div id="playlist-{{lec['_id']}}" class="collapse">
+          <div class="dropdown show">
+      <a class="btn btn-secondary dropdown-toggle" href="#" role="button" id="dropdownMenuLink" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+        Dropdown link</td>
+      </a>
+
+      <div class="dropdown-menu" aria-labelledby="dropdownMenuLink">
+        <a class="dropdown-item" href="#">Action</a>
+        <a class="dropdown-item" href="#">Another action</a>
+        <a class="dropdown-item" href="#">Something else here</a>
       </div>
+    </div>
+        {% endif %}
       {% endfor %}
+      <div class="btn-group">
+</div>
     </table>
   </th>
   <th class = "classsections" style = "margin-top: -80px">
@@ -33,7 +54,7 @@
           {{ form.csrf }}
           <p>Lecture Title {{ form.title }}</p>
           <p>Lecture Date {{ form.date }}</p>
-          <p>Youtube Link to Lecture {{ form.link }}</p>
+          <p>Youtube Lecture/Playlist Link {{ form.link }}</p>
           <p id="submit">{{ form.submit() }}</p>
       </form>
     {% endif %}
@@ -58,6 +79,7 @@
         lectureid,
         api_key: '{{ api_key }}'
       };
+
       console.log(`${JSON.stringify(data)}`)
       $.ajax({
         type: "POST",
@@ -68,6 +90,25 @@
         }
       });
     }
+
+    function dropDown() {
+    document.getElementById("myDropdown").classList.toggle("show");
+  }
+
+  // Close the dropdown menu if the user clicks outside of it
+  window.onclick = function(event) {
+    if (!event.target.matches('.dropbtn')) {
+
+      var dropdowns = document.getElementsByClassName("dropdown-content");
+      var i;
+      for (i = 0; i < dropdowns.length; i++) {
+        var openDropdown = dropdowns[i];
+        if (openDropdown.classList.contains('show')) {
+          openDropdown.classList.remove('show');
+        }
+      }
+    }
+  }
 </script>
 {% endblock %}
 {% block footer %}

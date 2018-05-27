@@ -135,6 +135,7 @@ class Class(DBObject):
             Class(
                 lectures=[],
                 semester=Class.get_semester(data['offering']),
+                students=[],
                 **data
             ),
             db
@@ -249,6 +250,7 @@ class Question(DBObject):
                 ok_id=question['ok_id'],
                 lecture_id=question['lecture'],
                 upvotes =[],
+                playlist_number= question['playlist_num'],
                 anon = question['anon']
             ),
             db
@@ -325,15 +327,17 @@ class Answer(DBObject):
         ).inserted_id
 
     @staticmethod
-    def edit_answer(answer_id, answer, db):
-        return db[Answer.collection].update_one({
-            {'_id': answer_id},
+    def edit_answer(data, db):
+        edit = data['text']
+
+        return db[Answer.collection].update_one(
+            {'_id': ObjectId(data['answerId'])},
             {
               '$set': {
-                'text': answer["text"],
+                'text': edit,
               }
-            },
-        }, upsert = False).inserted_id
+            }
+        )
 
     @staticmethod
     def upvote_answer(data, db):
