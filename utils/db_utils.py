@@ -185,8 +185,6 @@ class Lecture(DBObject):
             upsert=False
         )
 
-
-
     @staticmethod
     def suggest_transcript(data, db):
         lecture = find_one_by_id(data['lecture_id'], Lecture.collection, db)
