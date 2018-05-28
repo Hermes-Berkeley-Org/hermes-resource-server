@@ -24,7 +24,7 @@
           &nbsp; &nbsp;
           <td>{{lec['date']}}</td>
           {% if role == consts.INSTRUCTOR %}
-            <td><button class="btn btn-primary" type=submit onclick="deleteLecture('{{lec['_id']}}')">Delete Lecture</button></td>
+            <td><i class="fa fa-close" style="color:red" type=submit onclick="deleteLecture('{{lec['_id']}}')"></i></td>
           {% endif %}
         </div>
         </tr>

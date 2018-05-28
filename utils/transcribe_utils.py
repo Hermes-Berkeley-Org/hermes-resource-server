@@ -89,18 +89,11 @@ def read_from_youtube(link, youtube, is_playlist):
         })
     return transcript
 
-def get_video_duration(link, is_playlist):
-    """Gets the duration of a video
-    :param: str link: Either a video id if the initial link was a playlist
-    or video link if a video link was passed in
-    :param boolean is_playlist: Tells if link passed in is an id or video link
-    based off if it came from a list of ids (playlist) or not
-    :return: Duration of the video
-    """
-    if(is_playlist):
-        return ([pafy.new(vid).duration for vid in link])
+def get_video_duration(link):
     return pafy.new(link).duration
 
+def get_playlist_video_duration(links):
+    return [pafy.new(vid).duration for vid in links]
 
 def scrape(link):
     try:
@@ -130,13 +123,14 @@ def scrape(link):
         driver.quit()
         return []
 
-def get_titles(video_id, is_playlist, youtube):
-    if is_playlist:
-        title_lst = []
-        for vid in video_id:
-            title_lst.append(youtube.videos().list(part="snippet", id = vid).execute()["items"][0]["snippet"]["title"])
-        return title_lst
+def get_video_titles(video_id, youtube):
     return youtube.videos().list(part="snippet", id= video_id).execute()["items"][0]["snippet"]["title"]
+
+def get_playlist_titles(video_ids, youtube):
+    title_lst = []
+    for vid in video_ids:
+        title_lst.append(youtube.videos().list(part="snippet", id = vid).execute()["items"][0]["snippet"]["title"])
+    return title_lst
 
 def clean_link(link):
     res = link.split('?')
