@@ -15,6 +15,8 @@ import pafy
 LENGTH_REQUIRED = 100
 THRESHOLD = 0.0
 
+TRANSCRIPT_SUGGESTIONS_NECESSARY = 5
+
 def get_youtube_id(link):
     url = urlparse(link)
     params = parse_qs(url.query)
@@ -85,7 +87,8 @@ def read_from_youtube(link, youtube, is_playlist):
         transcript.append({
             'begin': p.get('begin'),
             'end': p.get('end'),
-            'text': p.text
+            'text': p.text,
+            'suggestions': [(p.text, TRANSCRIPT_SUGGESTIONS_NECESSARY)]
         })
     return transcript
 
@@ -136,7 +139,7 @@ def get_titles(video_id, is_playlist, youtube):
         for vid in video_id:
             title_lst.append(youtube.videos().list(part="snippet", id = vid).execute()["items"][0]["snippet"]["title"])
         return title_lst
-    return youtube.videos().list(part="snippet", id= video_id).execute()["items"][0]["snippet"]["title"]
+    return pafy.new(video_id).title
 
 def clean_link(link):
     res = link.split('?')

@@ -27,13 +27,13 @@ ul#menu li {
       {% endfor %}
       {% if playlist_number|int < (num_videos-1)|int %}
         <a href={{ url_for('lecture', cls= cls_num, lecture_number= lecture_num, playlist_number= ((playlist_number|int + 1|int)|string)) }}>
-          <button class="btn btn-primary submission" >Next Video</button>
+          <button class="btn btn-sm btn-primary submission" >Next Video</button>
         </a>
       {% endif %}
       </div>
       {% endif %}
+      <button id="display-full-transcript" class="btn btn-sm btn-primary">Display full transcript</button>
       <div id="transcript">
-
             {% for (link, (start, end)) in preds %}
               <table class='transcript-box'>
               {% for i in range(start, end + 1) %}
@@ -77,7 +77,7 @@ ul#menu li {
         <div class="row">
             <p>
               <button type="button" class="btn btn-default btn-sm" type=submit onclick='refreshQuestions()'>
-                <i class="fa fa-refresh" aria-hidden="true">Refresh </i>
+                <i class="fa fa-refresh" aria-hidden="true"></i> Refresh
               </button>
           </p>
       </div>
@@ -200,7 +200,7 @@ ul#menu li {
           suggestionInput.size = oldText.length;
           suggestionInput.value = oldText;
 
-          var choices = [oldText];
+          var choices = [];
 
           {% for transcript_elem in transcript %}
               if ({{loop.index - 1}} == index) {
@@ -263,6 +263,7 @@ ul#menu li {
       height: window.innerHeight / 2,
       width: window.innerWidth / 2,
       videoId: '{{ id }}',
+      playerVars: {rel: 0},
       events: {
         'onStateChange': stateChange,
         'onReady': onPlayerReady
@@ -273,54 +274,134 @@ ul#menu li {
 
 
   function onPlayerReady() {
+
       toggleTopQuestions();
 
-      var timestamps = [];
+      transcriptElements = [];
+      partitionTitles = [];
+
+      // Push transcript into JavaScript memory
       {% for transcript_element in transcript %}
-      timestamps.push(convertToSeconds("{{transcript_element['begin']}}"));
+      transcriptElements.push({
+          begin: "{{transcript_element['begin']}}",
+          end: "{{transcript_element['end']}}",
+          text: "{{transcript_element['text']}}",
+          suggestions: {{transcript_element['suggestions']|tojson}},
+          interval: [convertToSeconds("{{transcript_element['begin']}}"), convertToSeconds("{{transcript_element['end']}}")]
+      });
       {% endfor %}
+
+      {% for begin, end in partition_titles %}
+          partitionTitles.push({
+              begin: "{{begin}}",
+              end: "{{end}}",
+              interval: [convertToSecondsTiny("{{begin}}"), convertToSecondsTiny("{{end}}")]
+          })
+      {% endfor %}
+
+      var maxTranscriptIndex = 0;
+      var maxTranscriptTime = 0;
+
+      var renderTranscriptElement = function (transcriptElementIndex) {
+          transcriptElement = transcriptElements[transcriptElementIndex];
+          var p1 = document.getElementById(`ts-${transcriptElementIndex}`);
+          if (p1) {
+              p1.innerHTML = cleanTimestamp(transcriptElement.begin)
+          }
+          var p2 = document.getElementById(`transcript-text-${transcriptElementIndex}`);
+          p2.innerHTML = transcriptElement.text;
+          document.getElementById(`menu-${Math.floor(transcriptElementIndex / 2)}`).style.visibility = "visible";
+      };
+
+      var scrollToTranscriptElement = function (transcriptElementIndex) {
+          $('#transcript').animate({
+              scrollTop: $(`#transcript-row-${Math.floor(transcriptElementIndex / 2)}`).position().top
+          }, 500);
+      };
+
+      var displayQA = function (begin, end) {
+          var collapseButton = $(`a:contains('${begin} - ${end}')`);
+          var div = $(collapseButton.attr('data-target'));
+          if (div && div.attr('class') && div.attr('class').split(' ').indexOf('show') == -1) {
+            toggleResponses(collapseButton.children()[0].id);
+            div.collapse('show');
+          }
+      };
+
+      var displayFullTranscript = function () {
+          for (var i = maxTranscriptIndex; i < transcriptElements.length; i++) {
+              if ($(`#transcript-text-${i}`).contents().length == 0) {
+                  renderTranscriptElement(i);
+              }
+          }
+
+          maxTranscriptIndex = transcriptElement.length;
+          maxTranscriptTime = transcriptElements[maxTranscriptIndex - 1].end;
+      };
+
+      $("#display-full-transcript").click(displayFullTranscript);
 
       setInterval(function() {
           var currentTime = player.getCurrentTime();
           var state = player.getPlayerState();
-          {% for transcript_element in transcript %}
-          if (currentTime >= timestamps[{{loop.index - 1}}]) {
-              // TODO
-              // Send to a function, so can easily render all
 
-              // TODO
-              // Optimize so it doesn't have to check every single transcript element
-              if ($("#transcript-text-{{loop.index - 1}}").contents().length == 0) {
-                  var p1 = document.getElementById("ts-{{loop.index - 1}}");
-                  if (p1) {
-                      p1.innerHTML = cleanTimestamp("{{transcript_element['begin']}}")
+          if (currentTime > maxTranscriptTime) {
+              for (var i = maxTranscriptIndex; i < transcriptElements.length; i++) {
+                  var transcriptElement = transcriptElements[i];
+                  if ($(`#transcript-text-${i}`).contents().length == 0) {
+                      renderTranscriptElement(i);
                   }
-                  var p2 = document.getElementById("transcript-text-{{loop.index - 1}}");
-                  p2.innerHTML = "{{transcript_element['text']}}";
-                  document.getElementById("menu-{{loop.index // 2}}").style.visibility = "visible";
 
+                  var endTime = transcriptElement.interval[1];
+                  if (endTime > currentTime) {
+                      maxTranscriptIndex = i;
+                      maxTranscriptTime = endTime;
+                      break;
+                  }
               }
           }
+
+          for (var i = 0; i < transcriptElements.length; i++) {
+              var transcriptElement = transcriptElements[i];
+              var endTime = transcriptElement.interval[1];
+              if (endTime > currentTime) {
+                  scrollToTranscriptElement(i);
+                  break;
+              }
+          }
+
+          // {% for transcript_element in transcript %}
+          // // convertToSeconds
+          // if (currentTime >= timestamps[{{loop.index - 1}}]) {
+          //     // TODO
+          //     // Send to a function, so can easily render all
+          //
+          //     // TODO
+          //     // Optimize so it doesn't have to check every single transcript element
+          //
+          // }
 
           // TODO
           // Find closest time
           // Scroll to element with $.animate
 
-          {% endfor %}
-
-          {% for begin, end in partition_titles %}
-          if (currentTime >= convertToSecondsTiny("{{begin}}") && currentTime < convertToSecondsTiny("{{end}}")) {
-            if (state == 1) { // video is playing
-              var collapseButton = $("a:contains('{{begin}} - {{end}}')");
-              var div = $(collapseButton.attr('data-target'));
-              if (div && div.attr('class') && div.attr('class').split(' ').indexOf('show') == -1) {
-                console.log(collapseButton.children()[0].id);
-                toggleResponses(collapseButton.children()[0].id);
-                div.collapse('show');
+          // {% endfor %}
+          if (state == 1) {
+              for (var i = 0; i < partitionTitles.length; i++) {
+                  var partitionTitle = partitionTitles[i];
+                  if (currentTime >= partitionTitle.interval[0] && currentTime < partitionTitle.interval[1]) {
+                      displayQA(partitionTitle.begin, partitionTitle.end);
+                  }
               }
-            }
           }
-          {% endfor %}
+
+          // {% for begin, end in partition_titles %}
+          // if (currentTime >= convertToSecondsTiny("{{begin}}") && currentTime < convertToSecondsTiny("{{end}}")) {
+          //   if (state == 1) { // video is playing
+          //
+          //   }
+          // }
+          // {% endfor %}
       }, {{questions_interval}} * 250);
 
   }
@@ -563,7 +644,7 @@ ul#menu li {
       var rowElement2 = $(`#transcript-text-${2 * rowIndex + 1}`);
       console.log(ts.length + rowElement1.length + rowElement2.length);
       if (ts.length + rowElement1.length + rowElement2.length > 0) {
-          $('#question').val(`${ts.text()} ${rowElement1.text()} ${rowElement2.text()}`);
+          $('#question').val(`${ts.text()} ${rowElement1.text()}  ${rowElement2.text()}`);
       }
 
   }
