@@ -1,5 +1,5 @@
 {% extends 'header.html' %}
-{% block title %}Hermes | {{ cls_name }} - {{ name }}{% endblock %}
+{% block title %}{{ cls['display_name'] }} - {{ lecture['name'] }}{% endblock %}
 {% block head %}{{ super() }}{% endblock %}
 {% block content %}
 <style>
@@ -18,14 +18,14 @@ ul#menu li {
         <button class="btn btn-primary submission" >Previous Video</button>
       </a>
       {% endif %}
-      {% for lec in range(num_videos) %}
+      {% for lec in range(video_info['num_videos']) %}
       {% if playlist_number|int == lec|int %}
-        <b><u><font size ="2" color="black"> {{lec}}. {{vid_titles[lec]}}</font></u></b>
+        <b><u><font size ="2" color="black"> {{lec}}. {{lecture['vid_title'][lec]}}</font></u></b>
       {% else %}
-        <font size ="2"><a href={{ url_for('lecture', cls= cls_num, lecture_number= lecture_num, playlist_number= lec) }}>{{lec}}.{{vid_titles[lec]}}</a></font>
+        <font size ="2"><a href={{ url_for('lecture', cls= cls_num, lecture_number= lecture_num, playlist_number= lec) }}>{{lec}}.{{lecture['vid_title'][lec]}}</a></font>
       {% endif %}
       {% endfor %}
-      {% if playlist_number|int < (num_videos-1)|int %}
+      {% if playlist_number|int < (video_info['num_videos'] - 1)|int %}
         <a href={{ url_for('lecture', cls= cls_num, lecture_number= lecture_num, playlist_number= ((playlist_number|int + 1|int)|string)) }}>
           <button class="btn btn-sm btn-primary submission" >Next Video</button>
         </a>
@@ -61,7 +61,6 @@ ul#menu li {
     </div>
     <div class="col-md-4">
       <div id="questions">
-        <!-- <form class="form-horizontal"> -->
           <div class="form-group">
             <input id='question' class="form-control" placeholder='Enter your question here'></input>
           </div>
@@ -73,7 +72,6 @@ ul#menu li {
               <button class="btn btn-primary submission" type=submit onclick="sendQuestion()">Submit Question</button>
             </div>
           </div>
-        <!-- </form> -->
         <div class="row">
             <p>
               <button type="button" class="btn btn-default btn-sm" type=submit onclick='refreshQuestions()'>
@@ -82,7 +80,7 @@ ul#menu li {
           </p>
       </div>
       <section id="questions_table">
-          {% for question_set, interval in partition(db['Questions'].find({'$and':[{'lecture_id': lecture}, {'playlist_number': playlist_number|string }]}), questions_interval, duration) %}
+          {% for question_set, interval in app_utils.partition(db['Questions'].find({'$and':[{'lecture_id': lecture['_id']|string}, {'playlist_number': playlist_number|string }]}), questions_interval, video_info['duration']) %}
             {% if loop.index == 1 %}
                 <a data-toggle="collapse" onclick="toggleResponses('partition-icon-{{loop.index}}')" data-target="#partition-{{loop.index}}"><span style="font-size: 18px" id="partition-icon-{{loop.index}}" class="fa fa-chevron-down qa-entry" aria-hidden="true"></span><strong>Top Questions</strong></a>
             {% else %}
@@ -98,7 +96,7 @@ ul#menu li {
               <a id="show-answers-{{question['_id']}}" data-toggle="collapse" onclick="toggleResponses('toggle-icon-{{question['_id']}}')" data-target="#answers-{{question['_id']}}">
                 <p><span class="fa fa-chevron-down qa-entry" id="toggle-icon-{{question['_id']}}" aria-hidden="true"></span></a>
                     <span id="upvotes-{{question['_id']}}"><button class="btn btn-default btn-sm likes"  type=submit onclick='upvoteQuestion("{{user['_id']}}", "{{question['_id']}}")'>
-                      {% if user_id in question['upvotes'] %}
+                      {% if user['_id']|string in question['upvotes'] %}
                       <i class="fa fa-thumbs-up" aria-hidden="true"></i> Like  <span id = "upvotes-{{question['_id']}}-count" class ="clicked">{{ question['upvotes']|length }}</span>
                       {% else %}
                       <i class="fa fa-thumbs-o-up" aria-hidden="true"></i> Like <span id = "upvotes-{{question['_id']}}-count" class = "notclicked"> {{ question['upvotes']|length }}</span>
@@ -115,13 +113,12 @@ ul#menu li {
                 {% endif %}
                 </p>
             <div id="answers-container-{{question['_id']}}">
-            <!--<div class="clear"></div>-->
             <div id="answers-{{question['_id']}}" class="collapse">
                 {% for answer in db['Answers'].find({'question_id': question['_id']}) %}
                     <div id="each-answer-{{answer['_id']}}">
                       <p><span id="upvotes-{{answer['_id']}}" class="qa-entry">
                       <button class="btn btn-default btn-sm likes" type=submit onclick='upvoteAnswer("{{user['_id']}}", "{{answer['_id']}}")'>
-                          {% if user_id in answer['upvotes'] %}
+                          {% if user['_id']|string in answer['upvotes'] %}
                           <span id = "upvotes-{{answer['_id']}}-count" class = "notclicked">
                           <i class="fa fa-thumbs-up" aria-hidden="true"></i> Like <span id = "upvotes-{{answer['_id']}}-count" class = "notclicked"> {{ answer['upvotes']|length }}</span>
                           {% else %}
@@ -129,31 +126,25 @@ ul#menu li {
                           {% endif %}
                       </button>
                     </span>
-                    {% if answer['anon'] == "true" and role == consts.STUDENT %}
+                    {% if answer['anon'] == "true" and user['role'] == consts.STUDENT %}
                         <span class="question-tag"> Anonymous</span>
-                        <!-- <div class="from-them"> -->
                           <span class="qa-entry"> {{answer['text']}}</span>
-                        <!-- </div> -->
                     {% else %}
                         <span class="question-tag"> {{answer['name']}}</span>
-                        <!-- <div class="from-them"> -->
                           <span class="qa-entry">
                             <span id = "answer-text-{{answer['_id']}}">{{answer['text']}}
                             </span>
                           </span>
-
-                        <!-- </div> -->
                     {% endif %}
-                    {% if answer['user'] == user['_id'] or role == consts.INSTRUCTOR%}
+                    {% if answer['user'] == user['_id'] or user['role'] == consts.INSTRUCTOR%}
                         <i class="fa fa-pencil" aria-hidden="true" type="submit" onclick='convertAnswerToInput("{{answer['_id']}}", "{{question['_id']}}")'></i>
                      {% endif %}
-                    {% if role == consts.INSTRUCTOR %}
+                    {% if user['role'] == consts.INSTRUCTOR %}
                       <i class="fa fa-close" style="color:red" onclick='deleteAnswer("{{answer['_id']}}", "{{question['_id']}}")'></i>
                     {% endif %}
                     </p>
                   </div>
                 {% endfor %}
-                  <!-- <form class="form-horizontal"> -->
                     <div class="form-group">
                     <input id="answer-{{question['_id']}}" class="form-control qa-entry" placeholder='Enter your answer here'></input>
                     </div>
@@ -166,21 +157,15 @@ ul#menu li {
                       <button class="btn btn-primary btn-sm qa-entry submission" type="submit" onclick='sendAnswer("{{question['_id']}}")'>Submit Answer</button>
                     </div>
                   </div>
-                  <!-- </form> -->
             </div>
             </div>
-            <!-- <div class="clear"></div> -->
 
             {% endfor %}
           </div>
         </span>
-          <!-- </td> -->
-        <!-- </tr> -->
 
           {% endfor %}
         </section>
-      <!-- </div> -->
-        <!-- </table> -->
       </div>
     </div>
   </div>
@@ -189,67 +174,7 @@ ul#menu li {
 <script src="{{ url_for('static', filename='js/lectureUtils.js') }}"></script>
 
 <script>
-  $("span[id*='transcript-text']").on('contextmenu', function(event) {
-      var index = parseInt($(this).attr('id').split('-').pop());
-      var oldText = $(this).text();
-      document.getElementById(`transcript-dropdown-${Math.floor(index / 2)}`).style.visibility = "hidden";
-      if ($('[id*="suggestion"]').length == 0) {
-          event.preventDefault();
-          var suggestionInput = document.createElement('input');
-          suggestionInput.id = `suggestion-${index}`;
-          suggestionInput.size = oldText.length;
-          suggestionInput.value = oldText;
 
-          var choices = [];
-
-          {% for transcript_elem in transcript %}
-              if ({{loop.index - 1}} == index) {
-                  {% for suggestion in sort_suggestions(transcript_elem['suggestions'] if 'suggestions' in transcript_elem else []) %}
-                      choices.push("{{suggestion}}");
-                  {% endfor %}
-              }
-          {% endfor %}
-
-          $(this).html(suggestionInput);
-
-          $(`#suggestion-${index}`).typeahead(
-            {
-                hint: true,
-                highlight: true,
-                minLength: 0
-            },
-            {
-                name: 'suggestions',
-                source: substringMatcher(choices)
-            }
-          );
-
-          $(`#suggestion-${index}`).keydown(function(event) {
-            if (event.keyCode == 13) { // enter key
-              var parent = $(this).closest('span');
-              var text = $(this).val();
-
-              parent.html(oldText);
-
-              var data = {
-                  text,
-                  index,
-                  lecture_id: '{{ lecture }}',
-                  api_key: '{{ api_key }}'
-              }
-
-                $.ajax({
-                  type: "POST",
-                  url: "{{ url_for('edit_transcript') }}",
-                  data
-                });
-
-            }
-            document.getElementById(`transcript-dropdown-${Math.floor(index / 2)}`).style.visibility = "visible";
-          });
-      }
-
-  });
 
 
   var tag = document.createElement('script');
@@ -262,7 +187,7 @@ ul#menu li {
     player = new YT.Player('ytplayer', {
       height: window.innerHeight / 2,
       width: window.innerWidth / 2,
-      videoId: '{{ id }}',
+      videoId: '{{ video_info["video_id"] }}',
       playerVars: {rel: 0},
       events: {
         'onStateChange': stateChange,
@@ -280,7 +205,8 @@ ul#menu li {
       transcriptElements = [];
       partitionTitles = [];
 
-      // Push transcript into JavaScript memory
+      // Push transcript, partitionTitles into JavaScript memory
+
       {% for transcript_element in transcript %}
       transcriptElements.push({
           begin: "{{transcript_element['begin']}}",
@@ -291,7 +217,7 @@ ul#menu li {
       });
       {% endfor %}
 
-      {% for begin, end in partition_titles %}
+      {% for begin, end in video_info['partition_titles'] %}
           partitionTitles.push({
               begin: "{{begin}}",
               end: "{{end}}",
@@ -336,8 +262,72 @@ ul#menu li {
           }
 
           maxTranscriptIndex = transcriptElement.length;
-          maxTranscriptTime = transcriptElements[maxTranscriptIndex - 1].end;
+          if (maxTranscriptIndex > 0) {
+              maxTranscriptTime = transcriptElements[maxTranscriptIndex - 1].end;
+          }
       };
+
+      var sortChoices = function (choices) {
+          return choices.sort(
+              function (element1, element2) {
+                  return element2['votes'] - element1['votes']
+              }).map(
+                  function (element) {
+                      return element['text']
+                  }
+              );
+      }
+
+      $("span[id*='transcript-text']").on('contextmenu', function(event) {
+          var index = parseInt($(this).attr('id').split('-').pop());
+          console.log(index);
+          var oldText = $(this).text();
+          document.getElementById(`transcript-dropdown-${Math.floor(index / 2)}`).style.visibility = "hidden";
+          if ($('[id*="suggestion"]').length == 0) {
+              event.preventDefault();
+              var suggestionInput = document.createElement('input');
+              suggestionInput.id = `suggestion-${index}`;
+              suggestionInput.size = oldText.length;
+              suggestionInput.value = oldText;
+
+              var choices = sortChoices(transcriptElements[index].suggestions);
+              $(this).html(suggestionInput);
+
+              $(`#suggestion-${index}`).typeahead(
+                {
+                    hint: true,
+                    highlight: true,
+                    minLength: 0
+                },
+                {
+                    name: 'suggestions',
+                    source: substringMatcher(choices)
+                }
+              );
+
+              $(`#suggestion-${index}`).keydown(function(event) {
+                if (event.keyCode == 13 || event.keyCode == 27) { // enter key
+                  var parent = $(this).closest('span');
+                  var text = $(this).val();
+                  parent.html(oldText);
+                  if (event.keyCode == 13) {
+                    $.ajax({
+                      type: "POST",
+                      url: "{{ url_for('edit_transcript') }}",
+                      data: {
+                          text,
+                          index,
+                          user_id: '{{ user["_id"] }}',
+                          lecture_id: '{{ lecture["_id"]|string }}',
+                          playlist_number: '{{ playlist_number }}',
+                          api_key: '{{ api_key }}'
+                      }
+                    });
+                  }
+                }
+              });
+          }
+      });
 
       $("#display-full-transcript").click(displayFullTranscript);
 
@@ -364,28 +354,12 @@ ul#menu li {
           for (var i = 0; i < transcriptElements.length; i++) {
               var transcriptElement = transcriptElements[i];
               var endTime = transcriptElement.interval[1];
-              if (endTime > currentTime) {
+              if ((endTime > currentTime) && (state == 1)) {
                   scrollToTranscriptElement(i);
                   break;
               }
           }
 
-          // {% for transcript_element in transcript %}
-          // // convertToSeconds
-          // if (currentTime >= timestamps[{{loop.index - 1}}]) {
-          //     // TODO
-          //     // Send to a function, so can easily render all
-          //
-          //     // TODO
-          //     // Optimize so it doesn't have to check every single transcript element
-          //
-          // }
-
-          // TODO
-          // Find closest time
-          // Scroll to element with $.animate
-
-          // {% endfor %}
           if (state == 1) {
               for (var i = 0; i < partitionTitles.length; i++) {
                   var partitionTitle = partitionTitles[i];
@@ -395,13 +369,6 @@ ul#menu li {
               }
           }
 
-          // {% for begin, end in partition_titles %}
-          // if (currentTime >= convertToSecondsTiny("{{begin}}") && currentTime < convertToSecondsTiny("{{end}}")) {
-          //   if (state == 1) { // video is playing
-          //
-          //   }
-          // }
-          // {% endfor %}
       }, {{questions_interval}} * 250);
 
   }
@@ -444,8 +411,8 @@ ul#menu li {
            text: question,
            name: "{{ user['name'] }}",
            ok_id: "{{ user['ok_id'] }}",
-           lecture: "{{ lecture }}",
-           cls: "{{ cls }}",
+           lecture: "{{ lecture['_id']|string }}",
+           cls: "{{ cls['_id']|string }}",
            anon: anonymous,
            playlist_num: "{{ playlist_number }}",
            api_key: "{{ api_key }}"

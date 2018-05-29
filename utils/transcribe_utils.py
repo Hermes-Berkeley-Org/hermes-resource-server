@@ -88,7 +88,11 @@ def read_from_youtube(link, youtube, is_playlist):
             'begin': p.get('begin'),
             'end': p.get('end'),
             'text': p.text,
-            'suggestions': [(p.text, TRANSCRIPT_SUGGESTIONS_NECESSARY)]
+            'suggestions': [{
+                'text': p.text,
+                'votes': TRANSCRIPT_SUGGESTIONS_NECESSARY,
+                'users': []
+            }]
         })
     return transcript
 

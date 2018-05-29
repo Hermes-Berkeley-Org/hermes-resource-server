@@ -6,6 +6,11 @@ from bson.objectid import ObjectId
 
 from utils.app_utils import edit_distance
 
+import logging
+
+logger = logging.getLogger('app_logger')
+logger.setLevel(logging.INFO)
+
 EDIT_DISTANCE_PER_WORD = 5
 
 def insert(dbobj, db):
@@ -188,30 +193,51 @@ class Lecture(DBObject):
     @staticmethod
     def suggest_transcript(data, db):
         lecture = find_one_by_id(data['lecture_id'], Lecture.collection, db)
-        def replace_transcript_elem(lecture, index, text):
+        def replace_transcript_elem(lecture, index, text, user_id):
             def insert(text, suggestions):
-                for i, (suggestion, votes) in enumerate(suggestions[:]):
-                    if suggestion == text:
-                        suggestions[i] = (suggestion, votes + 1)
-                        return
-                suggestions.append((text, 1))
-            transcript = lecture['transcript']
-            transcript_elem = transcript[index]
-            if 'suggestions' not in transcript_elem:
-                transcript_elem['suggestions'] = list()
-            num_words = len(transcript_elem['text'].split(' '))
-            if edit_distance(text, transcript_elem['text']) < (num_words * EDIT_DISTANCE_PER_WORD):
-                insert(text, transcript_elem['suggestions'])
-            else:
-                print('REJECTED') # logger statement needed
-            return transcript[:index] + [transcript_elem] + transcript[index+1:]
+                found = False
+                for i, suggestion in enumerate(suggestions):
+                    if user_id in suggestion['users']:
+                        suggestion['users'].remove(user_id)
+                        suggestion['votes'] -= 1
+                        # TODO: turn into logger statements, don't know how to do this @Kian
+                        # it didn't work when I tried logger.info
+                        print('User already suggested, removing.')
+                    if suggestion['text'] == text:
+                        found = True
+                        suggestion['votes'] += 1
+                        suggestion['users'].append(user_id)
+                        print('User suggested something already suggested, adding.')
+                if not found:
+                    print('User created a new suggestion')
+                    suggestions.append({
+                        'text': text,
+                        'votes': 1,
+                        'users': [user_id]
+                    })
+            is_playlist = data['playlist_number'] != 'None'
+            transcripts = [lecture['transcript']] if not is_playlist else lecture['transcript']
+            playlist_number = int(data['playlist_number']) if is_playlist else 0
+            for i, transcript in enumerate(transcripts[:]):
+                if i == playlist_number:
+                    transcript_elem = transcript[index]
+                    if 'suggestions' not in transcript_elem:
+                        transcript_elem['suggestions'] = list()
+                    num_words = len(transcript_elem['text'].split(' '))
+                    if edit_distance(text, transcript_elem['text']) < (num_words * EDIT_DISTANCE_PER_WORD):
+                        insert(text, transcript_elem['suggestions'])
+                    else:
+                        print('Suggestion too far off, rejected.')
+                    transcripts[i] = transcript[:index] + [transcript_elem] + transcript[index+1:]
+                    break
+            return transcripts if is_playlist else transcripts[0]
         db[Lecture.collection].update_one(
             {
                 '_id': ObjectId(data['lecture_id'])
             },
             {
                 '$set': {
-                    'transcript': replace_transcript_elem(lecture, int(data['index']), data['text'])
+                    'transcript': replace_transcript_elem(lecture, int(data['index']), data['text'], data['user_id'])
                 }
             }
         )
