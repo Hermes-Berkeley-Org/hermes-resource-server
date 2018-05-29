@@ -283,32 +283,6 @@ def create_client(app):
                 db=db,
                 api_key=app.config['HERMES_API_KEY']
             )
-            # return render_template(
-            #     'lecture.html',
-            #     id=id,
-            #     lecture=str(lecture_obj['_id']),
-            #     name=lecture_obj['name'],
-            #     transcript=transcript,
-            #     preds=preds,
-            #     cls_name=cls_obj['display_name'],
-            #     user=user,
-            #     questions_interval=questions_interval,
-            #     partition=partition,
-            #     sort_suggestions=sort_suggestions,
-            #     partition_titles=partition_titles,
-            #     duration=duration,
-            #     user_id=str(user['_id']),
-            #     role=get_role(cls)[0],
-            #     consts=consts,
-            #     cls=str(cls_obj['_id']),
-            #     playlist_number=playlist_number,
-            #     num_videos = num_videos,
-            #     lecture_num = lecture_number,
-            #     vid_titles = lecture_obj['vid_title'],
-            #     cls_num = cls,
-            #     db=db,
-            #     api_key=app.config['HERMES_API_KEY']
-            # )
             logger.info("Displaying lecture. It is the ", play_num, " video in the playlist")
         return redirect(url_for('error', code=404))
 
