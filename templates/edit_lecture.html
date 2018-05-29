@@ -1,0 +1,57 @@
+{% extends 'header.html' %}
+{% block title %}Hermes | Edit {{ cls_name }} - {{ name }}{% endblock %}
+{% block head %}{{ super() }}{% endblock %}
+{% block content %}
+<div class="wrapper text-primary">
+	<div class="row">
+    <div class="col-md-7">
+      <div id="ytplayer"></div>
+      {% if playlist_number %}
+      <div class="navbar">
+      {% if playlist_number|int != 0|int %}
+      <a href={{ url_for('lecture', cls= cls_num, lecture_number= lecture_num, playlist_number= ((playlist_number|int - 1|int)|string)) }}>
+        <button class="btn btn-primary submission" >Previous Video</button>
+      </a>
+      {% endif %}
+      {% for lec in range(num_videos) %}
+      {% if playlist_number|int == lec|int %}
+        <b><u><font size ="2" color="black"> {{lec}}. {{vid_titles[lec]}}</font></u></b>
+      {% else %}
+        <font size ="2"><a href={{ url_for('lecture', cls= cls_num, lecture_number= lecture_num, playlist_number= lec) }}>{{lec}}.{{vid_titles[lec]}}</a></font>
+      {% endif %}
+      {% endfor %}
+      {% if playlist_number|int < (num_videos-1)|int %}
+        <a href={{ url_for('lecture', cls= cls_num, lecture_number= lecture_num, playlist_number= ((playlist_number|int + 1|int)|string)) }}>
+          <button class="btn btn-primary submission" >Next Video</button>
+        </a>
+      {% endif %}
+      </div>
+      {% endif %}
+   	</div>
+   	</div>
+</div>
+
+<script>
+var tag = document.createElement('script');
+  tag.src = "https://www.youtube.com/player_api";
+  var firstScriptTag = document.getElementsByTagName('script')[0];
+  firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+
+  var player;
+  function onYouTubePlayerAPIReady() {
+    player = new YT.Player('ytplayer', {
+      height: window.innerHeight / 2,
+      width: window.innerWidth / 2,
+      videoId: '{{ id }}',
+      events: {
+        'onStateChange': stateChange,
+        'onReady': onPlayerReady
+      }
+    });
+
+  }
+</script>
+{% endblock %}
+{% block footer %}
+{{ super() }}
+{% endblock %}

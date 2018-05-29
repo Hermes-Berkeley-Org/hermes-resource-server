@@ -1,5 +1,5 @@
 {% extends 'header.html' %}
-{% block title %}Hermes | {{info["Name"]}}{% endblock %}
+{% block title %}Hermes | {{info["display_name"]}}{% endblock %}
 {% block head %}{{ super() }}{% endblock %}
 {% block content %}
 <div class="wrapper text-primary">
@@ -11,6 +11,8 @@
       <tr>
         <th style = "margin-top: -80px">Lecture</th>
         <th "margin-top: -80px">Date Posted</th>
+        <th></th>
+        <th></th>
       </tr>
       {% for lec in lectures %}
         <tr id = lecture-{{lec['_id']}} class="lec-row">
@@ -24,7 +26,8 @@
           &nbsp; &nbsp;
           <td>{{lec['date']}}</td>
           {% if role == consts.INSTRUCTOR %}
-            <td><button class="btn btn-primary" type=submit onclick="deleteLecture('{{lec['_id']}}')">Delete Lecture</button></td>
+            <td><a href={{ url_for('edit_lecture', cls = lec['cls'], lecture_number = lec['lecture_number']) }}><i class="fa fa-pencil" aria-hidden="true"></i></a></td>
+            <td><a href="#"><i class="fa fa-trash" aria-hidden="true" type="submit" onclick="deleteLecture('{{lec['_id']}}')"></i></a></td>
           {% endif %}
         </div>
         </tr>
