@@ -331,6 +331,8 @@ def create_client(app):
                 else:
                     logger.info("Enter a valid link")
                     redirect(url_for('error', code=403))
+
+                ## Errors if no transcript. Around here or in get_titles() catch the error
                 title = get_titles(youtube_vid, is_playlist, youtube)
                 lecture = Lecture(
                     name=request.form['title'],
@@ -388,6 +390,25 @@ def create_client(app):
             consts=consts,
             api_key=app.config['HERMES_API_KEY']
         )
+
+    @app.route('/class/<cls>/edit_lecture/<lecture_number>')
+    def edit_lecture(cls, lecture_number):
+        cls_obj = db['Classes'].find_one({'ok_id': int(cls)})
+        class_ok_id = cls_obj["ok_id"]
+        lecture_obj = db['Lectures'].find_one({'cls': cls_obj, 'lecture_number': int(lecture_number)})
+        role, data = get_role(class_ok_id)
+        if role == consts.INSTRUCTOR:
+            lecture_obj = db['Lectures'].find_one({'cls': cls, 'lecture_number': int(lecture_number)})
+            cls_obj = db['Classes'].find_one({'ok_id': int(cls)})
+            return render_template(
+                'edit_lecture.html',
+                cls_name = cls_obj['display_name'],
+                lecture_number = lecture_number,
+                name = lecture_obj['name']
+                )
+        else:
+            logger.info("Error: user access level is %s", role)
+            return redirect(url_for('error'), code=403) 
 
     @app.route('/create_class/<class_ok_id>', methods=['GET', 'POST'])
     def create_class(class_ok_id):
