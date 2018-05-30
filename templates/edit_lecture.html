@@ -9,7 +9,7 @@
       {% if playlist_number %}
       <div class="navbar">
       {% if playlist_number|int != 0|int %}
-      <a href={{ url_for('lecture', cls= cls_num, lecture_number= lecture_num, playlist_number= ((playlist_number|int - 1|int)|string)) }}>
+      <a href={{ url_for('edit_lecture', cls= cls_num, lecture_number= lecture_num, playlist_number= ((playlist_number|int - 1|int)|string)) }}>
         <button class="btn btn-primary submission" >Previous Video</button>
       </a>
       {% endif %}
@@ -17,11 +17,11 @@
       {% if playlist_number|int == lec|int %}
         <b><u><font size ="2" color="black"> {{lec}}. {{vid_titles[lec]}}</font></u></b>
       {% else %}
-        <font size ="2"><a href={{ url_for('lecture', cls= cls_num, lecture_number= lecture_num, playlist_number= lec) }}>{{lec}}.{{vid_titles[lec]}}</a></font>
+        <font size ="2"><a href={{ url_for('edit_lecture', cls= cls_num, lecture_number= lecture_num, playlist_number= lec) }}>{{lec}}.{{vid_titles[lec]}}</a></font>
       {% endif %}
       {% endfor %}
       {% if playlist_number|int < (num_videos-1)|int %}
-        <a href={{ url_for('lecture', cls= cls_num, lecture_number= lecture_num, playlist_number= ((playlist_number|int + 1|int)|string)) }}>
+        <a href={{ url_for('edit_lecture', cls= cls_num, lecture_number= lecture_num, playlist_number= ((playlist_number|int + 1|int)|string)) }}>
           <button class="btn btn-primary submission" >Next Video</button>
         </a>
       {% endif %}
@@ -32,24 +32,19 @@
 </div>
 
 <script>
-var tag = document.createElement('script');
-  tag.src = "https://www.youtube.com/player_api";
-  var firstScriptTag = document.getElementsByTagName('script')[0];
-  firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+	var tag = document.createElement('script');
+	tag.src = "https://www.youtube.com/player_api";
+	var firstScriptTag = document.getElementsByTagName('script')[0];
+	firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
 
-  var player;
-  function onYouTubePlayerAPIReady() {
-    player = new YT.Player('ytplayer', {
-      height: window.innerHeight / 2,
-      width: window.innerWidth / 2,
-      videoId: '{{ id }}',
-      events: {
-        'onStateChange': stateChange,
-        'onReady': onPlayerReady
-      }
-    });
-
-  }
+	var player;
+	function onYouTubePlayerAPIReady() {
+	    player = new YT.Player('ytplayer', {
+			height: window.innerHeight / 2,
+			width: window.innerWidth / 2,
+			videoId: '{{ id }}'
+	    });
+  	}
 </script>
 {% endblock %}
 {% block footer %}

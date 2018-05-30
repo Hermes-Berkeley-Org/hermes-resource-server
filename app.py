@@ -391,8 +391,10 @@ def create_client(app):
             api_key=app.config['HERMES_API_KEY']
         )
 
-    @app.route('/class/<cls>/edit_lecture/<lecture_number>')
-    def edit_lecture(cls, lecture_number):
+
+    @app.route('/class/<cls>/edit_lecture/<lecture_number>/', defaults={'playlist_number': None})
+    @app.route('/class/<cls>/edit_lecture/<lecture_number>/<playlist_number>')
+    def edit_lecture(cls, lecture_number, playlist_number=None):
         cls_obj = db['Classes'].find_one({'ok_id': int(cls)})
         class_ok_id = cls_obj["ok_id"]
         lecture_obj = db['Lectures'].find_one({'cls': cls_obj, 'lecture_number': int(lecture_number)})
@@ -400,10 +402,23 @@ def create_client(app):
         if role == consts.INSTRUCTOR:
             lecture_obj = db['Lectures'].find_one({'cls': cls, 'lecture_number': int(lecture_number)})
             cls_obj = db['Classes'].find_one({'ok_id': int(cls)})
+            if playlist_number:
+                play_num = int(playlist_number)
+                link = "https://www.youtube.com/watch?v=" + lecture_obj["videos"][play_num]
+                id = get_youtube_id(link)
+                num_videos = len(lecture_obj['videos'])
+            else:
+                id = get_youtube_id(lecture_obj['link'])
+                num_videos = 1
             return render_template(
                 'edit_lecture.html',
+                id = id,
                 cls_name = cls_obj['display_name'],
-                lecture_number = lecture_number,
+                cls_num = cls,
+                lecture_num = lecture_number,
+                num_videos = num_videos,
+                vid_titles = lecture_obj['vid_title'],
+                playlist_number=playlist_number,
                 name = lecture_obj['name']
                 )
         else:
