@@ -26,7 +26,11 @@
           &nbsp; &nbsp;
           <td>{{lec['date']}}</td>
           {% if role == consts.INSTRUCTOR %}
-            <td><a href={{ url_for('edit_lecture', cls = lec['cls'], lecture_number = lec['lecture_number']) }}><i class="fa fa-pencil" aria-hidden="true"></i></a></td>
+            {% if lec['is_playlist'] %}
+              <td><a href={{ url_for('edit_lecture', cls = lec['cls'], lecture_number = lec['lecture_number'], playlist_number=0) }}><i class="fa fa-pencil" aria-hidden="true"></i></a></td>
+            {% else %}
+              <td><a href={{ url_for('edit_lecture', cls = lec['cls'], lecture_number = lec['lecture_number']) }}><i class="fa fa-pencil" aria-hidden="true"></i></a></td>
+            {% endif %}
             <td><a href="#"><i class="fa fa-trash" aria-hidden="true" type="submit" onclick="deleteLecture('{{lec['_id']}}')"></i></a></td>
           {% endif %}
         </div>
