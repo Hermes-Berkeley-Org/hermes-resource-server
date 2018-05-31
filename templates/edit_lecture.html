@@ -4,30 +4,54 @@
 {% block content %}
 <div class="wrapper text-primary">
 	<div class="row">
-    <div class="col-md-7">
-      <div id="ytplayer"></div>
-      {% if playlist_number %}
-      <div class="navbar">
-      {% if playlist_number|int != 0|int %}
-      <a href={{ url_for('edit_lecture', cls= cls_num, lecture_number= lecture_num, playlist_number= ((playlist_number|int - 1|int)|string)) }}>
-        <button class="btn btn-primary submission" >Previous Video</button>
-      </a>
-      {% endif %}
-      {% for lec in range(num_videos) %}
-      {% if playlist_number|int == lec|int %}
-        <b><u><font size ="2" color="black"> {{lec}}. {{vid_titles[lec]}}</font></u></b>
-      {% else %}
-        <font size ="2"><a href={{ url_for('edit_lecture', cls= cls_num, lecture_number= lecture_num, playlist_number= lec) }}>{{lec}}.{{vid_titles[lec]}}</a></font>
-      {% endif %}
-      {% endfor %}
-      {% if playlist_number|int < (num_videos-1)|int %}
-        <a href={{ url_for('edit_lecture', cls= cls_num, lecture_number= lecture_num, playlist_number= ((playlist_number|int + 1|int)|string)) }}>
-          <button class="btn btn-primary submission" >Next Video</button>
-        </a>
-      {% endif %}
-      </div>
-      {% endif %}
-   	</div>
+	    <div class="col-md-7">
+	      <div id="ytplayer"></div>
+	      {% if playlist_number %}
+	      <div class="navbar">
+	      {% if playlist_number|int != 0|int %}
+	      <a href={{ url_for('edit_lecture', cls= cls_num, lecture_number= lecture_num, playlist_number= ((playlist_number|int - 1|int)|string)) }}>
+	        <button class="btn btn-primary submission" >Previous Video</button>
+	      </a>
+	      {% endif %}
+	      {% for lec in range(num_videos) %}
+	      {% if playlist_number|int == lec|int %}
+	        <b><u><font size ="2" color="black"> {{lec}}. {{vid_titles[lec]}}</font></u></b>
+	      {% else %}
+	        <font size ="2"><a href={{ url_for('edit_lecture', cls= cls_num, lecture_number= lecture_num, playlist_number= lec) }}>{{lec}}.{{vid_titles[lec]}}</a></font>
+	      {% endif %}
+	      {% endfor %}
+	      {% if playlist_number|int < (num_videos-1)|int %}
+	        <a href={{ url_for('edit_lecture', cls= cls_num, lecture_number= lecture_num, playlist_number= ((playlist_number|int + 1|int)|string)) }}>
+	          <button class="btn btn-primary submission" >Next Video</button>
+	        </a>
+	      {% endif %}
+	      </div>
+	      {% endif %}
+	   	</div>
+	   	<div class="col-md-4">
+	   		<div class="form-group">
+	            <input id='vitamin-question' class="form-control" placeholder='Enter your vitamin here'></input>
+	        </div>
+	        <div class="row">
+	            <div class="form-group col-md-6">
+	                <input id="mcq" name="qtype" type="radio" onclick="toggleAnswer()" checked>  Multiple Choice</input>
+	            </div>
+	            <div class="form-group col-md-6">
+	              	<input id="frq" name="qtype" type="radio" onclick="toggleAnswer()">  Free Response</input>
+	            </div>
+	        </div>
+	        <div class="row">
+	        	<div id="answer">
+	        		<i class="fa fa-times"></i><input id="button1" class="mcq-choices" name="choices" type="radio"/><input id="choice1" class="form-control mcq-choices" placeholder="Choice A" />
+	        		<i class="fa fa-times"></i><input id="button2" class="mcq-choices" name="choices" type="radio" /><input id="choice2" class="form-control mcq-choices" placeholder="Choice B" />
+	        		<i class="fa fa-times"></i><input id="button3" class="mcq-choices" name="choices" type="radio" /><input id="choice3" class="form-control mcq-choices" placeholder="Choice C" />
+	        		<i class="fa fa-times"></i><input id="button4" class="mcq-choices" name="choices" type="radio" /><input id="choice4" class="form-control mcq-choices" placeholder="Choice D" />
+	        	</div>
+	        </div>
+	        <div class="row float-right">
+	        	<button class="btn btn-primary submission" type=submit onclick="addVitamin()"><i class="fa fa-plus"></i>  Add Vitamin</button>
+	        </div>
+	   	</div>
    	</div>
 </div>
 
@@ -44,6 +68,23 @@
 			width: window.innerWidth / 2,
 			videoId: '{{ id }}'
 	    });
+  	}
+
+  	function toggleAnswer() {
+  		if (document.getElementById('mcq').checked) {
+  			document.getElementById('answer').innerHTML = " \
+  			<i class=\"fa fa-times\"></i><input id=\"button1\" class=\"mcq-choices\" name=\"choices\" type=\"radio\" /><input id=\"choice1\" class=\"form-control mcq-choices\" placeholder=\"Choice A\" /> \
+  			<i class=\"fa fa-times\"></i><input id=\"button2\" class=\"mcq-choices\" name=\"choices\" type=\"radio\" /><input id=\"choice2\" class=\"form-control mcq-choices\" placeholder=\"Choice B\" /> \
+  			<i class=\"fa fa-times\"></i><input id=\"button3\" class=\"mcq-choices\" name=\"choices\" type=\"radio\" /><input id=\"choice3\" class=\"form-control mcq-choices\" placeholder=\"Choice C\" /> \
+  			<i class=\"fa fa-times\"></i><input id=\"button4\" class=\"mcq-choices\" name=\"choices\" type=\"radio\" /><input id=\"choice4\" class=\"form-control mcq-choices\" placeholder=\"Choice D\" /> \
+  			";
+  		} else {
+  			document.getElementById('answer').innerHTML = "<input id='vitamin-answer' class=\"form-control\" placeholder='Enter the answer here' />";
+  		}
+  	}
+
+  	function addVitamin() {
+
   	}
 </script>
 {% endblock %}

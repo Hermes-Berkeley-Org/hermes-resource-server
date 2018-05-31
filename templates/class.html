@@ -11,8 +11,10 @@
       <tr>
         <th style = "margin-top: -80px">Lecture</th>
         <th "margin-top: -80px">Date Posted</th>
-        <th></th>
-        <th></th>
+        {% if role == consts.INSTRUCTOR %}
+          <th></th>
+          <th></th>
+        {% endif %}
       </tr>
       {% for lec in lectures %}
         <tr id = lecture-{{lec['_id']}} class="lec-row">

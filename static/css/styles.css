@@ -150,3 +150,7 @@ ul.dropdown-menu li:hover {
 	cursor: pointer;
 	background-color: #fefbd8;
 }
+
+.mcq-choices {
+	display: inline;
+}
