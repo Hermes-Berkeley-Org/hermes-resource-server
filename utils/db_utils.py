@@ -210,6 +210,25 @@ class Lecture(DBObject):
             }
         )
 
+    @staticmethod
+    def add_vitamin(lecture_id, question, choices, answer, db):
+        vitamin = {
+            'question': question,
+            'choices': choices,
+            'answer': answer
+        }
+        db[Lecture.collection].update_one(
+            {
+              '_id': lecture_id
+            },
+            {
+              '$push': {
+                'vitamins': vitamin,
+              }
+            },
+            upsert=False
+        )
+
 
 
 class Question(DBObject):
