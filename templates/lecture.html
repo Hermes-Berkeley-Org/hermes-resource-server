@@ -479,60 +479,44 @@ ul#menu li {
   }
 
   function upvoteAnswer(user, answer){
-    var span = document.getElementById(`upvotes-${answer}-count`);
-    var currentcount = parseInt(span.innerHTML);
-    if(span.innerHTML.className == "notclicked"){
-      span.innerHTML =  currentcount + 1;
-    }
-    else{
-      span.innerHTML = currentcount - 1;
-    }
-    var data ={
-      user_id:user,
-      answer_id:answer,
-      api_key: "{{ api_key }}"
-    };
-    console.log(`${JSON.stringify(data)}`)
-    $.ajax({
-      type: "POST",
-      url: "{{ url_for('upvote_answer') }}",
-      data,
-      success: function (data) {
+      var currentcount = document.getElementById(`upvotes-${answer}`).value;
+      var data ={
+        user_id:user,
+        answer_id:answer,
+        api_key: "{{ api_key }}"
+      };
+      console.log(`${JSON.stringify(data)}`)
+      $.ajax({
+        type: "POST",
+        url: "{{ url_for('upvote_answer') }}",
+        data,
+        success: function (data) {
 
-        $(`#upvotes-${answer}`).load(window.location.href + ` #upvotes-${answer}`, function () {
-            toggleTopQuestions()
-        });
-      }
-    });
-  }
-
-  function upvoteQuestion(user, question){
-    var span = document.getElementById(`upvotes-${question}-count`)
-    var currentcount = parseInt(span.innerHTML);
-    if(span.innerHTML.className == "notclicked"){
-      span.innerHTML =  currentcount + 1;
-    }
-    else{
-      span.innerHTML = currentcount - 1;
+          $(`#upvotes-${answer}`).load(window.location.href + ` #upvotes-${answer}`, function () {
+              toggleTopQuestions()
+          });
+        }
+      });
     }
 
-    var data ={
-      user_id:user,
-      question_id:question,
-      api_key: "{{ api_key }}"
-    };
-    console.log(`${JSON.stringify(data)}`)
-    $.ajax({
-      type: "POST",
-      url: "{{ url_for('upvote_question') }}",
-      data,
-      success: function (data) {
-        $(`#upvotes-${question}`).load(window.location.href + `#upvotes-${question}`, function () {
-            toggleTopQuestions()
-        });
-      }
-    });
-  }
+    function upvoteQuestion(user, question){
+      var data ={
+        user_id:user,
+        question_id:question,
+        api_key: "{{ api_key }}"
+      };
+      console.log(`${JSON.stringify(data)}`)
+      $.ajax({
+        type: "POST",
+        url: "{{ url_for('upvote_question') }}",
+        data,
+        success: function (data) {
+          $(`#upvotes-${question}`).load(window.location.href + ` #upvotes-${question}`, function () {
+              toggleTopQuestions()
+          });
+        }
+      });
+    }
   function sendAnswer(questionId) {
 
       var answer = document.getElementById(`answer-${questionId}`).value;
