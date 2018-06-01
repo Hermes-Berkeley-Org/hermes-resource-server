@@ -215,21 +215,25 @@ class Lecture(DBObject):
                         'votes': 1,
                         'users': [user_id]
                     })
+            def push_onto_transcript_if_elected(transcript_elem):
+                transcript_elem['text'] = max(
+                    transcript_elem['suggestions'],
+                    key=lambda suggestion: suggestion['votes']
+                )['text']
             is_playlist = data['playlist_number'] != 'None'
             transcripts = [lecture['transcript']] if not is_playlist else lecture['transcript']
             playlist_number = int(data['playlist_number']) if is_playlist else 0
-            for i, transcript in enumerate(transcripts[:]):
-                if i == playlist_number:
-                    transcript_elem = transcript[index]
-                    if 'suggestions' not in transcript_elem:
-                        transcript_elem['suggestions'] = list()
-                    num_words = len(transcript_elem['text'].split(' '))
-                    if edit_distance(text, transcript_elem['text']) < (num_words * EDIT_DISTANCE_PER_WORD):
-                        insert(text, transcript_elem['suggestions'])
-                    else:
-                        print('Suggestion too far off, rejected.')
-                    transcripts[i] = transcript[:index] + [transcript_elem] + transcript[index+1:]
-                    break
+            transcript = transcripts[playlist_number]
+            transcript_elem = transcript[index]
+            if 'suggestions' not in transcript_elem:
+                transcript_elem['suggestions'] = list()
+            num_words = len(transcript_elem['text'].split(' '))
+            if edit_distance(text, transcript_elem['text']) < (num_words * EDIT_DISTANCE_PER_WORD):
+                insert(text, transcript_elem['suggestions'])
+            else:
+                print('Suggestion too far off, rejected.')
+            push_onto_transcript_if_elected(transcript_elem)
+            transcripts[playlist_number] = transcript[:index] + [transcript_elem] + transcript[index+1:]
             return transcripts if is_playlist else transcripts[0]
         db[Lecture.collection].update_one(
             {

@@ -22,6 +22,8 @@ import urllib.parse
 from werkzeug import security
 from flask_oauthlib.client import OAuth
 
+from functools import wraps
+
 import google.oauth2.credentials
 import google_auth_oauthlib.flow
 import googleapiclient.discovery
@@ -80,6 +82,14 @@ def create_client(app):
             session['logged_in'] = False
         logger.info("Successfully routed to index.")
         return render_template('about.html')
+
+    def login_required(f):
+        @wraps(f)
+        def decorated_function(*args, **kwargs):
+            if get_user_data() is None:
+                return redirect(url_for('login', next=request.url))
+            return f(*args, **kwargs)
+        return decorated_function
 
 
     @app.route('/login')
@@ -205,6 +215,7 @@ def create_client(app):
             return db_result
 
     @app.route('/home/')
+    @login_required
     def home():
         user = get_user_data()
         def validate(participation):
@@ -225,6 +236,7 @@ def create_client(app):
 
     @app.route('/class/<cls>/lecture/<lecture_number>/', defaults={'playlist_number': None})
     @app.route('/class/<cls>/lecture/<lecture_number>/<playlist_number>')
+    @login_required
     def lecture(cls, lecture_number, playlist_number=None):
         logger.info(playlist_number)
         cls_obj = db['Classes'].find_one({'ok_id': int(cls)})
@@ -293,6 +305,7 @@ def create_client(app):
                 return participation['role'], participation
 
     @app.route('/class/<class_ok_id>', methods=['GET', 'POST'])
+    @login_required
     def classpage(class_ok_id):
 
         form = CreateLectureForm(request.form)
