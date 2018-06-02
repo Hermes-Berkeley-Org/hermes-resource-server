@@ -344,7 +344,9 @@ def create_client(app):
                     duration=get_video_duration(youtube_vid, is_playlist),
                     cls=class_ok_id,
                     videos = youtube_vid,
-                    vid_title = title
+                    vid_title = title,
+                    vitamins = [],
+                    resources = []
                 )
                 id = Class.add_lecture(cls, lecture, db)
 
@@ -419,7 +421,8 @@ def create_client(app):
                 num_videos = num_videos,
                 vid_titles = lecture_obj['vid_title'],
                 playlist_number=playlist_number,
-                name = lecture_obj['name']
+                name = lecture_obj['name'],
+                db = db
                 )
         else:
             logger.info("Error: user access level is %s", role)
