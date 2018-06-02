@@ -21,6 +21,10 @@ def find_by_id(id, collection, db):
 def find_one_by_id(id, collection, db):
     return db[collection].find_one({'_id': ObjectId(id)})
 
+## Seconds to timestamp helper function
+def convert_seconds_to_timestamp(ts):
+    return '%d:%02d' % (ts // 60, ts % 60)
+
 class DBObject:
 
     collection = None
@@ -211,15 +215,16 @@ class Lecture(DBObject):
         )
 
     @staticmethod
-    def add_vitamin(lecture_id, question, answer, timestamp, db):
+    def add_vitamin(data, db):
+        timestamp = convert_seconds_to_timestamp(data['seconds'])
         vitamin = {
-            'question': question,
-            'answer': answer,
+            'question': data['question'],
+            'answer': data['answer'],
             'timestamp': timestamp
         }
         db[Lecture.collection].update_one(
             {
-              '_id': lecture_id
+              '_id': data['lecture_id']
             },
             {
               '$push': {
@@ -256,8 +261,6 @@ class Question(DBObject):
 
     @staticmethod
     def write_question(question, db):
-        def convert_seconds_to_timestamp(ts):
-            return '%d:%02d' % (ts // 60, ts % 60)
         question['timestamp'] = convert_seconds_to_timestamp(
             round(float(question['seconds'])))
         return insert(

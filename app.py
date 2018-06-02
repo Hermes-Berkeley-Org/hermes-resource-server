@@ -580,6 +580,19 @@ def create_client(app):
             logger.info("Illegal request type: %s", request.method)
             return redirect(url_for('error', code=500))
 
+    @app.route('/add_vitamin', methods=['GET', 'POST'])
+    def add_vitamin():
+        if request.method == 'POST':
+            if request.form['api_key'] == app.config['HERMES_API_KEY']:
+                Lecture.add_vitamin(request.form.to_dict(), db)
+                logger.info("Successfully added vitamin.")
+                return jsonify(success=True), 200
+            else:
+                return jsonify(success=False), 403
+        else:
+            logger.info("Illegal request type: %s", request.method)
+            return redirect(url_for('error', code=500))
+
     @app.template_filter('exclude')
     def exclude(lst, excl):
         ret = []
