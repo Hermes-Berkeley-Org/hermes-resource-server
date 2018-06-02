@@ -1,0 +1,59 @@
+#black-transparent-screen {
+	visibility: hidden;
+	height: 100vh;
+	width: 100vw;
+	background-color: #000;
+	z-index: 10000;
+	position: absolute;
+	left: 0;
+	top: 0;
+	opacity: 0;
+}
+
+/* Toggle this class - hide and show the popup */
+#black-transparent-screen.show {
+    visibility: visible;
+    -webkit-animation: fadeIn 0.5s;
+    animation: fadeIn 0.5s;
+    opacity: 0.5;
+}
+
+#vitamin-form {
+	position: absolute;
+	left: 25%;
+	top: -75%;
+	width: 50%;
+	height: 50%;
+	background-color: #fff;
+	z-index: 10001;
+	border-radius: 15px;
+}
+
+#vitamin-form.show {
+	left: 25%;
+	top: 25%;
+	-webkit-animation: slideIn 0.5s;
+    animation: slideIn 0.5s;
+}
+
+/* Add animation (fade in the popup) */
+@-webkit-keyframes fadeIn {
+    from {opacity: 0;} 
+    to {opacity: 0.5;}
+}
+
+@keyframes fadeIn {
+    from {opacity: 0;}
+    to {opacity: 0.5;}
+}
+
+/* Add animation (fade in the popup) */
+@-webkit-keyframes slideIn {
+    from { top: -75%; } 
+    to { top: 25%; } 
+}
+
+@keyframes slideIn {
+    from { top: -75%; } 
+    to { top: 25%; } 
+}

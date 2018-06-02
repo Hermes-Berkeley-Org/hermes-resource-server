@@ -3,6 +3,12 @@
 {% block head %}{{ super() }}{% endblock %}
 {% block content %}
 <div class="wrapper text-primary">
+	<!-- The screen and forms below are invisible / out of the screen until user triggers them -->
+	<div id="black-transparent-screen">
+	</div>
+	<div id="vitamin-form">
+		
+	</div>
 	<div class="row">
 	    <div class="col-md-7">
 	      <div id="ytplayer"></div>
@@ -29,6 +35,34 @@
 	      {% endif %}
 	   	</div>
 	   	<div class="col-md-4">
+	   		<div class="row">
+		   		<div class="col-md-6">
+		        	<button class="btn btn-primary submission" type=submit onclick="addVitaminForm()"><i class="fa fa-question"></i>  Add Vitamin</button>
+		        </div>
+		        <div class="col-md-6">
+		        	<button class="btn btn-primary submission" type=submit onclick="addResourceForm()"><i class="fa fa-sticky-note"></i>  Add Resource</button>
+		        </div>
+	   		</div>
+	   		<section id="vitamin-container">
+	   			<a data-toggle="collapse" onclick="toggleResponses('vitamin-icon')" data-target="#vitamins"><span style="font-size: 18px" id="vitamin-icon" class="fa fa-chevron-down qa-entry" aria-hidden="true"></span><strong>Vitamins</strong></a>
+	   			<div id="vitamins" class="collapse">
+		   			{% for vitamin in db['Lectures'].find({'$and':[{'lecture_id': lecture}, {'playlist_number': playlist_number|string }]})['vitamins'] %}
+		   				<a id="show-vitamin-{{vitamin['_id']}}" data-toggle="collapse" onclick="toggleResponses('toggle-icon-{{vitamin['_id']}}')" data-target="#vitamin-content-{{vitamin['_id']}}">
+		   					<p><span class="fa fa-chevron-down qa-entry" id="toggle-icon-{{vitamin['_id']}}" aria-hidden="true"></span>
+		   				</a>
+		   				<p><span class="qa-entry-lg">{{ vitamin['timestamp'] }}</span></p>
+	   					<div id="vitamin-content-{{ vitamin['_id'] }}" class="collapse qa-entry-lg">
+	   						<p>Q: {{ vitamin['question'] }}</p>
+	   						<p>A: {{ vitamin['answer'] }}</p>
+	   					</div>
+	   					<i class="fa fa-close" style="color:red" onclick='deleteVitamin("{{vitamin['_id']}}")'></i>
+	   					</p>
+		   			{% endfor %}
+		   		</div>
+	   		</section>
+	   		<section id="resource-container" class="collapse">
+	   		</section>
+	   		<!--
 	   		<div class="form-group">
 	            <input id='vitamin-question' class="form-control" placeholder='Enter your vitamin here'></input>
 	        </div>
@@ -51,6 +85,7 @@
 	        <div class="row float-right">
 	        	<button class="btn btn-primary submission" type=submit onclick="addVitamin()"><i class="fa fa-plus"></i>  Add Vitamin</button>
 	        </div>
+	    	-->
 	   	</div>
    	</div>
 </div>
@@ -70,22 +105,33 @@
 	    });
   	}
 
-  	function toggleAnswer() {
-  		if (document.getElementById('mcq').checked) {
-  			document.getElementById('answer').innerHTML = " \
-  			<i class=\"fa fa-times\"></i><input id=\"button1\" class=\"mcq-choices\" name=\"choices\" type=\"radio\" /><input id=\"choice1\" class=\"form-control mcq-choices\" placeholder=\"Choice A\" /> \
-  			<i class=\"fa fa-times\"></i><input id=\"button2\" class=\"mcq-choices\" name=\"choices\" type=\"radio\" /><input id=\"choice2\" class=\"form-control mcq-choices\" placeholder=\"Choice B\" /> \
-  			<i class=\"fa fa-times\"></i><input id=\"button3\" class=\"mcq-choices\" name=\"choices\" type=\"radio\" /><input id=\"choice3\" class=\"form-control mcq-choices\" placeholder=\"Choice C\" /> \
-  			<i class=\"fa fa-times\"></i><input id=\"button4\" class=\"mcq-choices\" name=\"choices\" type=\"radio\" /><input id=\"choice4\" class=\"form-control mcq-choices\" placeholder=\"Choice D\" /> \
-  			";
-  		} else {
-  			document.getElementById('answer').innerHTML = "<input id='vitamin-answer' class=\"form-control\" placeholder='Enter the answer here' />";
-  		}
+  	function addVitaminForm() {
+  		document.getElementById('black-transparent-screen').classList.add('show');
+  		document.getElementById('vitamin-form').classList.add('show');
   	}
 
-  	function addVitamin() {
+  	function addResourceForm() {
 
   	}
+
+  	function deleteVitamin(vitamin) {
+
+	}
+
+	function toggleResponses(buttonId) {
+		elem = document.getElementById(buttonId);
+		if (elem) {
+		  if (elem.classList.contains('fa-chevron-down')) {
+		    elem.classList.remove('fa-chevron-down');
+		    elem.classList.add('fa-chevron-up');
+		  } else {
+		    elem.classList.remove('fa-chevron-up');
+		    elem.classList.add('fa-chevron-down');
+		  }
+		}
+	}
+
+
 </script>
 {% endblock %}
 {% block footer %}

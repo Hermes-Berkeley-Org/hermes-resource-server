@@ -211,11 +211,11 @@ class Lecture(DBObject):
         )
 
     @staticmethod
-    def add_vitamin(lecture_id, question, choices, answer, db):
+    def add_vitamin(lecture_id, question, answer, timestamp, db):
         vitamin = {
             'question': question,
-            'choices': choices,
-            'answer': answer
+            'answer': answer,
+            'timestamp': timestamp
         }
         db[Lecture.collection].update_one(
             {
@@ -229,6 +229,22 @@ class Lecture(DBObject):
             upsert=False
         )
 
+    @staticmethod
+    def add_resource(lecture_id, res_link, db):
+        resource = {
+            'link': res_link
+        }
+        db[Lecture.collection].update_one(
+            {
+              '_id': lecture_id
+            },
+            {
+              '$push': {
+                'resources': resource,
+              }
+            },
+            upsert=False
+        )
 
 
 class Question(DBObject):

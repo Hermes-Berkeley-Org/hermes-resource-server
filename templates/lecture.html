@@ -253,7 +253,7 @@ ul#menu li {
           var hours = data[0];
           var minutes = data[1];
           var seconds = data[2];
-          return (parseInt(hours) * 360 + parseInt(minutes) * 60 + parseFloat(seconds))
+          return (parseInt(hours) * 3600 + parseInt(minutes) * 60 + parseFloat(seconds))
       };
 
       var convertToSecondsTiny = function(timestamp) {
