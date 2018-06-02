@@ -140,7 +140,35 @@
   	}
 
   	function addVitamin() {
-  		
+  		var seconds = player.getCurrentTime();
+      	var question = document.getElementById('vitamin-question').value;
+      	var answer = document.getElementById('vitamin-answer').value;
+      	if (question.length > 0 && answer.length > 0) {
+	        var data = {
+	           seconds: seconds,
+	           question: question,
+	           answer: answer,
+	           lecture_id: "{{ lecture }}",
+	           cls: "{{ cls }}",
+	           playlist_num: "{{ playlist_number }}",
+	           api_key: "{{ api_key }}"
+	        }
+
+	        console.log(`${JSON.stringify(data)}`)
+
+	        $.ajax({
+	          type: "POST",
+	          url: "{{ url_for('add_vitamin') }}",
+	          data,
+	          success: function (data) {
+	            $('#vitamin-container').load(window.location.href + ' #vitamin-container', function () {
+	                toggleResponses('vitamin-icon');
+      				$('#vitamins').collapse("show");
+	            });
+
+	          }
+	        });
+	    }
   	}
 
   	function deleteVitamin(vitamin) {
