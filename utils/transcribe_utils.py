@@ -15,8 +15,6 @@ import pafy
 LENGTH_REQUIRED = 100
 THRESHOLD = 0.0
 
-TRANSCRIPT_SUGGESTIONS_NECESSARY = 5
-
 def get_youtube_id(link):
     url = urlparse(link)
     params = parse_qs(url.query)
@@ -54,6 +52,7 @@ def classify(transcription, transcription_classifier):
             yield (link, (last, i // 2)) # note i is now the row number in the transcription table
             last = (i // 2) + 1
             curr_text = []
+    yield (None, (last, len(transcription) // 2 + 1))
 
 def read_from_youtube(link, youtube, is_playlist):
     """ Gets the transcript from a youtube video
@@ -88,11 +87,7 @@ def read_from_youtube(link, youtube, is_playlist):
             'begin': p.get('begin'),
             'end': p.get('end'),
             'text': p.text,
-            'suggestions': [{
-                'text': p.text,
-                'votes': TRANSCRIPT_SUGGESTIONS_NECESSARY,
-                'users': []
-            }]
+            'suggestions': {}
         })
     return transcript
 

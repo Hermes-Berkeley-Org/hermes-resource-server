@@ -1,6 +1,9 @@
 import os
 from datetime import datetime
 
+from collections import defaultdict
+from operator import itemgetter
+
 from pymongo import MongoClient
 from bson.objectid import ObjectId
 
@@ -12,6 +15,7 @@ logger = logging.getLogger('app_logger')
 logger.setLevel(logging.INFO)
 
 EDIT_DISTANCE_PER_WORD = 5
+TRANSCRIPT_SUGGESTIONS_NECESSARY = 5
 
 def insert(dbobj, db):
     return db[dbobj.collection].insert_one(dbobj.to_dict())
@@ -194,42 +198,23 @@ class Lecture(DBObject):
     def suggest_transcript(data, db):
         lecture = find_one_by_id(data['lecture_id'], Lecture.collection, db)
         def replace_transcript_elem(lecture, index, text, user_id):
-            def insert(text, suggestions):
-                found = False
-                for i, suggestion in enumerate(suggestions):
-                    if user_id in suggestion['users']:
-                        suggestion['users'].remove(user_id)
-                        suggestion['votes'] -= 1
-                        # TODO: turn into logger statements, don't know how to do this @Kian
-                        # it didn't work when I tried logger.info
-                        print('User already suggested, removing.')
-                    if suggestion['text'] == text:
-                        found = True
-                        suggestion['votes'] += 1
-                        suggestion['users'].append(user_id)
-                        print('User suggested something already suggested, adding.')
-                if not found:
-                    print('User created a new suggestion')
-                    suggestions.append({
-                        'text': text,
-                        'votes': 1,
-                        'users': [user_id]
-                    })
             def push_onto_transcript_if_elected(transcript_elem):
-                transcript_elem['text'] = max(
-                    transcript_elem['suggestions'],
-                    key=lambda suggestion: suggestion['votes']
-                )['text']
+                suggestions = defaultdict(int)
+                for user, suggestion in transcript_elem['suggestions'].items():
+                    suggestions[suggestion] += 1
+                best_suggestion, most_votes = max(suggestions.items(), key=itemgetter(1))
+                if most_votes > TRANSCRIPT_SUGGESTIONS_NECESSARY:
+                    transcript_elem['text'] = best_suggestion
             is_playlist = data['playlist_number'] != 'None'
             transcripts = [lecture['transcript']] if not is_playlist else lecture['transcript']
             playlist_number = int(data['playlist_number']) if is_playlist else 0
             transcript = transcripts[playlist_number]
             transcript_elem = transcript[index]
             if 'suggestions' not in transcript_elem:
-                transcript_elem['suggestions'] = list()
+                transcript_elem['suggestions'] = dict()
             num_words = len(transcript_elem['text'].split(' '))
             if edit_distance(text, transcript_elem['text']) < (num_words * EDIT_DISTANCE_PER_WORD):
-                insert(text, transcript_elem['suggestions'])
+                transcript_elem['suggestions'][user_id] = text
             else:
                 print('Suggestion too far off, rejected.')
             push_onto_transcript_if_elected(transcript_elem)
