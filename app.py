@@ -251,7 +251,7 @@ def create_client(app):
         if not playlist_number:
             preds = lecture_obj.get('preds')
             if not preds:
-                preds = [(None, [0, len(lecture_obj['transcript'])])]
+                preds = [(None, [0, len(lecture_obj['transcript']) // 2 + 1])]
             video_info['video_id'] = get_youtube_id(lecture_obj['link'])
             transcript = lecture_obj['transcript']
             video_info['partition_titles'] = list(
@@ -267,7 +267,7 @@ def create_client(app):
             link = "https://www.youtube.com/watch?v=" + lecture_obj["videos"][play_num]
             preds = lecture_obj.get('preds')[play_num]
             if not preds:
-                preds = [(None, [0, len(lecture_obj['transcript'][play_num])])]
+                preds = [(None, [0, len(lecture_obj['transcript'][play_num]) // 2 + 1])]
             video_info['video_id'] = get_youtube_id(link)
             transcript = lecture_obj['transcript'][play_num]
             video_info['partition_titles'] = list(
@@ -278,7 +278,6 @@ def create_client(app):
             )
             video_info['duration'] = lecture_obj['duration'][play_num]
             video_info['num_videos'] = len(lecture_obj['videos'])
-
         if lecture_obj and cls_obj:
             return render_template(
                 'lecture.html',
@@ -326,6 +325,13 @@ def create_client(app):
                 )
                 youtube = googleapiclient.discovery.build(
                     API_SERVICE_NAME, API_VERSION, credentials=credentials, cache_discovery=False)
+                try:
+                    test_response = youtube.search().list(
+                        q='test',
+                        part='id,snippet'
+                    ).execute()
+                except:
+                    return redirect(url_for('google_authorize', class_ok_id=class_ok_id))
 
         if request.method == 'POST':
             if role != consts.INSTRUCTOR:

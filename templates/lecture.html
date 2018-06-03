@@ -35,29 +35,31 @@ ul#menu li {
       <button id="display-full-transcript" class="btn btn-sm btn-primary">Display full transcript</button>
       <a href={{ url_for('classpage', class_ok_id=cls['ok_id'])}}><button class="btn btn-primary btn-sm submission">Return to {{cls['display_name']}}</button></a>
       <div id="transcript">
+        <table class='transcript-box'>
             {% for (link, (start, end)) in preds %}
-              <table class='transcript-box'>
-              {% for i in range(start, end + 1) %}
-                  <tr id="transcript-row-{{i}}" class="transcript-row">
+
+              {% for j in range(start, end + 1) %}
+                  <tr id="transcript-row-{{j}}" class="transcript-row">
                     <td>
-                      <div class="dropdown" id="menu-{{i}}">
-                      <span id="ts-{{2 * i}}"></span>
+                      <div class="dropdown" id="menu-{{j}}">
+                      <span id="ts-{{2 * j}}"></span>
                         <a data-toggle="dropdown">
-                          <span id="transcript-text-{{2 * i}}"></span>
-                          <span id="transcript-text-{{2 * i + 1}}"></span>
+                          <span id="transcript-text-{{2 * j}}"></span>
+                          <span id="transcript-text-{{2 * j + 1}}"></span>
                         </a>
-                        <ul id="transcript-dropdown-{{i}}" class="dropdown-menu">
+                        <ul id="transcript-dropdown-{{j}}" class="dropdown-menu">
                           {% if link %}
                           <li><a onclick="sendToURL('{{link}}')"> View section in textbook</a></li>
                           {% endif %}
-                          <li><a onclick="fillQuestion({{i}})"> Ask a question</a></li>
+                          <li><a onclick="fillQuestion({{j}})"> Ask a question</a></li>
                         </ul>
                       </div>
                     </td>
                   </tr>
               {% endfor %}
-              </table>
+
             {% endfor %}
+            </table>
       </div>
     </div>
     <div class="col-md-4">
@@ -238,14 +240,15 @@ ul#menu li {
               p1.innerHTML = cleanTimestamp(transcriptElement.begin)
           }
           var p2 = document.getElementById(`transcript-text-${transcriptElementIndex}`);
-          p2.innerHTML = transcriptElement.text;
+          p2.innerHTML = transcriptElement.suggestions["{{ user['_id'] }}"] || transcriptElement.text;
           document.getElementById(`menu-${Math.floor(transcriptElementIndex / 2)}`).style.visibility = "visible";
       };
 
       var scrollToTranscriptElement = function (transcriptElementIndex) {
+          var transcriptRow = $(`#transcript-row-${Math.floor(transcriptElementIndex / 2)}`);
           $('#transcript').animate({
-              scrollTop: $(`#transcript-row-${Math.floor(transcriptElementIndex / 2)}`).position().top
-          }, 500);
+              scrollTop: transcriptRow.position().top
+          }, 1500);
       };
 
       var displayQA = function (begin, end) {
@@ -270,15 +273,38 @@ ul#menu li {
           }
       };
 
-      var sortChoices = function (choices) {
-          return choices.sort(
+      var getChoices = function (originalText, suggestions) {
+          var votes = {};
+          for (var suggestion in suggestions) {
+              votes[suggestions[suggestion]] = (votes[suggestions[suggestion]] || 0) + 1;
+          }
+          var choices = Object.entries(votes).sort(
               function (element1, element2) {
-                  return element2['votes'] - element1['votes']
+                  return element2[1] - element1[1]
               }).map(
                   function (element) {
-                      return element['text']
+                      return element[0]
                   }
               );
+          if (!choices.includes(originalText)) {
+              choices.unshift(originalText);
+          }
+          return choices;
+      }
+
+      // h/t https://stackoverflow.com/questions/16308037/detect-when-elements-within-a-scrollable-div-are-out-of-view
+      function checkInView(container, elem, partial) {
+          var contHeight = container.height();
+          var contTop = container.scrollTop();
+          var contBottom = contTop + contHeight ;
+
+          var elemTop = $(elem).offset().top - container.offset().top;
+          var elemBottom = elemTop + $(elem).height();
+
+          var isTotal = (elemTop >= 0 && elemBottom <=contHeight);
+          var isPart = ((elemTop < 0 && elemBottom > 0 ) || (elemTop > 0 && elemTop <= container.height())) && partial ;
+
+          return  isTotal  || isPart ;
       }
 
       $("span[id*='transcript-text']").on('contextmenu', function(event) {
@@ -290,10 +316,13 @@ ul#menu li {
               event.preventDefault();
               var suggestionInput = document.createElement('input');
               suggestionInput.id = `suggestion-${index}`;
+              suggestionInput.classList.add("form-control");
+              suggestionInput.classList.add("input-sm");
+              suggestionInput.classList.add("input-reduce-padding")
               suggestionInput.size = oldText.length;
               suggestionInput.value = oldText;
 
-              var choices = sortChoices(transcriptElements[index].suggestions);
+              var choices = getChoices(transcriptElements[index].text, transcriptElements[index].suggestions);
               $(this).html(suggestionInput);
 
               $(`#suggestion-${index}`).typeahead(
@@ -312,8 +341,8 @@ ul#menu li {
                 if (event.keyCode == 13 || event.keyCode == 27) { // enter key
                   var parent = $(this).closest('span');
                   var text = $(this).val();
-                  parent.html(oldText);
                   if (event.keyCode == 13) {
+                    parent.html(text);
                     $.ajax({
                       type: "POST",
                       url: "{{ url_for('edit_transcript') }}",
@@ -326,6 +355,8 @@ ul#menu li {
                           api_key: '{{ api_key }}'
                       }
                     });
+                  } else {
+                    parent.html(oldText);
                   }
                 }
               });
@@ -336,6 +367,8 @@ ul#menu li {
 
       setInterval(function() {
           var currentTime = player.getCurrentTime();
+          currentTime += 5; // Transcript delay
+
           var state = player.getPlayerState();
 
           if (currentTime > maxTranscriptTime) {
@@ -358,7 +391,10 @@ ul#menu li {
               var transcriptElement = transcriptElements[i];
               var endTime = transcriptElement.interval[1];
               if ((endTime > currentTime) && (state == 1)) {
-                  scrollToTranscriptElement(i);
+                  if (!checkInView($('#transcript'), $(`#transcript-text-${i}`), false)) {
+                      console.log(`#transcript-text-${i} not in view, scrolling to it`);
+                      scrollToTranscriptElement(i);
+                  }
                   break;
               }
           }
