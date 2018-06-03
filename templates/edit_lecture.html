@@ -15,7 +15,7 @@
         </div>
         <div class="row">
         	<div class="col-md-6">
-        		<center><button class="btn btn-danger" type=submit onclick="cancelForm()"><i class="fa fa-ban"></i>  Cancel</button></center>
+        		<center><button class="btn btn-danger" type=submit onclick="removeForm()"><i class="fa fa-ban"></i>  Cancel</button></center>
         	</div>
         	<div class="col-md-6">
         		<center><button class="btn btn-primary" type=submit onclick="addVitamin()"><i class="fa fa-plus"></i>  Add Vitamin</button></center>
@@ -59,16 +59,15 @@
 	   		<section id="vitamin-container">
 	   			<a data-toggle="collapse" onclick="toggleResponses('vitamin-icon')" data-target="#vitamins"><span style="font-size: 18px" id="vitamin-icon" class="fa fa-chevron-down qa-entry" aria-hidden="true"></span><strong>Vitamins</strong></a>
 	   			<div id="vitamins" class="collapse">
-		   			{% for vitamin in db['Lectures'].find({'$and':[{'lecture_id': lecture}, {'playlist_number': playlist_number|string }]})['vitamins'] %}
+		   			{% for vitamin in db['Vitamins'].find({'$and':[{'lecture_id': lecture}, {'playlist_number': playlist_number|string }]}) %}
 		   				<a id="show-vitamin-{{vitamin['_id']}}" data-toggle="collapse" onclick="toggleResponses('toggle-icon-{{vitamin['_id']}}')" data-target="#vitamin-content-{{vitamin['_id']}}">
 		   					<p><span class="fa fa-chevron-down qa-entry" id="toggle-icon-{{vitamin['_id']}}" aria-hidden="true"></span>
 		   				</a>
-		   				<p><span class="qa-entry-lg">{{ vitamin['timestamp'] }}</span></p>
-	   					<div id="vitamin-content-{{ vitamin['_id'] }}" class="collapse qa-entry-lg">
-	   						<p>Q: {{ vitamin['question'] }}</p>
-	   						<p>A: {{ vitamin['answer'] }}</p>
-	   					</div>
-	   					<i class="fa fa-close" style="color:red" onclick='deleteVitamin("{{vitamin['_id']}}")'></i>
+		   				<span class="qa-entry-lg">{{ vitamin['timestamp'] }} <i class="fa fa-close" style="color:red" onclick='deleteVitamin("{{vitamin['_id']}}")'></i></span>
+		   					<div id="vitamin-content-{{ vitamin['_id'] }}" class="collapse qa-entry-lg">
+		   						<span class="qa-entry">Q: {{ vitamin['question'] }}</span><br>
+		   						<span class="qa-entry">A: {{ vitamin['answer'] }}</span>
+		   					</div>
 	   					</p>
 		   			{% endfor %}
 		   		</div>
@@ -119,15 +118,16 @@
   	}
 
   	function addVitaminForm() {
+  		player.pauseVideo();
   		document.getElementById('black-transparent-screen').classList.add('show');
   		document.getElementById('vitamin-form').classList.add('show');
   	}
 
   	function addResourceForm() {
-
+  		player.pauseVideo();
   	}
 
-  	function cancelForm() {
+  	function removeForm() {
   		document.getElementById('black-transparent-screen').classList.remove('show');
 
   		var vitamin_form = document.getElementById('vitamin-form');
@@ -149,8 +149,7 @@
 	           question: question,
 	           answer: answer,
 	           lecture_id: "{{ lecture }}",
-	           cls: "{{ cls }}",
-	           playlist_num: "{{ playlist_number }}",
+	           playlist_number: "{{ playlist_number }}",
 	           api_key: "{{ api_key }}"
 	        }
 
@@ -162,6 +161,7 @@
 	          data,
 	          success: function (data) {
 	            $('#vitamin-container').load(window.location.href + ' #vitamin-container', function () {
+	            	removeForm();
 	                toggleResponses('vitamin-icon');
       				$('#vitamins').collapse("show");
 	            });

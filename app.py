@@ -13,7 +13,7 @@ import logging
 from utils.webpage_utils import CreateLectureForm, CreateClassForm
 from utils import db_utils
 from utils.app_utils import get_curr_semester, partition, generate_partition_titles
-from utils.db_utils import User, Class, Lecture, Note, Question, Answer
+from utils.db_utils import User, Class, Lecture, Note, Question, Answer, Vitamin
 from utils.transcribe_utils import transcribe, get_youtube_id, get_video_duration, get_titles
 from utils.textbook_utils import CLASSIFIERS
 
@@ -344,9 +344,7 @@ def create_client(app):
                     duration=get_video_duration(youtube_vid, is_playlist),
                     cls=class_ok_id,
                     videos = youtube_vid,
-                    vid_title = title,
-                    vitamins = [],
-                    resources = []
+                    vid_title = title
                 )
                 id = Class.add_lecture(cls, lecture, db)
 
@@ -417,12 +415,14 @@ def create_client(app):
                 id = id,
                 cls_name = cls_obj['display_name'],
                 cls_num = cls,
+                lecture = str(lecture_obj['_id']),
                 lecture_num = lecture_number,
                 num_videos = num_videos,
                 vid_titles = lecture_obj['vid_title'],
                 playlist_number=playlist_number,
                 name = lecture_obj['name'],
-                db = db
+                db = db,
+                api_key = app.config['HERMES_API_KEY']
                 )
         else:
             logger.info("Error: user access level is %s", role)
@@ -584,7 +584,7 @@ def create_client(app):
     def add_vitamin():
         if request.method == 'POST':
             if request.form['api_key'] == app.config['HERMES_API_KEY']:
-                Lecture.add_vitamin(request.form.to_dict(), db)
+                Vitamin.add_vitamin(request.form.to_dict(), db)
                 logger.info("Successfully added vitamin.")
                 return jsonify(success=True), 200
             else:

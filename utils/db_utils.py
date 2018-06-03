@@ -214,24 +214,25 @@ class Lecture(DBObject):
             }
         )
 
+class Vitamin(DBObject):
+
+    collection = 'Vitamins'
+
+    def __init__(self, **attr):
+        DBObject.__init__(self, **attr)
+
     @staticmethod
     def add_vitamin(data, db):
-        timestamp = convert_seconds_to_timestamp(data['seconds'])
-        vitamin = {
-            'question': data['question'],
-            'answer': data['answer'],
-            'timestamp': timestamp
-        }
-        db[Lecture.collection].update_one(
-            {
-              '_id': data['lecture_id']
-            },
-            {
-              '$push': {
-                'vitamins': vitamin,
-              }
-            },
-            upsert=False
+        timestamp = convert_seconds_to_timestamp(round(float(data['seconds'])))
+        return insert(
+            Vitamin(
+                question = data['question'],
+                answer = data['answer'],
+                timestamp = timestamp,
+                lecture_id = data['lecture_id'],
+                playlist_number = data['playlist_number']
+            ),
+            db
         )
 
     @staticmethod
