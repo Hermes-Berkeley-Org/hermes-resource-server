@@ -8,6 +8,19 @@ ul#menu li {
 }
 </style>
 <div class="wrapper text-primary">
+  <div id="black-transparent-screen">
+  </div>
+  <div id="vitamin-problem">
+  		<p class="text-right" id="skip" onclick="removeForm()">>>Skip</p>
+		<div class="form-group">
+            <p id="vitamin-question"></p>
+        </div>
+        <div id="incorrect"></div>
+        <div class="form-group">
+            <input id='vitamin-answer' class="form-control popup-input" placeholder='Enter your answer here'></input>
+        </div>
+        <button class="btn btn-primary submission" type=submit onclick="submitVitaminAnswer()">Submit</button>
+  </div>
   <div class="row">
     <div class="col-md-7">
       <div id="ytplayer"></div>
@@ -244,6 +257,7 @@ ul#menu li {
 
   }
 
+  var vitaminSolution;
 
   function onPlayerReady() {
       toggleTopQuestions();
@@ -318,6 +332,41 @@ ul#menu li {
           {% endfor %}
       }, {{questions_interval}} * 250);
 
+      var solvingVitamin = false;
+
+      setInterval(function() {
+      	  var currentTime = Math.floor(player.getCurrentTime());
+          {% for vitamin in db['Vitamins'].find({'$and':[{'lecture_id': lecture}, {'playlist_number': playlist_number|string }]}) %}
+          	  var timeDiff = Math.abs(currentTime - parseFloat("{{ vitamin['seconds'] }}"));
+	          if (timeDiff < 0.5 && solvingVitamin == false) {
+	          	player.pauseVideo();
+	          	solvingVitamin = true;
+	          	var vitamin_question = document.getElementById('vitamin-question');
+	          	vitaminSolution = "{{ vitamin['answer'] }}";
+	          	vitamin_question.innerHTML = "{{ db['Vitamins'].find_one({'_id': vitamin['_id']})['question'] }}"
+	          	document.getElementById('black-transparent-screen').classList.add('show');
+	  		    document.getElementById('vitamin-problem').classList.add('show');
+	  		  } else if (player.getPlayerState() == 1) {
+	  		  	solvingVitamin = false;
+	  		  }
+          {% endfor %}
+      }, 1000);
+
+  }
+
+  function removeForm() {
+	document.getElementById('black-transparent-screen').classList.remove('show');
+	document.getElementById('vitamin-problem').classList.remove('show');
+  }
+
+  function submitVitaminAnswer() {
+  	document.getElementById('incorrect').innerHTML = "";
+  	var answer = document.getElementById('vitamin-answer').value;
+  	if (answer === vitaminSolution) {
+  		removeForm();
+  	} else {
+  		document.getElementById('incorrect').innerHTML = "That is incorrect. Please try again.";
+  	}
   }
 
   function stateChange() {
