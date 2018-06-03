@@ -172,7 +172,22 @@
   	}
 
   	function deleteVitamin(vitamin) {
+	    var data = {
+	      vitamin_id: vitamin,
+	      api_key: "{{ api_key }}"
+	    }
 
+	    $.ajax({
+	      type: "POST",
+	      url: "{{ url_for('delete_vitamin') }}",
+	      data: data,
+	      success: function (data) {
+	        $('#vitamin-container').load(window.location.href + ' #vitamin-container', function () {
+	            toggleResponses('vitamin-icon');
+      			$('#vitamins').collapse("show");
+	        });
+	      }
+	    })
 	}
 
 	function toggleResponses(buttonId) {

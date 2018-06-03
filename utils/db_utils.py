@@ -228,11 +228,19 @@ class Vitamin(DBObject):
             Vitamin(
                 question = data['question'],
                 answer = data['answer'],
+                seconds = data['seconds'],
                 timestamp = timestamp,
                 lecture_id = data['lecture_id'],
                 playlist_number = data['playlist_number']
             ),
             db
+        )
+
+    @staticmethod
+    def delete_vitamin(vitamin, db):
+        vitamin_id = vitamin['vitamin_id']
+        db[Vitamin.collection].delete_one(
+            {'_id': ObjectId(vitamin_id)}
         )
 
     @staticmethod
