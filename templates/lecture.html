@@ -400,17 +400,59 @@ ul#menu li {
 
 
   function convertAnswerToInput(answer, question){
-    var currentVal = document.getElementById(`each-answer-${answer}`);
     var txt = document.getElementById(`answer-text-${answer}`).innerHTML;
-    txt = txt.replace(/ /g, '&nbsp;');
-    currentVal.innerHTML = `<input id= edit-answer-${answer} class="form-control qa-entry" value= ${txt}></input> <button class="btn btn-primary btn-sm qa-entry submission" type="submit" onclick='editAnswer("${answer}", "${question}")'>Submit Edit</button>`
+    //txt = txt.replace(/ /g, '&nbsp;');
+
+    var spn = document.createElement("span");
+
+    var frm = document.createElement("input");
+    frm.setAttribute("class", "form-control qa-entry");
+    frm.setAttribute("id", `edit-answer-${answer}`);
+    frm.value = txt;
+    spn.appendChild(frm);
+
+    var btn = document.createElement("BUTTON");
+    btn.setAttribute("class", "btn btn-primary btn-sm qa-entry submission");
+    btn.setAttribute("type", "submit");
+    btn.setAttribute("onclick", `editAnswer("${answer}", "${question}")`);
+    var t = document.createTextNode("Submit Edit");
+    btn.appendChild(t);
+    spn.appendChild(btn);
+
+    var d = document.getElementById(`each-answer-${answer}`);
+    d.appendChild(spn);
+    // var currentVal = document.getElementById(`each-answer-${answer}`);
+    //var txt = document.getElementById(`answer-text-${answer}`).innerHTML;
+    //txt = txt.replace(/ /g, '&nbsp;');
+    // currentVal.innerHTML = `<input id= edit-answer-${answer} class="form-control qa-entry" value= ${txt}></input> <button class="btn btn-primary btn-sm qa-entry submission" type="submit" onclick='editAnswer("${answer}", "${question}")'>Submit Edit</button>`
   }
 
   function convertQuestionToInput(questionId){
-    var currentVal = document.getElementById(`each-question-${questionId}`);
     txt = document.getElementById(`question-text-${questionId}`).innerHTML;
-    txt = txt.replace(/ /g, '&nbsp;');
-    currentVal.innerHTML = `<span> <input id= edit-question-${questionId} class="form-control qa-entry" value= ${txt}></input> <button class="btn btn-primary btn-sm qa-entry submission" type="submit" onclick='editQuestion("${questionId}")'>Submit Edit</button> </span>`
+
+    var spn = document.createElement("span");
+
+    var frm = document.createElement("input");
+    frm.setAttribute("class", "form-control qa-entry");
+    frm.setAttribute("id", `edit-question-${questionId}`);
+    frm.value = txt;
+    spn.appendChild(frm);
+
+    var btn = document.createElement("BUTTON");
+    btn.setAttribute("class", "btn btn-primary btn-sm qa-entry submission");
+    btn.setAttribute("type", "submit");
+    btn.setAttribute("onclick", `editQuestion("${questionId}")`);
+    var t = document.createTextNode("Submit Edit");
+    btn.appendChild(t);
+    spn.appendChild(btn);
+
+    var d = document.getElementById(`each-question-${questionId}`);
+    d.appendChild(spn);
+
+    // var currentVal = document.getElementById(`each-question-${questionId}`);
+    // txt = document.getElementById(`question-text-${questionId}`).innerHTML;
+    // txt = txt.replace(/ /g, '&nbsp;');
+    // currentVal.innerHTML = `<span> <input id= edit-question-${questionId} class="form-control qa-entry" value= ${txt}></input> <button class="btn btn-primary btn-sm qa-entry submission" type="submit" onclick='editQuestion("${questionId}")'>Submit Edit</button> </span>`
   }
 
   function editQuestion(questionId) {
