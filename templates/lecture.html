@@ -75,11 +75,9 @@ ul#menu li {
           </div>
         <!-- </form> -->
         <div class="row">
-            <p>
               <button type="button" class="btn btn-default btn-sm" type=submit onclick='refreshQuestions()'>
                 <i class="fa fa-refresh" aria-hidden="true">Refresh </i>
               </button>
-          </p>
       </div>
       <section id="questions_table">
           {% for question_set, interval in partition(db['Questions'].find({'$and':[{'lecture_id': lecture}, {'playlist_number': playlist_number|string }]}), questions_interval, duration) %}
@@ -94,10 +92,13 @@ ul#menu li {
 
 
             {% for question in question_set %}
-
               <a id="show-answers-{{question['_id']}}" data-toggle="collapse" onclick="toggleResponses('toggle-icon-{{question['_id']}}')" data-target="#answers-{{question['_id']}}">
-                <p><span class="fa fa-chevron-down qa-entry" id="toggle-icon-{{question['_id']}}" aria-hidden="true"></span></a>
-                    <span id="upvotes-{{question['_id']}}"><button class="btn btn-default btn-sm likes"  type=submit onclick='upvoteQuestion("{{user['_id']}}", "{{question['_id']}}")'>
+
+                <p>
+                  <span class="fa fa-chevron-down qa-entry" id="toggle-icon-{{question['_id']}}" aria-hidden="true"></span></a>
+                  <span id= "each-question-{{question['_id']}}">
+                    <span id="upvotes-{{question['_id']}}">
+                      <button class="btn btn-default btn-sm likes"  type=submit onclick='upvoteQuestion("{{user['_id']}}", "{{question['_id']}}")'>
                       {% if user_id in question['upvotes'] %}
                       <i class="fa fa-thumbs-up" aria-hidden="true"></i> Like  <span id = "upvotes-{{question['_id']}}-count" class ="clicked">{{ question['upvotes']|length }}</span>
                       {% else %}
@@ -109,11 +110,15 @@ ul#menu li {
                 {% else %}
                   <span class="question-tag-lg"> {{question['name']}} {{question['timestamp']}}</span>
                 {% endif %}
-                <span class="qa-entry-lg"> {{question['text']}}</span>
+                <span class="qa-entry-lg" id = "question-text-{{question['_id']}}"> {{question['text']}}</span>
                 {% if role == consts.INSTRUCTOR %}
                   <a onclick='deleteQuestion("{{question['_id']}}")'><span class="fa fa-close" style="color:red"></span></a>
                 {% endif %}
-                </p>
+                {% if role == consts.INSTRUCTOR or True %}
+                  <i class="fa fa-pencil" aria-hidden="true" type="submit" onclick='convertQuestionToInput("{{question['_id']}}")'></i>
+                {% endif %}
+              </span>
+              </p>
             <div id="answers-container-{{question['_id']}}">
             <!--<div class="clear"></div>-->
             <div id="answers-{{question['_id']}}" class="collapse">
@@ -147,7 +152,7 @@ ul#menu li {
                     {% if answer['user'] == user['_id'] or role == consts.INSTRUCTOR%}
                         <i class="fa fa-pencil" aria-hidden="true" type="submit" onclick='convertAnswerToInput("{{answer['_id']}}", "{{question['_id']}}")'></i>
                      {% endif %}
-                    {% if role == consts.INSTRUCTOR %}
+                    {% if answer['user'] == user['_id'] or role == consts.INSTRUCTOR %}
                       <i class="fa fa-close" style="color:red" onclick='deleteAnswer("{{answer['_id']}}", "{{question['_id']}}")'></i>
                     {% endif %}
                     </p>
@@ -324,12 +329,6 @@ ul#menu li {
       // recordData maybe
   }
 
-  function convertAnswerToInput(answer, question){
-    var currentVal = document.getElementById(`each-answer-${answer}`);
-    var txt = document.getElementById(`answer-text-${answer}`).innerHTML;
-    txt = txt.replace(/ /g, '&nbsp;');
-    currentVal.innerHTML = `<input id= edit-answer-${answer} class="form-control qa-entry" value= ${txt}></input> <button class="btn btn-primary btn-sm qa-entry submission" type="submit" onclick='editAnswer("${answer}", "${question}")'>Submit Edit</button>`
-  }
   function toggleTopQuestions() {
       toggleResponses('partition-icon-1');
       $('#partition-1').collapse("show");
@@ -399,7 +398,82 @@ ul#menu li {
     })
   }
 
-  //NOTE: not sure about the success function
+
+  function convertAnswerToInput(answer, question){
+    var txt = document.getElementById(`answer-text-${answer}`).innerHTML;
+    //txt = txt.replace(/ /g, '&nbsp;');
+
+    var spn = document.createElement("span");
+
+    var frm = document.createElement("input");
+    frm.setAttribute("class", "form-control qa-entry");
+    frm.setAttribute("id", `edit-answer-${answer}`);
+    frm.value = txt;
+    spn.appendChild(frm);
+
+    var btn = document.createElement("BUTTON");
+    btn.setAttribute("class", "btn btn-primary btn-sm qa-entry submission");
+    btn.setAttribute("type", "submit");
+    btn.setAttribute("onclick", `editAnswer("${answer}", "${question}")`);
+    var t = document.createTextNode("Submit Edit");
+    btn.appendChild(t);
+    spn.appendChild(btn);
+
+    var d = document.getElementById(`answer-text-${answer}`);
+    d.replaceWith(spn); //document.getElementById(`each-answer-${answer}`));
+    // var currentVal = document.getElementById(`each-answer-${answer}`);
+    //var txt = document.getElementById(`answer-text-${answer}`).innerHTML;
+    //txt = txt.replace(/ /g, '&nbsp;');
+    // currentVal.innerHTML = `<input id= edit-answer-${answer} class="form-control qa-entry" value= ${txt}></input> <button class="btn btn-primary btn-sm qa-entry submission" type="submit" onclick='editAnswer("${answer}", "${question}")'>Submit Edit</button>`
+  }
+
+  function convertQuestionToInput(questionId){
+    txt = document.getElementById(`question-text-${questionId}`).innerHTML;
+
+    var spn = document.createElement("span");
+
+    var frm = document.createElement("input");
+    frm.setAttribute("class", "form-control qa-entry");
+    frm.setAttribute("id", `edit-question-${questionId}`);
+    frm.value = txt;
+    spn.appendChild(frm);
+
+    var btn = document.createElement("BUTTON");
+    btn.setAttribute("class", "btn btn-primary btn-sm qa-entry submission");
+    btn.setAttribute("type", "submit");
+    btn.setAttribute("onclick", `editQuestion("${questionId}")`);
+    var t = document.createTextNode("Submit Edit");
+    btn.appendChild(t);
+    spn.appendChild(btn);
+
+    var d = document.getElementById(`question-text-${questionId}`);
+    d.replaceWith(spn);
+
+    // var currentVal = document.getElementById(`each-question-${questionId}`);
+    // txt = document.getElementById(`question-text-${questionId}`).innerHTML;
+    // txt = txt.replace(/ /g, '&nbsp;');
+    // currentVal.innerHTML = `<span> <input id= edit-question-${questionId} class="form-control qa-entry" value= ${txt}></input> <button class="btn btn-primary btn-sm qa-entry submission" type="submit" onclick='editQuestion("${questionId}")'>Submit Edit</button> </span>`
+  }
+
+  function editQuestion(questionId) {
+    var text = document.getElementById(`edit-question-${questionId}`).value;
+    var data = {
+      text,
+      api_key: "{{ api_key }}",
+      questionId
+    }
+
+    $.ajax({
+      type: "POST",
+      url: "{{ url_for('edit_question') }}",
+      data,
+      success: function (data) {
+        $('#questions_table').load(window.location.href + ' #questions_table', function () {
+            toggleTopQuestions()
+        });
+      }
+    })
+  }
 
   function editAnswer(answerId, questionId) {
       var text = document.getElementById(`edit-answer-${answerId}`).value;
@@ -447,60 +521,44 @@ ul#menu li {
   }
 
   function upvoteAnswer(user, answer){
-    var span = document.getElementById(`upvotes-${answer}-count`);
-    var currentcount = parseInt(span.innerHTML);
-    if(span.innerHTML.className == "notclicked"){
-      span.innerHTML =  currentcount + 1;
-    }
-    else{
-      span.innerHTML = currentcount - 1;
-    }
-    var data ={
-      user_id:user,
-      answer_id:answer,
-      api_key: "{{ api_key }}"
-    };
-    console.log(`${JSON.stringify(data)}`)
-    $.ajax({
-      type: "POST",
-      url: "{{ url_for('upvote_answer') }}",
-      data,
-      success: function (data) {
+      var currentcount = document.getElementById(`upvotes-${answer}`).value;
+      var data ={
+        user_id:user,
+        answer_id:answer,
+        api_key: "{{ api_key }}"
+      };
+      console.log(`${JSON.stringify(data)}`)
+      $.ajax({
+        type: "POST",
+        url: "{{ url_for('upvote_answer') }}",
+        data,
+        success: function (data) {
 
-        $(`#upvotes-${answer}`).load(window.location.href + ` #upvotes-${answer}`, function () {
-            toggleTopQuestions()
-        });
-      }
-    });
-  }
-
-  function upvoteQuestion(user, question){
-    var span = document.getElementById(`upvotes-${question}-count`)
-    var currentcount = parseInt(span.innerHTML);
-    if(span.innerHTML.className == "notclicked"){
-      span.innerHTML =  currentcount + 1;
-    }
-    else{
-      span.innerHTML = currentcount - 1;
+          $(`#upvotes-${answer}`).load(window.location.href + ` #upvotes-${answer}`, function () {
+              toggleTopQuestions()
+          });
+        }
+      });
     }
 
-    var data ={
-      user_id:user,
-      question_id:question,
-      api_key: "{{ api_key }}"
-    };
-    console.log(`${JSON.stringify(data)}`)
-    $.ajax({
-      type: "POST",
-      url: "{{ url_for('upvote_question') }}",
-      data,
-      success: function (data) {
-        $(`#upvotes-${question}`).load(window.location.href + `#upvotes-${question}`, function () {
-            toggleTopQuestions()
-        });
-      }
-    });
-  }
+    function upvoteQuestion(user, question){
+      var data ={
+        user_id:user,
+        question_id:question,
+        api_key: "{{ api_key }}"
+      };
+      console.log(`${JSON.stringify(data)}`)
+      $.ajax({
+        type: "POST",
+        url: "{{ url_for('upvote_question') }}",
+        data,
+        success: function (data) {
+          $(`#upvotes-${question}`).load(window.location.href + ` #upvotes-${question}`, function () {
+              toggleTopQuestions()
+          });
+        }
+      });
+    }
   function sendAnswer(questionId) {
 
       var answer = document.getElementById(`answer-${questionId}`).value;

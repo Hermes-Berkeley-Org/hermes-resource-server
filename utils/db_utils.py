@@ -241,15 +241,15 @@ class Question(DBObject):
         ).inserted_id
 
     @staticmethod
-    def edit_question(id, question, db):
-        return db[Question.collection].update({
-            {'id':id},
+    def edit_question(data, db):
+        edit = data['text']
+        return db[Question.collection].update_one(
+            {'_id': ObjectId(data['questionId'])},
             {
               '$set': {
-                'question': question["text"],
+                'text': edit,
               }
-            },
-        }, upsert = False).inserted_id
+            })
 
     @staticmethod
     def delete_question(question, db):
