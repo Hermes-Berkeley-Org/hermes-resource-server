@@ -342,7 +342,7 @@ ul#menu li {
 	          	player.pauseVideo();
 	          	solvingVitamin = true;
 	          	var vitamin_question = document.getElementById('vitamin-question');
-	          	vitaminSolution = "{{ vitamin['answer'] }}";
+	          	vitaminSolution = "{{ vitamin['answer'] }}".toLowerCase();
 	          	vitamin_question.innerHTML = "{{ db['Vitamins'].find_one({'_id': vitamin['_id']})['question'] }}"
 	          	document.getElementById('black-transparent-screen').classList.add('show');
 	  		    document.getElementById('vitamin-problem').classList.add('show');
@@ -361,7 +361,7 @@ ul#menu li {
 
   function submitVitaminAnswer() {
   	document.getElementById('incorrect').innerHTML = "";
-  	var answer = document.getElementById('vitamin-answer').value;
+  	var answer = document.getElementById('vitamin-answer').value.toLowerCase();
   	if (answer === vitaminSolution) {
   		removeForm();
   	} else {
