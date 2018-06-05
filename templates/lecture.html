@@ -419,8 +419,8 @@ ul#menu li {
     btn.appendChild(t);
     spn.appendChild(btn);
 
-    var d = document.getElementById(`each-answer-${answer}`);
-    d.appendChild(spn);
+    var d = document.getElementById(`answer-text-${answer}`);
+    d.replaceWith(spn); //document.getElementById(`each-answer-${answer}`));
     // var currentVal = document.getElementById(`each-answer-${answer}`);
     //var txt = document.getElementById(`answer-text-${answer}`).innerHTML;
     //txt = txt.replace(/ /g, '&nbsp;');
@@ -446,8 +446,8 @@ ul#menu li {
     btn.appendChild(t);
     spn.appendChild(btn);
 
-    var d = document.getElementById(`each-question-${questionId}`);
-    d.appendChild(spn);
+    var d = document.getElementById(`question-text-${questionId}`);
+    d.replaceWith(spn);
 
     // var currentVal = document.getElementById(`each-question-${questionId}`);
     // txt = document.getElementById(`question-text-${questionId}`).innerHTML;
