@@ -150,3 +150,11 @@ ul.dropdown-menu li:hover {
 	cursor: pointer;
 	background-color: #fefbd8;
 }
+
+.tt-suggestion {
+  background-color : #ffffff;
+}
+
+.input-reduce-padding {
+	padding: 1px 3px;
+}

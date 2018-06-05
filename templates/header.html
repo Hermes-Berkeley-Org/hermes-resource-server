@@ -11,6 +11,8 @@
         <title>{% block title %}{% endblock %}</title>
 
         <!-- Bootstrap core CSS -->
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
         <link href="{{ url_for('static', filename='vendor/bootstrap/css/bootstrap.min.css') }}" rel="stylesheet">
 
         <!-- Custom fonts for this template -->
@@ -30,6 +32,8 @@
         <!-- Custom style sheet for lecture question bubbles -->
         <link href="{{ url_for('static', filename='css/lecture-questions.css') }}" rel="stylesheet">
         <link href="{{ url_for('static', filename='css/class.css') }}" rel="stylesheet">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+
         {% endblock %}
     </head>
     <body>
@@ -64,7 +68,7 @@
 
     {% endblock %}
     </div>
-    <div id="footer">
+    <!-- <div id="footer">
         {% block footer %}
         <div class="copyright py-4 text-center text-white">
             <div class="container">
@@ -72,7 +76,7 @@
             </div>
         </div>
         {% endblock %}
-    </div>
+    </div> -->
     </body>
 
     <!-- Bootstrap core JavaScript -->
@@ -89,4 +93,6 @@
 
     <!-- Custom scripts for this template -->
     <script src="{{ url_for('static', filename='js/freelancer.min.js') }}"></script>
+
+    <script src="{{ url_for('static', filename='js/typeahead.bundle.js') }}"></script>
 </html>
