@@ -156,6 +156,9 @@ ul#menu li {
                       <i class="fa fa-close" style="color:red" onclick='deleteAnswer("{{answer['_id']}}", "{{question['_id']}}")'></i>
                     {% endif %}
                     </p>
+                    {% if answer['user'] == user['_id'] or role == consts.INSTRUCTOR%}
+                        <button class="btn btn-primary btn-sm qa-entry submission" type="submit" onclick='convertAnswerToInput("{{answer['_id']}}", "{{question['_id']}}")'>Edit Answer</button>
+                    {% endif %}
                   </div>
                 {% endfor %}
                   <!-- <form class="form-horizontal"> -->

@@ -14,7 +14,7 @@ from utils.webpage_utils import CreateLectureForm, CreateClassForm
 from utils import db_utils
 from utils.app_utils import get_curr_semester, partition, generate_partition_titles
 from utils.db_utils import User, Class, Lecture, Note, Question, Answer
-from utils.transcribe_utils import transcribe, get_youtube_id, get_video_duration, get_titles
+from utils.transcribe_utils import transcribe, get_youtube_id, get_video_duration, get_video_titles, get_playlist_titles, get_playlist_video_duration
 from utils.textbook_utils import CLASSIFIERS
 
 import consts
@@ -325,13 +325,16 @@ def create_client(app):
                         playlistId= youtube_id
                     ).execute()
                     youtube_vid= [vid["contentDetails"]["videoId"] for vid in youtube_vids["items"]]
+                    duration = get_playlist_video_duration(youtube_vid)
+                    title = get_playlist_titles(youtube_vid, youtube)
                 elif "v=" in url:
                     youtube_vid= request.form['link']
                     is_playlist = False
+                    duration = get_video_duration(youtube_vid)
+                    title = get_video_titles(youtube_vid, youtube)
                 else:
                     logger.info("Enter a valid link")
                     redirect(url_for('error', code=403))
-                title = get_titles(youtube_vid, is_playlist, youtube)
                 lecture = Lecture(
                     name=request.form['title'],
                     url_name=db_utils.encode_url(request.form['title']),
@@ -339,7 +342,7 @@ def create_client(app):
                     link=request.form['link'],
                     lecture_number=num_lectures,
                     is_playlist= is_playlist,
-                    duration=get_video_duration(youtube_vid, is_playlist),
+                    duration=duration,
                     cls=class_ok_id,
                     videos = youtube_vid,
                     vid_title = title
