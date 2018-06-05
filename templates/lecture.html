@@ -112,10 +112,8 @@ ul#menu li {
                 {% endif %}
                 <span class="qa-entry-lg" id = "question-text-{{question['_id']}}"> {{question['text']}}</span>
                 {% if role == consts.INSTRUCTOR %}
-                  <a onclick='deleteQuestion("{{question['_id']}}")'><span class="fa fa-close" style="color:red"></span></a>
-                {% endif %}
-                {% if role == consts.INSTRUCTOR or True %}
                   <i class="fa fa-pencil" aria-hidden="true" type="submit" onclick='convertQuestionToInput("{{question['_id']}}")'></i>
+                  <a onclick='deleteQuestion("{{question['_id']}}")'><span class="fa fa-close" style="color:red"></span></a>
                 {% endif %}
               </span>
               </p>
@@ -151,14 +149,9 @@ ul#menu li {
                     {% endif %}
                     {% if answer['user'] == user['_id'] or role == consts.INSTRUCTOR%}
                         <i class="fa fa-pencil" aria-hidden="true" type="submit" onclick='convertAnswerToInput("{{answer['_id']}}", "{{question['_id']}}")'></i>
-                     {% endif %}
-                    {% if answer['user'] == user['_id'] or role == consts.INSTRUCTOR %}
                       <i class="fa fa-close" style="color:red" onclick='deleteAnswer("{{answer['_id']}}", "{{question['_id']}}")'></i>
                     {% endif %}
                     </p>
-                    {% if answer['user'] == user['_id'] or role == consts.INSTRUCTOR%}
-                        <button class="btn btn-primary btn-sm qa-entry submission" type="submit" onclick='convertAnswerToInput("{{answer['_id']}}", "{{question['_id']}}")'>Edit Answer</button>
-                    {% endif %}
                   </div>
                 {% endfor %}
                   <!-- <form class="form-horizontal"> -->
@@ -403,7 +396,7 @@ ul#menu li {
 
 
   function convertAnswerToInput(answer, question){
-    var txt = document.getElementById(`answer-text-${answer}`).innerHTML;
+    var txt = document.getElementById(`answer-text-${answer}`).innerHTML.trim();
     //txt = txt.replace(/ /g, '&nbsp;');
 
     var spn = document.createElement("span");
