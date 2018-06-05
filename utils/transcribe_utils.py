@@ -52,6 +52,7 @@ def classify(transcription, transcription_classifier):
             yield (link, (last, i // 2)) # note i is now the row number in the transcription table
             last = (i // 2) + 1
             curr_text = []
+    yield (None, (last, len(transcription) // 2 + 1))
 
 def read_from_youtube(link, youtube, is_playlist):
     """ Gets the transcript from a youtube video
@@ -85,7 +86,8 @@ def read_from_youtube(link, youtube, is_playlist):
         transcript.append({
             'begin': p.get('begin'),
             'end': p.get('end'),
-            'text': p.text
+            'text': p.text,
+            'suggestions': {}
         })
     return transcript
 
@@ -124,7 +126,7 @@ def scrape(link):
         return []
 
 def get_video_titles(video_id, youtube):
-    return youtube.videos().list(part="snippet", id= video_id).execute()["items"][0]["snippet"]["title"]
+    return pafy.new(video_id).title
 
 def get_playlist_titles(video_ids, youtube):
     title_lst = []

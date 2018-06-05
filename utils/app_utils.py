@@ -1,4 +1,32 @@
 from datetime import datetime
+from operator import itemgetter
+
+def edit_distance(s1, s2):
+    def diff(i, j):
+        return 0 if i == j else 1
+    def get_char(s, i):
+        return s[i - 1]
+
+    m, n = len(s1), len(s2)
+
+    E = [[0 for _ in range(n+1)] for _ in range(m+1)]
+
+    for i in range(m + 1):
+        E[i][0] = i
+
+    for j in range(n + 1):
+        E[0][j] = j
+
+    for i in range(1, m + 1):
+        for j in range(1, n + 1):
+            E[i][j] = min(
+                E[i - 1][j] + 1,
+                E[i][j - 1] + 1,
+                E[i - 1][j - 1] + diff(get_char(s1, i), get_char(s2, j))
+            )
+
+    return E[m][n]
+
 
 def get_curr_semester():
     today = datetime.today()
@@ -21,6 +49,9 @@ def convert_timestamp_to_seconds(ts):
     minutes = data[1]
     seconds = data[2]
     return (int(hours) * 360 + int(minutes) * 60 + int(seconds))
+
+def sort_suggestions(suggestions):
+    return map(itemgetter(0), sorted(suggestions, key=itemgetter(1)))
 
 def partition(cursor, questions_interval, duration):
     duration = convert_timestamp_to_seconds(duration)
