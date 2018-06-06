@@ -7,11 +7,31 @@
     <div id="black-transparent-screen">
     </div>
     <div id="vitamin-form">
+      <h4>Add Vitamin</h4>
         <div class="form-group">
             <input id='vitamin-question' class="form-control popup-input" placeholder='Enter your vitamin question here'></input>
         </div>
         <div class="form-group">
-            <input id='vitamin-answer' class="form-control popup-input" placeholder='Enter your vitamin answer here'></input>
+          <!-- <input id='vitamin-answer' class="form-control popup-input" placeholder='Enter your vitamin answer here'></input> -->
+          <div class="vitamin-answer">
+            <p>Please enter 2-4 choices, then use the buttons to choose the correct answer.</p>
+            <div class="row">
+              <div class="col-md-6" style="display: inline;">
+                <input id="button1" name="choices" type="radio">   <input id="choice1" class="form-control mcq-choices" placeholder="Choice A" />
+              </div>
+              <div class="col-md-6" style="display: inline;">
+                <input id="button2" name="choices" type="radio">   <input id="choice2" class="form-control mcq-choices" placeholder="Choice B" />
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-md-6" style="display: inline;">
+                <input id="button3" name="choices" type="radio">   <input id="choice3" class="form-control mcq-choices" placeholder="Choice C" />
+              </div>
+              <div class="col-md-6" style="display: inline;">
+                <input id="button4" name="choices" type="radio">   <input id="choice4" class="form-control mcq-choices" placeholder="Choice D" />
+              </div>
+            </div>
+          </div>
         </div>
         <div class="row">
             <div class="col-md-6">

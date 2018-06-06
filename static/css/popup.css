@@ -34,7 +34,7 @@
 	background-color: #fff;
 	z-index: 10001;
 	border-radius: 15px;
-	padding: 5%;
+	padding: 2%;
 }
 
 #vitamin-form.show, #vitamin-problem.show {
@@ -46,6 +46,10 @@
 
 .popup-input {
 	width: 100%;
+}
+
+.mcq-choices {
+	width: 80%;
 }
 
 #incorrect {
