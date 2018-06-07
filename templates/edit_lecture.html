@@ -11,36 +11,40 @@
         <div class="form-group">
             <input id='vitamin-question' class="form-control popup-input" placeholder='Enter your vitamin question here'></input>
         </div>
-        <div class="form-group">
+        <form>
+          <div class="form-group">
           <!-- <input id='vitamin-answer' class="form-control popup-input" placeholder='Enter your vitamin answer here'></input> -->
-          <div class="vitamin-answer">
-            <p>Please enter 2-4 choices, then use the buttons to choose the correct answer.</p>
-            <div class="row">
-              <div class="col-md-6" style="display: inline;">
-                <input id="button1" name="choices" type="radio">   <input id="choice1" class="form-control mcq-choices" placeholder="Choice A" />
+            <div class="vitamin-answer">
+              <p id="instructions">Please enter 2-4 choices, then use the buttons to choose the correct answer.</p>
+              <p class="incorrect" id="incorrect-input"></p>
+              <div class="row">
+                <div class="col-md-6" style="display: inline;">
+                  <input id="button1" name="choices" type="radio" required>   <input id="choice1" class="form-control mcq-choices" placeholder="Choice A" />
+                </div>
+                <div class="col-md-6" style="display: inline;">
+                  <input id="button2" name="choices" type="radio" required>   <input id="choice2" class="form-control mcq-choices" placeholder="Choice B" />
+                </div>
               </div>
-              <div class="col-md-6" style="display: inline;">
-                <input id="button2" name="choices" type="radio">   <input id="choice2" class="form-control mcq-choices" placeholder="Choice B" />
-              </div>
-            </div>
-            <div class="row">
-              <div class="col-md-6" style="display: inline;">
-                <input id="button3" name="choices" type="radio">   <input id="choice3" class="form-control mcq-choices" placeholder="Choice C" />
-              </div>
-              <div class="col-md-6" style="display: inline;">
-                <input id="button4" name="choices" type="radio">   <input id="choice4" class="form-control mcq-choices" placeholder="Choice D" />
+              <div class="row">
+                <div class="col-md-6" style="display: inline;">
+                  <input id="button3" name="choices" type="radio" required>   <input id="choice3" class="form-control mcq-choices" placeholder="Choice C" />
+                </div>
+                <div class="col-md-6" style="display: inline;">
+                  <input id="button4" name="choices" type="radio" required>   <input id="choice4" class="form-control mcq-choices" placeholder="Choice D" />
+                </div>
               </div>
             </div>
           </div>
-        </div>
-        <div class="row">
-            <div class="col-md-6">
-                <center><button class="btn btn-danger" type=submit onclick="removeForm()"><i class="fa fa-ban"></i>  Cancel</button></center>
-            </div>
-            <div class="col-md-6">
-                <center><button class="btn btn-primary" type=submit onclick="addVitamin()"><i class="fa fa-plus"></i>  Add Vitamin</button></center>
-            </div>
-        </div>
+          <div class="row">
+              <div class="col-md-6">
+                  <center><button class="btn btn-danger" type=submit onclick="removeForm()"><i class="fa fa-ban"></i>  Cancel</button></center>
+              </div>
+              <div class="col-md-6">
+                  <center><button class="btn btn-primary" type=submit onclick="addVitamin()"><i class="fa fa-plus"></i>  Add Vitamin</button></center>
+              </div>
+          </div>
+        </form>
+
     </div>
     <div class="row">
         <div class="col-md-7">
@@ -94,30 +98,6 @@
             </section>
             <section id="resource-container" class="collapse">
             </section>
-            <!--
-            <div class="form-group">
-                <input id='vitamin-question' class="form-control" placeholder='Enter your vitamin here'></input>
-            </div>
-            <div class="row">
-                <div class="form-group col-md-6">
-                    <input id="mcq" name="qtype" type="radio" onclick="toggleAnswer()" checked>  Multiple Choice</input>
-                </div>
-                <div class="form-group col-md-6">
-                    <input id="frq" name="qtype" type="radio" onclick="toggleAnswer()">  Free Response</input>
-                </div>
-            </div>
-            <div class="row">
-                <div id="answer">
-                    <i class="fa fa-times"></i><input id="button1" class="mcq-choices" name="choices" type="radio"/><input id="choice1" class="form-control mcq-choices" placeholder="Choice A" />
-                    <i class="fa fa-times"></i><input id="button2" class="mcq-choices" name="choices" type="radio" /><input id="choice2" class="form-control mcq-choices" placeholder="Choice B" />
-                    <i class="fa fa-times"></i><input id="button3" class="mcq-choices" name="choices" type="radio" /><input id="choice3" class="form-control mcq-choices" placeholder="Choice C" />
-                    <i class="fa fa-times"></i><input id="button4" class="mcq-choices" name="choices" type="radio" /><input id="choice4" class="form-control mcq-choices" placeholder="Choice D" />
-                </div>
-            </div>
-            <div class="row float-right">
-                <button class="btn btn-primary submission" type=submit onclick="addVitamin()"><i class="fa fa-plus"></i>  Add Vitamin</button>
-            </div>
-            -->
         </div>
     </div>
 </div>
@@ -162,18 +142,36 @@
     function addVitamin() {
         var seconds = player.getCurrentTime();
         var question = document.getElementById('vitamin-question').value;
-        var answer = document.getElementById('vitamin-answer').value;
-        if (question.length > 0 && answer.length > 0) {
+        var answer = "";
+        var choices = [];
+        var options = 0;
+        for (var i = 1; i <= 4; i++) {
+          var selected = 'button' + i;
+          var choice = document.getElementById('choice' + i).value;
+          if (document.getElementById(selected).checked && choice != "") {
+            answer = choice;
+          }
+          choices.push(choice);
+          if (choice.length > 0) {
+            options++;
+          }
+        }
+        if (question.length > 0 && answer.length > 0 && options >= 2) {
+            document.getElementById('incorrect-input').innerHTML = "";
             var data = {
                seconds: seconds,
                question: question,
                answer: answer,
+               choice1: choices[0],
+               choice2: choices[1],
+               choice3: choices[2],
+               choice4: choices[3],
                lecture_id: "{{ lecture }}",
                playlist_number: "{{ playlist_number }}",
                api_key: "{{ api_key }}"
             }
 
-            console.log(`${JSON.stringify(data)}`)
+            console.log(`${JSON.stringify(data)}`);
 
             $.ajax({
               type: "POST",
@@ -188,6 +186,8 @@
 
               }
             });
+        } else {
+          document.getElementById('incorrect-input').innerHTML = "There was an error with your input. Please double check them.";
         }
     }
 

@@ -15,7 +15,7 @@ ul#menu li {
 		<div class="form-group">
             <p id="vitamin-question"></p>
         </div>
-        <div id="incorrect"></div>
+        <div class="incorrect" id="incorrect-answer"></div>
         <div class="form-group">
             <input id='vitamin-answer' class="form-control popup-input" placeholder='Enter your answer here'></input>
         </div>
@@ -360,12 +360,12 @@ ul#menu li {
   }
 
   function submitVitaminAnswer() {
-  	document.getElementById('incorrect').innerHTML = "";
+  	document.getElementById('incorrect-answer').innerHTML = "";
   	var answer = document.getElementById('vitamin-answer').value.toLowerCase();
   	if (answer === vitaminSolution) {
   		removeForm();
   	} else {
-  		document.getElementById('incorrect').innerHTML = "That is incorrect. Please try again.";
+  		document.getElementById('incorrect-answer').innerHTML = "That is incorrect. Please try again.";
   	}
   }
 

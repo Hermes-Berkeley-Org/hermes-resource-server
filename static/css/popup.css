@@ -28,18 +28,17 @@
 #vitamin-form, #vitamin-problem {
 	position: absolute;
 	left: 25%;
-	top: -75%;
+	top: -200%;
 	width: 50%;
-	height: 50%;
+	height: 75%;
 	background-color: #fff;
 	z-index: 10001;
 	border-radius: 15px;
-	padding: 2%;
+	padding: 3%;
 }
 
 #vitamin-form.show, #vitamin-problem.show {
-	left: 25%;
-	top: 25%;
+	top: 12.5%;
 	-webkit-animation: slideIn 0.5s;
     animation: slideIn 0.5s;
 }
@@ -52,7 +51,7 @@
 	width: 80%;
 }
 
-#incorrect {
+.incorrect {
 	color: red;
 }
 
@@ -71,11 +70,11 @@
 }
 
 @-webkit-keyframes slideIn {
-    from { top: -75%; } 
-    to { top: 25%; } 
+    from { top: -200%; } 
+    to { top: 12.5%; } 
 }
 
 @keyframes slideIn {
-    from { top: -75%; } 
-    to { top: 25%; } 
+    from { top: -200%; } 
+    to { top: 12.5%; } 
 }

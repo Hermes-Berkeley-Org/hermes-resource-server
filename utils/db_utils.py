@@ -224,10 +224,15 @@ class Vitamin(DBObject):
     @staticmethod
     def add_vitamin(data, db):
         timestamp = convert_seconds_to_timestamp(round(float(data['seconds'])))
+        print(data)
         return insert(
             Vitamin(
                 question = data['question'],
                 answer = data['answer'],
+                choice1 = data['choice1'],
+                choice2 = data['choice2'],
+                choice3 = data['choice3'],
+                choice4 = data['choice4'],
                 seconds = data['seconds'],
                 timestamp = timestamp,
                 lecture_id = data['lecture_id'],
