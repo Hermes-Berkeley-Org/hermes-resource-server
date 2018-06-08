@@ -91,6 +91,32 @@ def create_client(app):
             return f(*args, **kwargs)
         return decorated_function
 
+    def validate_user(user_id, class_ok_id, role):
+        def user_role_matches():
+            supposed_role, data = get_role(class_ok_id, user_id)
+            print('ROLE MATCHES')
+            return supposed_role and supposed_role == role
+        def user_matches_logged_in_user():
+            logged_in_user = get_user_data()
+            print('USER MATCHES')
+            return logged_in_user and str(logged_in_user.get('_id')) == user_id
+        return user_role_matches() and user_matches_logged_in_user()
+
+    def post_on_behalf_of(role):
+        def decorator(f):
+            @wraps(f)
+            def decorated_function(*args, **kwargs):
+                if request.method == 'POST':
+                    user_id, class_ok_id = request.form.get('user_id'), request.form.get('class_ok_id')
+                    if user_id and class_ok_id and validate_user(user_id, class_ok_id, role):
+                        return f(*args, **kwargs)
+                    else:
+                        return jsonify(success=False), 403
+                else:
+                    logger.info("Illegal request type: %s", request.method)
+                    return redirect(url_for('error', code=500))
+            return decorated_function
+        return decorator
 
     @app.route('/login')
     def login():
@@ -244,7 +270,7 @@ def create_client(app):
             {'cls': cls, 'lecture_number': int(lecture_number)}
         )
         user = get_user_data()
-        user['role'] = get_role(cls)[0]
+        user['role'], data = get_role(cls)
         questions_interval = 30
         lecture_obj['lecture_number'] = lecture_number
         video_info = {}
@@ -279,6 +305,7 @@ def create_client(app):
             video_info['duration'] = lecture_obj['duration'][play_num]
             video_info['num_videos'] = len(lecture_obj['videos'])
         if lecture_obj and cls_obj:
+            logger.info("Displaying lecture. It is the ", play_num, " video in the playlist")
             return render_template(
                 'lecture.html',
                 video_info=video_info,
@@ -294,14 +321,15 @@ def create_client(app):
                 db=db,
                 api_key=app.config['HERMES_API_KEY']
             )
-            logger.info("Displaying lecture. It is the ", play_num, " video in the playlist")
         return redirect(url_for('error', code=404))
 
-    def get_role(class_ok_id):
-        user = get_user_data()
+    def get_role(class_ok_id, user=None):
+        if not user:
+            user = get_user_data()
         for participation in user['classes']:
             if participation['ok_id'] == int(class_ok_id):
                 return participation['role'], participation
+        return None, None
 
     @app.route('/class/<class_ok_id>', methods=['GET', 'POST'])
     @login_required
@@ -441,135 +469,83 @@ def create_client(app):
             logger.info("Error: user access level is %s", role)
             return redirect(url_for('error'), code=403)
 
-    @app.route('/delete_lecture', methods=['GET', 'POST'])
+    @post_on_behalf_of(consts.INSTRUCTOR)
+    @app.route('/delete_lecture', methods=['POST'])
     def delete_lecture():
-        if request.method == 'POST':
-            if request.form['api_key'] == app.config['HERMES_API_KEY']:
-                Lecture.delete_lecture(request.form.to_dict(), db)
-                logger.info("Successfully deleted lecture.")
-                return jsonify(success=True), 200
-            else:
-                return jsonify(success=False), 403
-        else:
-            logger.info("Illegal request type: %s", request.method)
-            return redirect(url_for('error', code=500))
+        Lecture.delete_lecture(request.form.to_dict(), db)
+        logger.info("Successfully deleted lecture.")
+        return jsonify(success=True), 200
 
-    @app.route('/write_question', methods=['GET', 'POST'])
+    @post_on_behalf_of(consts.STUDENT)
+    @app.route('/write_question', methods=['POST'])
     def write_question():
-        if request.method == 'POST':
-            if request.form['api_key'] == app.config['HERMES_API_KEY']:
-                Question.write_question(request.form.to_dict(), db)
-                logger.info("Successfully wrote question.")
-                return jsonify(success=True), 200
-            else:
-                return jsonify(success=False), 403
-        else:
-            logger.info("Illegal request type: %s", request.method)
-            return redirect(url_for('error', code=500))
+        Question.write_question(request.form.to_dict(), db)
+        logger.info("Successfully wrote question.")
+        return jsonify(success=True), 200
 
-    @app.route('/delete_question', methods=['GET', 'POST'])
+    @post_on_behalf_of(consts.STUDENT)
+    @app.route('/delete_question', methods=['POST'])
     def delete_question():
-        if request.method == 'POST':
-            if request.form['api_key'] == app.config['HERMES_API_KEY']:
-                Question.delete_question(request.form.to_dict(), db)
-                logger.info("Successfully deleted question.")
-                return jsonify(success=True), 200
-            else:
-                return jsonify(success=False), 403
-        else:
-            logger.info("Illegal request type: %s", request.method)
-            return redirect(url_for('error', code=500))
+        role, data = get_role(request.form.get('class_ok_id'))
+        is_instructor = (role == consts.INSTRUCTOR)
+        Question.delete_question(request.form.to_dict(), db, is_instructor)
+        logger.info("Successfully deleted question.")
+        return jsonify(success=True), 200
 
-    @app.route('/edit_question', methods=['GET', 'POST'])
+    @post_on_behalf_of(consts.STUDENT)
+    @app.route('/edit_question', methods=['POST'])
     def edit_question():
-        if request.method == 'POST':
-            if request.form['api_key'] == app.config['HERMES_API_KEY']:
-                Question.edit_question(request.form.to_dict(), db)
-                logger.info("Successfully edited question.")
-                return jsonify(success=True), 200
-            else:
-                return jsonify(success=False), 403
-        else:
-            logger.info("Illegal request type: %s", request.method)
-            return redirect(url_for('error', code=500))
+        role, data = get_role(request.form.get('class_ok_id'))
+        is_instructor = (role == consts.INSTRUCTOR)
+        Question.edit_question(request.form.to_dict(), db, is_instructor)
+        logger.info("Successfully edited question.")
+        return jsonify(success=True), 200
 
-    @app.route('/upvote_question', methods=['GET', 'POST'])
+    @post_on_behalf_of(consts.STUDENT)
+    @app.route('/upvote_question', methods=['POST'])
     def upvote_question():
-        if request.method == 'POST':
-            if request.form['api_key'] == app.config['HERMES_API_KEY']:
-                Question.upvote_question(request.form.to_dict(), db)
-                logger.info("Successfully upvoted question.")
-                return jsonify(success=True), 200
-            else:
-                return jsonify(success=False), 403
-        else:
-            logger.info("Illegal request type: %s", request.method)
-            return redirect(url_for('error', code=500))
+        Question.upvote_question(request.form.to_dict(), db)
+        logger.info("Successfully upvoted question.")
+        return jsonify(success=True), 200
 
-    @app.route('/write_answer', methods=['GET', 'POST'])
+    @post_on_behalf_of(consts.STUDENT)
+    @app.route('/write_answer', methods=['POST'])
     def write_answer():
-        if request.method == 'POST':
-            if request.form['api_key'] == app.config['HERMES_API_KEY']:
-                Answer.write_answer(get_user_data(), request.form.to_dict(), db)
-                logger.info("Successfully wrote answer.")
-                return jsonify(success=True), 200
-            else:
-                return jsonify(success=False), 403
-        else:
-            logger.info("Illegal request type: %s", request.method)
-            return redirect(url_for('error', code=500))
+        Answer.write_answer(get_user_data(), request.form.to_dict(), db)
+        logger.info("Successfully wrote answer.")
+        return jsonify(success=True), 200
 
-    @app.route('/delete_answer', methods=['GET', 'POST'])
+    @post_on_behalf_of(consts.STUDENT)
+    @app.route('/delete_answer', methods=['POST'])
     def delete_answer():
-        if request.method == 'POST':
-            if request.form['api_key'] == app.config['HERMES_API_KEY']:
-                Answer.delete_answer(request.form.to_dict(), db)
-                logger.info("Successfully deleted answer.")
-                return jsonify(success=True), 200
-            else:
-                return jsonify(success=False), 403
-        else:
-            logger.info("Illegal request type: %s", request.method)
-            return redirect(url_for('error', code=500))
+        role, data = get_role(request.form.get('class_ok_id'))
+        is_instructor = (role == consts.INSTRUCTOR)
+        Answer.delete_answer(request.form.to_dict(), db, is_instructor)
+        logger.info("Successfully deleted answer.")
+        return jsonify(success=True), 200
 
-    @app.route('/edit_answer', methods=['GET', 'POST'])
+    @post_on_behalf_of(consts.STUDENT)
+    @app.route('/edit_answer', methods=['POST'])
     def edit_answer():
-        if request.method == 'POST':
-            if request.form['api_key'] == app.config['HERMES_API_KEY']:
-                Answer.edit_answer(request.form.to_dict(), db)
-                logger.info("Successfully edited answer.")
-                return jsonify(success=True), 200
-            else:
-                return jsonify(success=False), 403
-        else:
-            logger.info("Illegal request type: %s", request.method)
-            return redirect(url_for('error', code=500))
+        role, data = get_role(request.form.get('class_ok_id'))
+        is_instructor = (role == consts.INSTRUCTOR)
+        Answer.edit_answer(request.form.to_dict(), db, is_instructor)
+        logger.info("Successfully edited answer.")
+        return jsonify(success=True), 200
 
-    @app.route('/edit_transcript', methods=['GET', 'POST'])
+    @post_on_behalf_of(consts.STUDENT)
+    @app.route('/edit_transcript', methods=['POST'])
     def edit_transcript():
-        if request.method == 'POST':
-            if request.form['api_key'] == app.config['HERMES_API_KEY']:
-                Lecture.suggest_transcript(request.form.to_dict(), db)
-                logger.info("Successfully edited transcript.")
-                return jsonify(success=True), 200
-            else:
-                return jsonify(success=False), 403
-        else:
-            logger.info("Illegal request type: %s", request.method)
-            return redirect(url_for('error', code=500))
+        Lecture.suggest_transcript(request.form.to_dict(), db)
+        logger.info("Successfully edited transcript.")
+        return jsonify(success=True), 200
 
-    @app.route('/upvote_answer', methods=['GET', 'POST'])
+    @post_on_behalf_of(consts.STUDENT)
+    @app.route('/upvote_answer', methods=['POST'])
     def upvote_answer():
-        if request.method == 'POST':
-            if request.form['api_key'] == app.config['HERMES_API_KEY']:
-                Answer.upvote_answer(request.form.to_dict(), db)
-                logger.info("Successfully upvoted answer.")
-                return jsonify(success=True), 200
-            else:
-                return jsonify(success=False), 403
-        else:
-            logger.info("Illegal request type: %s", request.method)
-            return redirect(url_for('error', code=500))
+        Answer.upvote_answer(request.form.to_dict(), db)
+        logger.info("Successfully upvoted answer.")
+        return jsonify(success=True), 200
 
     @app.template_filter('exclude')
     def exclude(lst, excl):
