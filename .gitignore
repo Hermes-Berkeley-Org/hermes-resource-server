@@ -8,4 +8,5 @@ node-modules/
 .idea/
 keys/
 deploy/private_env
+deploy/heroku_env
 .ipynb_checkpoints/
