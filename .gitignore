@@ -7,4 +7,5 @@ node-modules/
 .DS_Store
 .idea/
 keys/
+deploy/private_env
 .ipynb_checkpoints/
