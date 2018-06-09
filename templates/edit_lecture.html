@@ -89,8 +89,17 @@
                         </a>
                         <span class="qa-entry-lg">{{ vitamin['timestamp'] }} <i class="fa fa-close" style="color:red" onclick='deleteVitamin("{{vitamin['_id']}}")'></i></span>
                             <div id="vitamin-content-{{ vitamin['_id'] }}" class="collapse qa-entry-lg">
-                                <span class="qa-entry">Q: {{ vitamin['question'] }}</span><br>
-                                <span class="qa-entry">A: {{ vitamin['answer'] }}</span>
+                                <span class="qa-entry">Question: {{ vitamin['question'] }}</span><br>
+                                <span class="qa-entry">Answer: {{ vitamin['answer'] }}</span><br>
+                                <span class="qa-entry">Choices:
+                                  {% for choice in vitamin['choices'] %}
+                                    {% if loop.index == 1 %}
+                                      {{ choice }}
+                                    {% else %}
+                                      , {{ choice }}
+                                    {% endif %}
+                                  {% endfor %}
+                                </span>
                             </div>
                         </p>
                     {% endfor %}
