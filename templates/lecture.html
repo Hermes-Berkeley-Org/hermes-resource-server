@@ -346,9 +346,7 @@ ul#menu li {
                 vitamin_question.innerHTML = "{{ db['Vitamins'].find_one({'_id': vitamin['_id']})['question'] }}";
                 var choices = [];
                 {% for choice in vitamin['choices'] %}
-                    {% if choice|length > 0 %}
-                        choices.push("{{ choice }}");
-                    {% endif %}
+                    choices.push("{{ choice }}");
                 {% endfor %}
                 var vitamin_answer = document.getElementById('vitamin-answer');
                 var inner_html = "<div class='row'>";
