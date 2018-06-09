@@ -11,15 +11,15 @@ ul#menu li {
   <div id="black-transparent-screen">
   </div>
   <div id="vitamin-problem">
-  		<p class="text-right" id="skip" onclick="removeForm()">>>Skip</p>
-		<div class="form-group">
+        <p class="text-right" id="skip" onclick="removeForm()">>>Skip</p>
+        <div class="form-group">
             <p id="vitamin-question"></p>
         </div>
         <div class="incorrect" id="incorrect-answer"></div>
-        <div class="form-group">
-            <input id='vitamin-answer' class="form-control popup-input" placeholder='Enter your answer here'></input>
-        </div>
-        <button class="btn btn-primary submission" type=submit onclick="submitVitaminAnswer()">Submit</button>
+        <form>
+            <div class="form-group" id="vitamin-answer"></div>
+            <button class="btn btn-primary submission" type=submit onclick="submitVitaminAnswer()">Submit</button>
+        </form>
   </div>
   <div class="row">
     <div class="col-md-7">
@@ -335,38 +335,67 @@ ul#menu li {
       var solvingVitamin = false;
 
       setInterval(function() {
-      	  var currentTime = Math.floor(player.getCurrentTime());
+          var currentTime = Math.floor(player.getCurrentTime());
           {% for vitamin in db['Vitamins'].find({'$and':[{'lecture_id': lecture}, {'playlist_number': playlist_number|string }]}) %}
-          	  var timeDiff = Math.abs(currentTime - parseFloat("{{ vitamin['seconds'] }}"));
-	          if (timeDiff < 0.5 && solvingVitamin == false) {
-	          	player.pauseVideo();
-	          	solvingVitamin = true;
-	          	var vitamin_question = document.getElementById('vitamin-question');
-	          	vitaminSolution = "{{ vitamin['answer'] }}".toLowerCase();
-	          	vitamin_question.innerHTML = "{{ db['Vitamins'].find_one({'_id': vitamin['_id']})['question'] }}"
-	          	document.getElementById('black-transparent-screen').classList.add('show');
-	  		    document.getElementById('vitamin-problem').classList.add('show');
-	  		  } else if (player.getPlayerState() == 1) {
-	  		  	solvingVitamin = false;
-	  		  }
+              var timeDiff = Math.abs(currentTime - parseFloat("{{ vitamin['seconds'] }}"));
+              if (timeDiff < 0.5 && solvingVitamin == false) {
+                player.pauseVideo();
+                solvingVitamin = true;
+                var vitamin_question = document.getElementById('vitamin-question');
+                vitaminSolution = "{{ vitamin['answer'] }}";
+                vitamin_question.innerHTML = "{{ db['Vitamins'].find_one({'_id': vitamin['_id']})['question'] }}";
+                var choices = [];
+                {% for choice in vitamin['choices'] %}
+                    {% if choice|length > 0 %}
+                        choices.push("{{ choice }}");
+                    {% endif %}
+                {% endfor %}
+                var vitamin_answer = document.getElementById('vitamin-answer');
+                var inner_html = "<div class='row'>";
+                for (var i = 1; i <= choices.length; i++) {
+                    if (i == 3) {
+                        inner_html += "</div><div class='row'>";
+                    }
+                    inner_html += "<div class='col-md-6' style='display: inline;'>";
+                    inner_html += "<input id='button" + i + "' name='choices' type='radio' required>   ";
+                    inner_html += choices[i-1];
+                    inner_html += "</div>";
+                }
+                inner_html += "</div>";
+                vitamin_answer.innerHTML = inner_html;
+                document.getElementById('incorrect-answer').innerHTML = "";
+                document.getElementById('black-transparent-screen').classList.add('show');
+                document.getElementById('vitamin-problem').classList.add('show');
+              } else if (player.getPlayerState() == 1) {
+                solvingVitamin = false;
+              }
           {% endfor %}
       }, 1000);
 
   }
 
   function removeForm() {
-	document.getElementById('black-transparent-screen').classList.remove('show');
-	document.getElementById('vitamin-problem').classList.remove('show');
+    document.getElementById('black-transparent-screen').classList.remove('show');
+    document.getElementById('vitamin-problem').classList.remove('show');
   }
 
   function submitVitaminAnswer() {
-  	document.getElementById('incorrect-answer').innerHTML = "";
-  	var answer = document.getElementById('vitamin-answer').value.toLowerCase();
-  	if (answer === vitaminSolution) {
-  		removeForm();
-  	} else {
-  		document.getElementById('incorrect-answer').innerHTML = "That is incorrect. Please try again.";
-  	}
+    document.getElementById('incorrect-answer').innerHTML = "";
+    var answer;
+    for (var i = 1; i <= 4; i++) {
+        var selected = 'button' + i;
+        var choice = document.getElementById('choice' + i).value;
+        if (document.getElementById(selected).checked && choice != "") {
+            answer = choice;
+            break;
+        }
+    }
+    var answer = document.getElementById('vitamin-answer').value;
+    if (answer === vitaminSolution) {
+        removeForm();
+    } else {
+        document.getElementById('incorrect-answer').innerHTML = "That is incorrect. Please try again.";
+    }
   }
 
   function stateChange() {

@@ -119,8 +119,13 @@
 
     function addVitaminForm() {
         player.pauseVideo();
-        document.getElementById('black-transparent-screen').classList.add('show');
-        document.getElementById('vitamin-form').classList.add('show');
+        var seconds = player.getCurrentTime();
+        if (seconds < 1) {
+          alert('Please do not add a vitamin within the first second.');
+        } else {
+          document.getElementById('black-transparent-screen').classList.add('show');
+          document.getElementById('vitamin-form').classList.add('show');
+        }
     }
 
     function addResourceForm() {
