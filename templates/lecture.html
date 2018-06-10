@@ -12,12 +12,17 @@ ul#menu li {
   </div>
   <div id="vitamin-problem">
         <p class="text-right" id="skip" onclick="removeForm()">>>Skip</p>
-        <div class="form-group">
-            <p id="vitamin-question"></p>
-        </div>
-        <div class="incorrect" id="incorrect-answer"></div>
         <form>
-            <div class="form-group" id="vitamin-answer"></div>
+            <div id="problems">
+                <div id="problem-1">
+                    <div class="form-group">
+                        <p class="vitamin-element" id="vitamin-question-1"></p>
+                    </div>
+                    <p class="vitamin-element" id="correct-answer-1"></p>
+                    <div class="incorrect vitamin-element" id="incorrect-answer-1"></div>
+                    <div class="form-group vitamin-element" id="vitamin-answer-1"></div>
+                </div>
+            </div>
             <button class="btn btn-primary submission" type=submit onclick="submitVitaminAnswer()">Submit</button>
         </form>
   </div>
@@ -257,7 +262,35 @@ ul#menu li {
 
   }
 
-  var vitaminSolution;
+  var vitaminSolutions = [];
+
+    function convertToTimestamp(seconds) {
+      var remainder = (seconds % 60) | 0;
+      if (seconds < 3600) {
+        var minutes = (seconds / 60) | 0;
+        if (remainder >= 10) {
+          return minutes + ":" + remainder;
+        } else {
+          return minutes + ":0" + remainder;
+        }
+      } else {
+        var hours = (seconds / 3600) | 0;
+        var minutes = ((seconds - hours * 3600) / 60) | 0;
+        if (minutes >= 10) {
+          if (remainder >= 10) {
+            return hours + ":" + minutes + ":" + remainder;
+          } else {
+            return hours + ":" + minutes + ":0" + remainder;
+          }
+        } else {
+          if (remainder >= 10) {
+            return hours + ":0" + minutes + ":" + remainder;
+          } else {
+            return hours + ":0" + minutes + ":0" + remainder;
+          }
+        }
+      }
+    }
 
   function onPlayerReady() {
       toggleTopQuestions();
@@ -333,38 +366,81 @@ ul#menu li {
       }, {{questions_interval}} * 250);
 
       var solvingVitamin = false;
+      var delayAssignment = false;
 
       setInterval(function() {
           var currentTime = Math.floor(player.getCurrentTime());
+          var multiple = false;
           {% for vitamin in db['Vitamins'].find({'$and':[{'lecture_id': lecture}, {'playlist_number': playlist_number|string }]}) %}
               var timeDiff = Math.abs(currentTime - parseFloat("{{ vitamin['seconds'] }}"));
               if (timeDiff < 0.5 && solvingVitamin == false) {
                 player.pauseVideo();
                 solvingVitamin = true;
-                var vitamin_question = document.getElementById('vitamin-question');
-                vitaminSolution = "{{ vitamin['answer'] }}";
-                vitamin_question.innerHTML = "{{ db['Vitamins'].find_one({'_id': vitamin['_id']})['question'] }}";
-                var choices = [];
-                {% for choice in vitamin['choices'] %}
-                    choices.push("{{ choice }}");
-                {% endfor %}
-                var vitamin_answer = document.getElementById('vitamin-answer');
-                var inner_html = "<div class='row'>";
-                for (var i = 1; i <= choices.length; i++) {
-                    if (i == 3) {
-                        inner_html += "</div><div class='row'>";
-                    }
-                    inner_html += "<div class='col-md-6' style='display: inline;'>";
-                    inner_html += "<input id='button" + i + "' name='choices' type='radio' required>   ";
-                    inner_html += choices[i-1];
-                    inner_html += "</div>";
+                if (!multiple) {
+                    {% for vitamin_at_timestamp in db['Vitamins'].find({'timestamp': vitamin['timestamp']}) %}
+                        {% if not loop.first %}
+                            multiple = true;
+                        {% endif %}
+                        {% if not loop.last %}
+                            $('#problem-{{loop.index}}').clone().attr('id', "problem-{{loop.index + 1}}").appendTo('#problems');
+                            var children = document.getElementById('problem-{{loop.index + 1}}').querySelectorAll(".vitamin-element");
+                            for (var i = 0; i < children.length; i++) {
+                                children[i].id = children[i].id.substring(0, children[i].id.lastIndexOf("-") + 1) + "{{loop.index + 1}}";
+                            }
+                        {% endif %}
+                        var vitamin_question = document.getElementById('vitamin-question-{{loop.index}}');
+                        vitaminSolutions.push("{{ vitamin_at_timestamp['answer'] }}");
+                        vitamin_question.innerHTML = "{{ db['Vitamins'].find_one({'_id': vitamin_at_timestamp['_id']})['question'] }}";
+                        var choices = [];
+                        {% for choice in vitamin_at_timestamp['choices'] %}
+                            choices.push("{{ choice }}");
+                        {% endfor %}
+                        var vitamin_answer = document.getElementById('vitamin-answer-{{loop.index}}');
+                        var inner_html = "<div class='row'>";
+                        for (var i = 1; i <= choices.length; i++) {
+                            if (i == 3) {
+                                inner_html += "</div><div class='row'>";
+                            }
+                            inner_html += "<div class='col-md-6' style='display: inline;'>";
+                            inner_html += "<input id='button-{{loop.index}}-" + i + "' name='choices-{{loop.index}}' type='radio' required>   ";
+                            inner_html += "<span id='choice-{{loop.index}}-" + i + "'>" + choices[i-1] + "</span>";
+                            inner_html += "</div>";
+                        }
+                        inner_html += "</div>";
+                        vitamin_answer.innerHTML = inner_html;
+                        document.getElementById('incorrect-answer-{{loop.index}}').innerHTML = "";
+                        document.getElementById('correct-answer-{{loop.index}}').innerHTML = "";
+                    {% endfor %}
                 }
-                inner_html += "</div>";
-                vitamin_answer.innerHTML = inner_html;
-                document.getElementById('incorrect-answer').innerHTML = "";
                 document.getElementById('black-transparent-screen').classList.add('show');
                 document.getElementById('vitamin-problem').classList.add('show');
+                // var vitamin_question = document.getElementById('vitamin-question');
+                // vitaminSolution = "{{ vitamin['answer'] }}";
+                // vitamin_question.innerHTML = "{{ db['Vitamins'].find_one({'_id': vitamin['_id']})['question'] }}";
+                // var choices = [];
+                // {% for choice in vitamin['choices'] %}
+                //     choices.push("{{ choice }}");
+                // {% endfor %}
+                // var vitamin_answer = document.getElementById('vitamin-answer');
+                // var inner_html = "<div class='row'>";
+                // for (var i = 1; i <= choices.length; i++) {
+                //     if (i == 3) {
+                //         inner_html += "</div><div class='row'>";
+                //     }
+                //     inner_html += "<div class='col-md-6' style='display: inline;'>";
+                //     inner_html += "<input id='button" + i + "' name='choices' type='radio' required>   ";
+                //     inner_html += choices[i-1];
+                //     inner_html += "</div>";
+                // }
+                // inner_html += "</div>";
+                // vitamin_answer.innerHTML = inner_html;
+                // document.getElementById('incorrect-answer').innerHTML = "";
+                // document.getElementById('black-transparent-screen').classList.add('show');
+                // document.getElementById('vitamin-problem').classList.add('show');
               } else if (player.getPlayerState() == 1) {
+                delayAssignment = true;
+              } else if (delayAssignment && player.getPlayerState() == 1) {
+                delayAssignment = false;
                 solvingVitamin = false;
               }
           {% endfor %}
@@ -378,22 +454,34 @@ ul#menu li {
   }
 
   function submitVitaminAnswer() {
-    document.getElementById('incorrect-answer').innerHTML = "";
-    var answer;
-    for (var i = 1; i <= 4; i++) {
-        var selected = 'button' + i;
-        var choice = document.getElementById('choice' + i).value;
-        if (document.getElementById(selected).checked && choice != "") {
-            answer = choice;
-            break;
+    for (var i = 1; i <= vitaminSolutions.length; i++) {
+        document.getElementById('incorrect-answer-' + i).innerHTML = "";
+        document.getElementById('correct-answer-' + i).innerHTML = "";
+    }
+    var answers = [];
+    for (var questionNum = 1; questionNum <= vitaminSolutions.length; questionNum++) {
+        for (var i = 1; i <= 4; i++) {
+            var choice = document.getElementById('choice-' + questionNum + '-' + i).value;
+            if (document.getElementById('button-' + questionNum + '-' + i).checked && choice != "") {
+                answers.push(choice);
+                break;
+            }
         }
     }
-    var answer = document.getElementById('vitamin-answer').value;
-    if (answer === vitaminSolution) {
-        removeForm();
-    } else {
-        document.getElementById('incorrect-answer').innerHTML = "That is incorrect. Please try again.";
+    console.log(answers);
+    console.log(vitaminSolutions);
+    var allCorrect = true;
+    for (var i = 1; i <= answers.length; i++) {
+        if (answers[i-1] !== vitaminSolutions[i-1]) {
+            allCorrect = false;
+            document.getElementById('incorrect-answer-' + i).innerHTML = "That is incorrect. Please try again.";
+        } else {
+            document.getElementById('correct-answer-' + i).innerHTML = "Correct!";
+        }
     }
+    if (allCorrect) {
+        removeForm();
+    } 
   }
 
   function stateChange() {

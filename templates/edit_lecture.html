@@ -7,7 +7,7 @@
     <div id="black-transparent-screen">
     </div>
     <div id="vitamin-form">
-      <h4>Add Vitamin</h4>
+      <h4>Add Vitamin at <span id="timestamp"></span></h4>
         <div class="form-group">
             <input id='vitamin-question' class="form-control popup-input" placeholder='Enter your vitamin question here'></input>
         </div>
@@ -126,12 +126,41 @@
         });
     }
 
+    function convertToTimestamp(seconds) {
+      var remainder = (seconds % 60) | 0;
+      if (seconds < 3600) {
+        var minutes = (seconds / 60) | 0;
+        if (remainder >= 10) {
+          return minutes + ":" + remainder;
+        } else {
+          return minutes + ":0" + remainder;
+        }
+      } else {
+        var hours = (seconds / 3600) | 0;
+        var minutes = ((seconds - hours * 3600) / 60) | 0;
+        if (minutes >= 10) {
+          if (remainder >= 10) {
+            return hours + ":" + minutes + ":" + remainder;
+          } else {
+            return hours + ":" + minutes + ":0" + remainder;
+          }
+        } else {
+          if (remainder >= 10) {
+            return hours + ":0" + minutes + ":" + remainder;
+          } else {
+            return hours + ":0" + minutes + ":0" + remainder;
+          }
+        }
+      }
+    }
+
     function addVitaminForm() {
         player.pauseVideo();
         var seconds = player.getCurrentTime();
         if (seconds < 1) {
           alert('Please do not add a vitamin within the first second.');
         } else {
+          document.getElementById('timestamp').innerHTML = convertToTimestamp(seconds);
           document.getElementById('black-transparent-screen').classList.add('show');
           document.getElementById('vitamin-form').classList.add('show');
         }
