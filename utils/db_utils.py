@@ -1,10 +1,21 @@
 import os
 from datetime import datetime
 
+from collections import defaultdict
+from operator import itemgetter
+
 from pymongo import MongoClient
 from bson.objectid import ObjectId
 
+from utils.app_utils import edit_distance
 
+import logging
+
+logger = logging.getLogger('app_logger')
+logger.setLevel(logging.INFO)
+
+EDIT_DISTANCE_PER_WORD = 5
+TRANSCRIPT_SUGGESTIONS_NECESSARY = 5
 
 def insert(dbobj, db):
     return db[dbobj.collection].insert_one(dbobj.to_dict())
@@ -188,20 +199,38 @@ class Lecture(DBObject):
         )
 
     @staticmethod
-    def edit_transcript(data, db):
+    def suggest_transcript(data, db):
         lecture = find_one_by_id(data['lecture_id'], Lecture.collection, db)
-        def replace_transcript_elem(lecture, index, text):
-            transcript = lecture['transcript']
+        def replace_transcript_elem(lecture, index, text, user_id):
+            def push_onto_transcript_if_elected(transcript_elem):
+                suggestions = defaultdict(int)
+                for user, suggestion in transcript_elem['suggestions'].items():
+                    suggestions[suggestion] += 1
+                best_suggestion, most_votes = max(suggestions.items(), key=itemgetter(1))
+                if most_votes > TRANSCRIPT_SUGGESTIONS_NECESSARY:
+                    transcript_elem['text'] = best_suggestion
+            is_playlist = data['playlist_number'] != 'None'
+            transcripts = [lecture['transcript']] if not is_playlist else lecture['transcript']
+            playlist_number = int(data['playlist_number']) if is_playlist else 0
+            transcript = transcripts[playlist_number]
             transcript_elem = transcript[index]
-            transcript_elem['text'] = text
-            return transcript[:index] + [transcript_elem] + transcript[index+1:]
+            if 'suggestions' not in transcript_elem:
+                transcript_elem['suggestions'] = dict()
+            num_words = len(transcript_elem['text'].split(' '))
+            if edit_distance(text, transcript_elem['text']) < (num_words * EDIT_DISTANCE_PER_WORD):
+                transcript_elem['suggestions'][user_id] = text
+            else:
+                print('Suggestion too far off, rejected.')
+            push_onto_transcript_if_elected(transcript_elem)
+            transcripts[playlist_number] = transcript[:index] + [transcript_elem] + transcript[index+1:]
+            return transcripts if is_playlist else transcripts[0]
         db[Lecture.collection].update_one(
             {
                 '_id': ObjectId(data['lecture_id'])
             },
             {
                 '$set': {
-                    'transcript': replace_transcript_elem(lecture, int(data['index']), data['text'])
+                    'transcript': replace_transcript_elem(lecture, int(data['index']), data['text'], data['user_id'])
                 }
             }
         )
@@ -290,15 +319,15 @@ class Question(DBObject):
         ).inserted_id
 
     @staticmethod
-    def edit_question(id, question, db):
-        return db[Question.collection].update({
-            {'id':id},
+    def edit_question(data, db):
+        edit = data['text']
+        return db[Question.collection].update_one(
+            {'_id': ObjectId(data['questionId'])},
             {
               '$set': {
-                'question': question["text"],
+                'text': edit,
               }
-            },
-        }, upsert = False).inserted_id
+            })
 
     @staticmethod
     def delete_question(question, db):

@@ -10,3 +10,4 @@ class Config(object):
     TESTING_OK_ID = os.environ.get('TESTING_OK_ID')
     TRANSCRIPTION_MODE = os.environ.get('TRANSCRIPTION_MODE')
     HERMES_API_KEY = os.environ.get('HERMES_API_KEY')
+    TEMPLATES_AUTO_RELOAD = True
