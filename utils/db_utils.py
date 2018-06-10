@@ -261,6 +261,7 @@ class Question(DBObject):
                 text=question['text'],
                 name=question['name'],
                 ok_id=question['ok_id'],
+                user=question['user_id'],
                 lecture_id=question['lecture'],
                 upvotes =[],
                 playlist_number= question['playlist_num'],
@@ -270,22 +271,29 @@ class Question(DBObject):
         ).inserted_id
 
     @staticmethod
-    def edit_question(data, db):
+    def edit_question(data, db, is_instructor):
         edit = data['text']
-        return db[Question.collection].update_one(
-            {'_id': ObjectId(data['questionId'])},
-            {
-              '$set': {
-                'text': edit,
-              }
-            })
+        question_id = data['questionId']
+        question = find_one_by_id(question_id, Question.collection, db)
+        if question and (is_instructor or question['user'] == data['user_id']):
+            return db[Question.collection].update_one(
+                {'_id': ObjectId(data['questionId'])},
+                {
+                  '$set': {
+                    'text': edit,
+                  }
+                })
 
     @staticmethod
-    def delete_question(question, db):
-        question_id = question['question_id']
-        result = db[Question.collection].delete_one(
-        {'_id': ObjectId(question_id)}
-        )
+    def delete_question(data, db, is_instructor):
+        question_id = data['question_id']
+        question = find_one_by_id(question_id, Question.collection, db)
+        if question and (is_instructor or question['user'] == data['user_id']):
+            return db[Question.collection].delete_one(
+                {'_id': ObjectId(question_id)}
+            )
+
+
 
     @staticmethod
     def upvote_question(data, db):
@@ -331,7 +339,7 @@ class Answer(DBObject):
             Answer(
                 question_id=ObjectId(answer['question_id']),
                 text=answer['text'],
-                user=user['_id'],
+                user=str(user['_id']),
                 name=user['name'],
                 upvotes=[],
                 anon= answer['anon']
@@ -340,17 +348,18 @@ class Answer(DBObject):
         ).inserted_id
 
     @staticmethod
-    def edit_answer(data, db):
+    def edit_answer(data, db, is_instructor):
         edit = data['text']
-
-        return db[Answer.collection].update_one(
-            {'_id': ObjectId(data['answerId'])},
-            {
-              '$set': {
-                'text': edit,
-              }
-            }
-        )
+        answer = find_one_by_id(data['answerId'], Answer.collection, db)
+        if answer and (is_instructor or answer['user'] == data['user_id']):
+            return db[Answer.collection].update_one(
+                {'_id': ObjectId(data['answerId'])},
+                {
+                  '$set': {
+                    'text': edit,
+                  }
+                }
+            )
 
     @staticmethod
     def upvote_answer(data, db):
@@ -384,11 +393,14 @@ class Answer(DBObject):
             )
 
     @staticmethod
-    def delete_answer(answer, db):
-        answer_id = answer['answer_id']
-        return db[Answer.collection].delete_one(
-        {'_id': ObjectId(answer_id)}
-        )
+    def delete_answer(data, db, is_instructor):
+        answer_id = data['answer_id']
+
+        answer = find_one_by_id(answer_id, Answer.collection, db)
+        if answer and (is_instructor or answer['user'] == data['user_id']):
+            return db[Answer.collection].delete_one(
+                {'_id': ObjectId(answer_id)}
+            )
 
 
 if __name__ == '__main__':

@@ -9,7 +9,7 @@ To setup:
     pip3 install -r requirements.txt
 
     chmod +x deploy/*
-    source deploy/setup-env.sh
+    source deploy/setup-env
 
     brew install heroku/brew/heroku
     heroku login
@@ -52,3 +52,7 @@ Make sure to also make changes in deploy/heroku_env, then run:
 **Google Auth**:
 
 Download the client_secret.json file from the Drive and put it in a directory called "keys"
+
+**Other Keys**
+
+Download both files in the "envs" folder from the Drive and put them in the deploy directory
