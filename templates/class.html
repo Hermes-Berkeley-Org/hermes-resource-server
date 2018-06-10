@@ -77,7 +77,8 @@
     function deleteLecture(lectureid){
       var data ={
         lectureid,
-        api_key: '{{ api_key }}'
+        user_id: '{{ user["_id"]|string }}',
+        class_ok_id: '{{ info["ok_id"] }}'
       };
 
       console.log(`${JSON.stringify(data)}`)
