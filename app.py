@@ -93,24 +93,32 @@ def create_client(app):
 
     def validate_user(user_id, class_ok_id, role):
         def user_role_matches():
-            supposed_role, data = get_role(class_ok_id, user_id)
-            print('ROLE MATCHES')
-            return supposed_role and supposed_role == role
+            supposed_role, data = get_role(class_ok_id, user_id=user_id)
+            return supposed_role and \
+                consts.OK_ROLES.index(supposed_role) >= consts.OK_ROLES.index(role)
         def user_matches_logged_in_user():
             logged_in_user = get_user_data()
-            print('USER MATCHES')
             return logged_in_user and str(logged_in_user.get('_id')) == user_id
-        return user_role_matches() and user_matches_logged_in_user()
+        user_role_match = user_role_matches()
+        logged_in_user_match = user_matches_logged_in_user()
+        if not user_role_match:
+            logger.info("User does not have clearance to authorize as {0}".format(role))
+        if not logged_in_user_match:
+            logger.info("User does not match logged in user")
+        return user_role_match and logged_in_user_match
 
     def post_on_behalf_of(role):
         def decorator(f):
             @wraps(f)
             def decorated_function(*args, **kwargs):
                 if request.method == 'POST':
-                    user_id, class_ok_id = request.form.get('user_id'), request.form.get('class_ok_id')
+                    data = request.form.to_dict()
+                    user_id, class_ok_id = data.get('user_id'), data.get('class_ok_id')
                     if user_id and class_ok_id and validate_user(user_id, class_ok_id, role):
+                        logger.info("Successfully authenticated a " + role)
                         return f(*args, **kwargs)
                     else:
+                        logger.info("Authentication for {0} rejected".format(role))
                         return jsonify(success=False), 403
                 else:
                     logger.info("Illegal request type: %s", request.method)
@@ -232,12 +240,14 @@ def create_client(app):
                     if 'id' in ok_data:
                         return ok_data['id']
 
-    def get_user_data():
+    def get_user_data(user_id=None):
         if not session.get('logged_in'):
             return
+        if user_id:
+            return db_utils.find_one_by_id(user_id, User.collection, db)
         ok_id = get_ok_id()
         if ok_id:
-            db_result = db['Users'].find_one({'ok_id': ok_id}) or {}
+            db_result = db[User.collection].find_one({'ok_id': ok_id}) or {}
             return db_result
 
     @app.route('/home/')
@@ -305,7 +315,9 @@ def create_client(app):
             video_info['duration'] = lecture_obj['duration'][play_num]
             video_info['num_videos'] = len(lecture_obj['videos'])
         if lecture_obj and cls_obj:
-            logger.info("Displaying lecture. It is the ", play_num, " video in the playlist")
+            logger.info("Displaying lecture.")
+            if playlist_number:
+                logger.info("It is the ", play_num, " video in the playlist")
             return render_template(
                 'lecture.html',
                 video_info=video_info,
@@ -323,9 +335,8 @@ def create_client(app):
             )
         return redirect(url_for('error', code=404))
 
-    def get_role(class_ok_id, user=None):
-        if not user:
-            user = get_user_data()
+    def get_role(class_ok_id, user_id=None):
+        user = get_user_data(user_id=user_id)
         for participation in user['classes']:
             if participation['ok_id'] == int(class_ok_id):
                 return participation['role'], participation
@@ -469,22 +480,22 @@ def create_client(app):
             logger.info("Error: user access level is %s", role)
             return redirect(url_for('error'), code=403)
 
-    @post_on_behalf_of(consts.INSTRUCTOR)
     @app.route('/delete_lecture', methods=['POST'])
+    @post_on_behalf_of(consts.INSTRUCTOR)
     def delete_lecture():
         Lecture.delete_lecture(request.form.to_dict(), db)
         logger.info("Successfully deleted lecture.")
         return jsonify(success=True), 200
 
-    @post_on_behalf_of(consts.STUDENT)
     @app.route('/write_question', methods=['POST'])
+    @post_on_behalf_of(consts.STUDENT)
     def write_question():
         Question.write_question(request.form.to_dict(), db)
         logger.info("Successfully wrote question.")
         return jsonify(success=True), 200
 
-    @post_on_behalf_of(consts.STUDENT)
     @app.route('/delete_question', methods=['POST'])
+    @post_on_behalf_of(consts.STUDENT)
     def delete_question():
         role, data = get_role(request.form.get('class_ok_id'))
         is_instructor = (role == consts.INSTRUCTOR)
@@ -492,8 +503,8 @@ def create_client(app):
         logger.info("Successfully deleted question.")
         return jsonify(success=True), 200
 
-    @post_on_behalf_of(consts.STUDENT)
     @app.route('/edit_question', methods=['POST'])
+    @post_on_behalf_of(consts.STUDENT)
     def edit_question():
         role, data = get_role(request.form.get('class_ok_id'))
         is_instructor = (role == consts.INSTRUCTOR)
@@ -501,22 +512,22 @@ def create_client(app):
         logger.info("Successfully edited question.")
         return jsonify(success=True), 200
 
-    @post_on_behalf_of(consts.STUDENT)
     @app.route('/upvote_question', methods=['POST'])
+    @post_on_behalf_of(consts.STUDENT)
     def upvote_question():
         Question.upvote_question(request.form.to_dict(), db)
         logger.info("Successfully upvoted question.")
         return jsonify(success=True), 200
 
-    @post_on_behalf_of(consts.STUDENT)
     @app.route('/write_answer', methods=['POST'])
+    @post_on_behalf_of(consts.STUDENT)
     def write_answer():
         Answer.write_answer(get_user_data(), request.form.to_dict(), db)
         logger.info("Successfully wrote answer.")
         return jsonify(success=True), 200
 
-    @post_on_behalf_of(consts.STUDENT)
     @app.route('/delete_answer', methods=['POST'])
+    @post_on_behalf_of(consts.STUDENT)
     def delete_answer():
         role, data = get_role(request.form.get('class_ok_id'))
         is_instructor = (role == consts.INSTRUCTOR)
@@ -524,8 +535,8 @@ def create_client(app):
         logger.info("Successfully deleted answer.")
         return jsonify(success=True), 200
 
-    @post_on_behalf_of(consts.STUDENT)
     @app.route('/edit_answer', methods=['POST'])
+    @post_on_behalf_of(consts.STUDENT)
     def edit_answer():
         role, data = get_role(request.form.get('class_ok_id'))
         is_instructor = (role == consts.INSTRUCTOR)
@@ -533,15 +544,15 @@ def create_client(app):
         logger.info("Successfully edited answer.")
         return jsonify(success=True), 200
 
-    @post_on_behalf_of(consts.STUDENT)
     @app.route('/edit_transcript', methods=['POST'])
+    @post_on_behalf_of(consts.STUDENT)
     def edit_transcript():
         Lecture.suggest_transcript(request.form.to_dict(), db)
         logger.info("Successfully edited transcript.")
         return jsonify(success=True), 200
 
-    @post_on_behalf_of(consts.STUDENT)
     @app.route('/upvote_answer', methods=['POST'])
+    @post_on_behalf_of(consts.STUDENT)
     def upvote_answer():
         Answer.upvote_answer(request.form.to_dict(), db)
         logger.info("Successfully upvoted answer.")

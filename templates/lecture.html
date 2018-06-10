@@ -228,7 +228,7 @@ ul#menu li {
               begin: "{{begin}}",
               end: "{{end}}",
               interval: [convertToSecondsTiny("{{begin}}"), convertToSecondsTiny("{{end}}")]
-          })
+          });
       {% endfor %}
 
       var maxTranscriptIndex = 0;
@@ -459,7 +459,7 @@ ul#menu li {
            class_ok_id: '{{ cls["ok_id"] }}',
            anon: anonymous,
            playlist_num: "{{ playlist_number }}"
-        }
+        };
 
         console.log(`${JSON.stringify(data)}`)
 
@@ -479,8 +479,10 @@ ul#menu li {
 
   function deleteQuestion(question) {
     var data = {
-      question_id: question
-    }
+      question_id: question,
+      user_id: '{{ user["_id"] }}',
+      class_ok_id: '{{ cls["ok_id"] }}'
+    };
 
     $.ajax({
       type: "POST",
@@ -491,7 +493,7 @@ ul#menu li {
             toggleTopQuestions()
         });
       }
-    })
+    });
   }
 
 
@@ -516,7 +518,7 @@ ul#menu li {
 
     var d = document.getElementById(`answer-text-${answer}`);
     d.replaceWith(spn);
-
+}
   function convertQuestionToInput(questionId){
     txt = document.getElementById(`question-text-${questionId}`).innerHTML;
 
@@ -544,7 +546,7 @@ ul#menu li {
     var text = document.getElementById(`edit-question-${questionId}`).value;
     var data = {
       text,
-      questionId
+      questionId,
       user_id: '{{ user["_id"] }}',
       class_ok_id: '{{ cls["ok_id"] }}'
     };
@@ -558,7 +560,7 @@ ul#menu li {
             toggleTopQuestions()
         });
       }
-    })
+    });
   }
 
   function editAnswer(answerId, questionId) {
@@ -586,7 +588,7 @@ ul#menu li {
 
   function deleteAnswer(answer, question) {
     var data = {
-      answer_id: answer
+      answer_id: answer,
       user_id: '{{ user["_id"] }}',
       class_ok_id: '{{ cls["ok_id"] }}'
     };
@@ -605,7 +607,7 @@ ul#menu li {
             });
         });
       }
-    })
+    });
   }
 
   function upvoteAnswer(user, answer){
@@ -616,7 +618,7 @@ ul#menu li {
         user_id: '{{ user["_id"] }}',
         class_ok_id: '{{ cls["ok_id"] }}'
       };
-      console.log(`${JSON.stringify(data)}`)
+      console.log(`${JSON.stringify(data)}`);
       $.ajax({
         type: "POST",
         url: "{{ url_for('upvote_answer') }}",
@@ -633,7 +635,7 @@ ul#menu li {
     function upvoteQuestion(user, question){
       var data ={
         user_id:user,
-        question_id:question
+        question_id:question,
         user_id: '{{ user["_id"] }}',
         class_ok_id: '{{ cls["ok_id"] }}'
       };
@@ -652,7 +654,7 @@ ul#menu li {
   function sendAnswer(questionId) {
 
       var answer = document.getElementById(`answer-${questionId}`).value;
-      var anonymous = $(`#anona-${questionId}`).is(":checked");;
+      var anonymous = $(`#anona-${questionId}`).is(":checked");
 
       if (answer.length > 0) {
           if(anonymous == "1"){
@@ -712,7 +714,7 @@ ul#menu li {
 
   }
 
-  function addResource(){
+  function addResource() {
     var seconds = player.getCurrentTime();
 
   }
