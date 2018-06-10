@@ -154,3 +154,11 @@ ul.dropdown-menu li:hover {
 .mcq-choices {
 	display: inline;
 }
+
+.tt-suggestion {
+  background-color : #ffffff;
+}
+
+.input-reduce-padding {
+	padding: 1px 3px;
+}

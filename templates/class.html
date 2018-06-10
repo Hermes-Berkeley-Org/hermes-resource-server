@@ -33,7 +33,7 @@
             {% else %}
               <td><a href={{ url_for('edit_lecture', cls = lec['cls'], lecture_number = lec['lecture_number']) }}><i class="fa fa-pencil" aria-hidden="true"></i></a></td>
             {% endif %}
-            <td><a href="#"><i class="fa fa-trash" aria-hidden="true" type="submit" onclick="deleteLecture('{{lec['_id']}}')"></i></a></td>
+            <td><i class="fa fa-close" style="color:red" type=submit onclick="deleteLecture('{{lec['_id']}}')"></i></td>
           {% endif %}
         </div>
         </tr>
