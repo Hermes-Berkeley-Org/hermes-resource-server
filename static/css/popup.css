@@ -27,10 +27,11 @@
 
 #vitamin-form, #vitamin-problem {
 	position: absolute;
+	overflow-y: auto;
 	left: 25%;
 	top: -200%;
 	width: 50%;
-	height: 75%;
+	height: 62.5%;
 	background-color: #fff;
 	z-index: 10001;
 	border-radius: 15px;
@@ -38,7 +39,7 @@
 }
 
 #vitamin-form.show, #vitamin-problem.show {
-	top: 12.5%;
+	top: 18.75%;
 	-webkit-animation: slideIn 0.5s;
     animation: slideIn 0.5s;
 }
@@ -71,10 +72,10 @@
 
 @-webkit-keyframes slideIn {
     from { top: -200%; } 
-    to { top: 12.5%; } 
+    to { top: 18.75%; } 
 }
 
 @keyframes slideIn {
     from { top: -200%; } 
-    to { top: 12.5%; } 
+    to { top: 18.75%; } 
 }
