@@ -282,7 +282,7 @@ ul#menu li {
               begin: "{{begin}}",
               end: "{{end}}",
               interval: [convertToSecondsTiny("{{begin}}"), convertToSecondsTiny("{{end}}")]
-          })
+          });
       {% endfor %}
 
       var maxTranscriptIndex = 0;
@@ -413,9 +413,9 @@ ul#menu li {
                           text,
                           index,
                           user_id: '{{ user["_id"] }}',
+                          class_ok_id: '{{ cls["ok_id"] }}',
                           lecture_id: '{{ lecture["_id"]|string }}',
-                          playlist_number: '{{ playlist_number }}',
-                          api_key: '{{ api_key }}'
+                          playlist_number: '{{ playlist_number }}'
                       }
                     });
                   } else {
@@ -626,10 +626,11 @@ ul#menu li {
            ok_id: "{{ user['ok_id'] }}",
            lecture: "{{ lecture['_id']|string }}",
            cls: "{{ cls['_id']|string }}",
+           user_id: '{{ user["_id"] }}',
+           class_ok_id: '{{ cls["ok_id"] }}',
            anon: anonymous,
-           playlist_num: "{{ playlist_number }}",
-           api_key: "{{ api_key }}"
-        }
+           playlist_num: "{{ playlist_number }}"
+        };
 
         console.log(`${JSON.stringify(data)}`)
 
@@ -650,8 +651,9 @@ ul#menu li {
   function deleteQuestion(question) {
     var data = {
       question_id: question,
-      api_key: "{{ api_key }}"
-    }
+      user_id: '{{ user["_id"] }}',
+      class_ok_id: '{{ cls["ok_id"] }}'
+    };
 
     $.ajax({
       type: "POST",
@@ -662,13 +664,12 @@ ul#menu li {
             toggleTopQuestions()
         });
       }
-    })
+    });
   }
 
 
   function convertAnswerToInput(answer, question){
     var txt = document.getElementById(`answer-text-${answer}`).innerHTML.trim();
-    //txt = txt.replace(/ /g, '&nbsp;');
 
     var spn = document.createElement("span");
 
@@ -687,13 +688,8 @@ ul#menu li {
     spn.appendChild(btn);
 
     var d = document.getElementById(`answer-text-${answer}`);
-    d.replaceWith(spn); //document.getElementById(`each-answer-${answer}`));
-    // var currentVal = document.getElementById(`each-answer-${answer}`);
-    //var txt = document.getElementById(`answer-text-${answer}`).innerHTML;
-    //txt = txt.replace(/ /g, '&nbsp;');
-    // currentVal.innerHTML = `<input id= edit-answer-${answer} class="form-control qa-entry" value= ${txt}></input> <button class="btn btn-primary btn-sm qa-entry submission" type="submit" onclick='editAnswer("${answer}", "${question}")'>Submit Edit</button>`
-  }
-
+    d.replaceWith(spn);
+}
   function convertQuestionToInput(questionId){
     txt = document.getElementById(`question-text-${questionId}`).innerHTML;
 
@@ -715,20 +711,16 @@ ul#menu li {
 
     var d = document.getElementById(`question-text-${questionId}`);
     d.replaceWith(spn);
-
-    // var currentVal = document.getElementById(`each-question-${questionId}`);
-    // txt = document.getElementById(`question-text-${questionId}`).innerHTML;
-    // txt = txt.replace(/ /g, '&nbsp;');
-    // currentVal.innerHTML = `<span> <input id= edit-question-${questionId} class="form-control qa-entry" value= ${txt}></input> <button class="btn btn-primary btn-sm qa-entry submission" type="submit" onclick='editQuestion("${questionId}")'>Submit Edit</button> </span>`
   }
 
   function editQuestion(questionId) {
     var text = document.getElementById(`edit-question-${questionId}`).value;
     var data = {
       text,
-      api_key: "{{ api_key }}",
-      questionId
-    }
+      questionId,
+      user_id: '{{ user["_id"] }}',
+      class_ok_id: '{{ cls["ok_id"] }}'
+    };
 
     $.ajax({
       type: "POST",
@@ -739,15 +731,16 @@ ul#menu li {
             toggleTopQuestions()
         });
       }
-    })
+    });
   }
 
   function editAnswer(answerId, questionId) {
       var text = document.getElementById(`edit-answer-${answerId}`).value;
       var data = {
        text,
-       api_key: "{{ api_key }}",
-       answerId
+       answerId,
+       user_id: '{{ user["_id"] }}',
+       class_ok_id: '{{ cls["ok_id"] }}'
       };
 
       $.ajax({
@@ -767,7 +760,8 @@ ul#menu li {
   function deleteAnswer(answer, question) {
     var data = {
       answer_id: answer,
-      api_key: "{{ api_key }}"
+      user_id: '{{ user["_id"] }}',
+      class_ok_id: '{{ cls["ok_id"] }}'
     };
 
     question_id = question;
@@ -784,7 +778,7 @@ ul#menu li {
             });
         });
       }
-    })
+    });
   }
 
   function upvoteAnswer(user, answer){
@@ -792,9 +786,10 @@ ul#menu li {
       var data ={
         user_id:user,
         answer_id:answer,
-        api_key: "{{ api_key }}"
+        user_id: '{{ user["_id"] }}',
+        class_ok_id: '{{ cls["ok_id"] }}'
       };
-      console.log(`${JSON.stringify(data)}`)
+      console.log(`${JSON.stringify(data)}`);
       $.ajax({
         type: "POST",
         url: "{{ url_for('upvote_answer') }}",
@@ -812,7 +807,8 @@ ul#menu li {
       var data ={
         user_id:user,
         question_id:question,
-        api_key: "{{ api_key }}"
+        user_id: '{{ user["_id"] }}',
+        class_ok_id: '{{ cls["ok_id"] }}'
       };
       console.log(`${JSON.stringify(data)}`)
       $.ajax({
@@ -829,7 +825,7 @@ ul#menu li {
   function sendAnswer(questionId) {
 
       var answer = document.getElementById(`answer-${questionId}`).value;
-      var anonymous = $(`#anona-${questionId}`).is(":checked");;
+      var anonymous = $(`#anona-${questionId}`).is(":checked");
 
       if (answer.length > 0) {
           if(anonymous == "1"){
@@ -842,7 +838,8 @@ ul#menu li {
              question_id: questionId,
              text: answer,
              anon: anonymous,
-             api_key: "{{ api_key }}"
+             user_id: '{{ user["_id"] }}',
+             class_ok_id: '{{ cls["ok_id"] }}'
           };
 
 
@@ -888,7 +885,7 @@ ul#menu li {
 
   }
 
-  function addResource(){
+  function addResource() {
     var seconds = player.getCurrentTime();
 
   }
