@@ -337,9 +337,10 @@ def create_client(app):
 
     def get_role(class_ok_id, user_id=None):
         user = get_user_data(user_id=user_id)
-        for participation in user['classes']:
-            if participation['ok_id'] == int(class_ok_id):
-                return participation['role'], participation
+        if user:
+            for participation in user['classes']:
+                if participation['ok_id'] == int(class_ok_id):
+                    return participation['role'], participation
         return None, None
 
     @app.route('/class/<class_ok_id>', methods=['GET', 'POST'])
