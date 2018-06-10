@@ -274,7 +274,7 @@ class Question(DBObject):
     def edit_question(data, db, is_instructor):
         edit = data['text']
         question_id = data['questionId']
-        question = find_one_by_id(question_id, Answer.collection, db)
+        question = find_one_by_id(question_id, Question.collection, db)
         if question and (is_instructor or question['user'] == data['user_id']):
             return db[Question.collection].update_one(
                 {'_id': ObjectId(data['questionId'])},
@@ -287,7 +287,7 @@ class Question(DBObject):
     @staticmethod
     def delete_question(data, db, is_instructor):
         question_id = data['question_id']
-        question = find_one_by_id(question_id, Answer.collection, db)
+        question = find_one_by_id(question_id, Question.collection, db)
         if question and (is_instructor or question['user'] == data['user_id']):
             return db[Question.collection].delete_one(
                 {'_id': ObjectId(question_id)}
