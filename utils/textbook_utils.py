@@ -114,5 +114,5 @@ def get_words(document):
     return [word for word in re.split('\s+', re.sub('[^a-zA-Z]', ' ', document)) if word not in sw]
 
 CLASSIFIERS = {
-    'CS 61A': CS61ATranscriptionClassifier
+    # 'CS 61A': CS61ATranscriptionClassifier
 }
