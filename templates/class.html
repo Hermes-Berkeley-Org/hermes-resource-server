@@ -34,7 +34,7 @@
         <span id="playlists-{{lec['_id']}}" class = "collapse">
           {% for video in range(lec['videos']|length) %}
           <p>
-            <tr>
+            <tr class="collapse">
                 <td> </td>
                 <td>
                   <a href={{ url_for('lecture', cls=lec['cls'], lecture_number=lec['lecture_number'], playlist_number= video) }}> Lecture Video {{ video }} </a>

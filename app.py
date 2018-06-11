@@ -430,7 +430,9 @@ def create_client(app):
                         transcription_classifier=ts_classifier,
                         error_on_failure=True
                     )
-                    Lecture.add_transcript(id, transcript, preds, db)
+                    if not preds:
+                        return False
+                        Lecture.add_transcript(id, transcript, preds, db)
                 else:
                     transcript_lst = []
                     preds_lst = []
@@ -443,6 +445,8 @@ def create_client(app):
                             transcription_classifier=ts_classifier,
                             error_on_failure = True
                         )
+                        if not preds:
+                            return False
                         transcript_lst.append(transcript)
                         preds_lst.append(preds)
                     Lecture.add_transcript(id, transcript_lst, preds_lst, db)
