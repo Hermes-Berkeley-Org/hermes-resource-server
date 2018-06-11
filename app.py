@@ -64,6 +64,8 @@ def create_client(app):
         authorize_url='{0}/oauth/authorize'.format(ok_server)
     )
 
+    app.secret_key = app.config['SECRET_KEY']
+
     @app.before_request
     def before_request():
         if 'localhost' in request.host_url or '0.0.0.0' in request.host_url:
