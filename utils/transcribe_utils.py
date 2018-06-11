@@ -76,10 +76,13 @@ def read_from_youtube(link, youtube, is_playlist):
             return item["id"]
     caption_id = get_caption_id(video_id)
     tfmt = "ttml"
-    subtitle_html = youtube.captions().download(
-        id=caption_id,
-        tfmt=tfmt
-    ).execute()
+    try:
+        subtitle_html = youtube.captions().download(
+            id=caption_id,
+            tfmt=tfmt
+        ).execute()
+    except HttpError:
+        return False
     soup = BeautifulSoup(subtitle_html, 'html.parser')
     transcript = []
     for p in soup.find_all('p'):
@@ -92,10 +95,16 @@ def read_from_youtube(link, youtube, is_playlist):
     return transcript
 
 def get_video_duration(link):
-    return pafy.new(link).duration
+    try:
+        return pafy.new(link).duration
+    except:
+        return False
 
 def get_playlist_video_duration(links):
-    return [pafy.new(vid).duration for vid in links]
+    try:
+        return [pafy.new(vid).duration for vid in links]
+    except:
+        return False
 
 def scrape(link):
     try:
@@ -126,13 +135,19 @@ def scrape(link):
         return []
 
 def get_video_titles(video_id, youtube):
-    return pafy.new(video_id).title
+    try:
+        return pafy.new(video_id).title
+    except:
+        return False
 
 def get_playlist_titles(video_ids, youtube):
     title_lst = []
-    for vid in video_ids:
-        title_lst.append(youtube.videos().list(part="snippet", id = vid).execute()["items"][0]["snippet"]["title"])
-    return title_lst
+    try:
+        for vid in video_ids:
+            title_lst.append(youtube.videos().list(part="snippet", id = vid).execute()["items"][0]["snippet"]["title"])
+        return title_lst
+    except:
+        return False
 
 def clean_link(link):
     res = link.split('?')
