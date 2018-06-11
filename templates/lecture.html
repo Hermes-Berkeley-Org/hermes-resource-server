@@ -260,7 +260,8 @@ ul#menu li {
           var hours = data[0];
           var minutes = data[1];
           var seconds = data[2];
-          return (parseInt(hours) * 3600 + parseInt(minutes) * 60 + parseFloat(seconds))
+          return (parseInt(hours) * 3600 + parseInt(minutes) * 60 + parseFloat(seconds));
+      }
 
       transcriptElements = [];
       partitionTitles = [];
@@ -477,9 +478,11 @@ ul#menu li {
       var delayAssignment = false;
 
       setInterval(function() {
+          console.log('vitamin');
           var currentTime = Math.floor(player.getCurrentTime());
           var multiple = false;
-          {% for vitamin in db['Vitamins'].find({'$and':[{'lecture_id': lecture}, {'playlist_number': playlist_number|string }]}) %}
+          {% for vitamin in db['Vitamins'].find({'$and':[{'lecture_id': lecture["_id"]|string}, {'playlist_number': playlist_number|string }]}) %}
+              console.log('iteration');
               var timeDiff = Math.abs(currentTime - parseFloat("{{ vitamin['seconds'] }}"));
               if (timeDiff < 0.5 && solvingVitamin == false) {
                 player.pauseVideo();
