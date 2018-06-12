@@ -281,6 +281,7 @@ def create_client(app):
                     cls['class_exists'] = exists
                     if is_instructor(cls) or exists:
                         valid_classes.append(cls)
+                print(valid_classes)
                 return render_template(
                     'home.html',
                     user=user,
