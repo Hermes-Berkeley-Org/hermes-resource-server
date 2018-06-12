@@ -252,23 +252,40 @@ def create_client(app):
             db_result = db[User.collection].find_one({'ok_id': ok_id}) or {}
             return db_result
 
+    def get_updated_user_classes():
+        if 'dev_token' in session:
+            token = session['dev_token'][0]
+            r = requests.get('{0}/api/v3/user/?access_token={1}'.format(
+                    app.config['OK_SERVER'],
+                    token
+                )
+            )
+            ok_resp = r.json()
+            if 'data' in ok_resp and 'participations' in ok_resp['data']:
+                return ok_resp['data']['participations']
+
     @app.route('/home/')
     @login_required
     def home():
         user = get_user_data()
-        def validate(participation):
-            participation['semester'] = Class.get_semester(participation['offering'])
-            participation['class_exists'] = db[Class.collection].find({'ok_id': participation['ok_id']}).count() > 0
-            return participation['role'] == consts.INSTRUCTOR or \
-                participation['class_exists']
+        def class_exists(participation):
+            return db[Class.collection].find({'ok_id': participation['course']['id']}).count() > 0
+        def is_instructor(participation):
+            return participation['role'] == consts.INSTRUCTOR
         if user:
-            classes = [participation for participation in user['classes'] if validate(participation)]
-            return render_template(
-                'home.html',
-                user=user,
-                classes=classes,
-                curr_semester=app_utils.get_curr_semester()
-            )
+            classes = get_updated_user_classes()
+            if classes:
+                valid_classes = []
+                for cls in classes:
+                    exists = class_exists(cls)
+                    cls['class_exists'] = exists
+                    if is_instructor(cls) or exists:
+                        valid_classes.append(cls)
+                return render_template(
+                    'home.html',
+                    user=user,
+                    classes=valid_classes
+                )
         logger.info("Displaying home.")
         return redirect(url_for('index'))
 
