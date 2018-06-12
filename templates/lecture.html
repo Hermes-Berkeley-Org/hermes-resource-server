@@ -12,19 +12,17 @@ ul#menu li {
   </div>
   <div id="vitamin-problem">
         <p class="text-right" id="skip" onclick="removeForm()">>>Skip</p>
-        <form>
-            <div id="problems">
-                <div id="problem-1">
-                    <div class="form-group">
-                        <p class="vitamin-element" id="vitamin-question-1"></p>
-                    </div>
-                    <p class="vitamin-element" id="correct-answer-1"></p>
-                    <div class="incorrect vitamin-element" id="incorrect-answer-1"></div>
-                    <div class="form-group vitamin-element" id="vitamin-answer-1"></div>
+        <div id="problems">
+            <div id="problem-1">
+                <div class="form-group">
+                    <p class="vitamin-element" id="vitamin-question-1"></p>
                 </div>
+                <p class="vitamin-element" id="correct-answer-1"></p>
+                <div class="incorrect vitamin-element" id="incorrect-answer-1"></div>
+                <div class="form-group vitamin-element" id="vitamin-answer-1"></div>
             </div>
-            <button class="btn btn-primary submission" type=submit onclick="submitVitaminAnswer()">Submit</button>
-        </form>
+        </div>
+        <button class="btn btn-primary submission" type=submit onclick="submitVitaminAnswer()">Submit</button>
   </div>
   <div class="row">
     <div class="col-md-7">
@@ -489,7 +487,7 @@ ul#menu li {
           // console.log(solvingVitamin);
           {% for vitamin in db['Vitamins'].find({'$and':[{'lecture_id': lecture["_id"]|string}, {'playlist_number': playlist_number|string }]}) %}
               var timeDiff = Math.abs(currentTime - parseFloat("{{ vitamin['seconds'] }}"));
-              if (timeDiff < 0.4 && !solvingVitamin && !multiple) {
+              if (timeDiff < 0.5 && !solvingVitamin && !multiple) {
                 player.pauseVideo();
                 solvingVitamin = true;
                 delayAssignment = false;
@@ -549,6 +547,7 @@ ul#menu li {
     inner_html += "<div class='form-group vitamin-element' id='vitamin-answer-1'></div>";
     inner_html += "</div>";
     document.getElementById('problems').innerHTML = inner_html;
+    vitaminSolutions = [];
     // solvingVitamin = false;
     // console.log(solvingVitamin);
     // multiple = false;
