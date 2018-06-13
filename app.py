@@ -320,6 +320,7 @@ def create_client(app):
             )
             video_info['duration'] = lecture_obj['duration'][play_num]
             video_info['num_videos'] = len(lecture_obj['videos'])
+        vitamins = db['Vitamins'].find({'$and':[{'lecture_id': str(lecture_obj["_id"])}, {'playlist_number': str(playlist_number)}]})
         if lecture_obj and cls_obj:
             logger.info("Displaying lecture.")
             if playlist_number:
@@ -337,6 +338,7 @@ def create_client(app):
                 app_utils=app_utils,
                 consts=consts,
                 db=db,
+                vitamins=vitamins,
                 api_key=app.config['HERMES_API_KEY']
             )
         return redirect(url_for('error', code=404))
