@@ -485,7 +485,7 @@ ul#menu li {
             multiple = false;
           }
           // console.log(solvingVitamin);
-          {% for vitamin in db['Vitamins'].find({'$and':[{'lecture_id': lecture["_id"]|string}, {'playlist_number': playlist_number|string }]}) %}
+          {% for vitamin in vitamins %}
               var timeDiff = Math.abs(currentTime - parseFloat("{{ vitamin['seconds'] }}"));
               if (timeDiff < 0.5 && !solvingVitamin && !multiple) {
                 player.pauseVideo();
