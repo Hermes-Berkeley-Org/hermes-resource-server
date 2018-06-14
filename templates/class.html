@@ -3,77 +3,71 @@
 {% block head %}{{ super() }}{% endblock %}
 {% block content %}
 <div class="wrapper text-primary">
-  <table class = "classtable">
-    <tr>
-    <th class = "classsections">
-    <h4 style = "margin-top: -60px">{{info['display_name']}}</h4>
-    <table class ="lecture_table" id = "lec_table">
-      <tr>
-        <th "margin-top: -80px"> </th>
-        <th style = "margin-top: -80px">Lecture</th>
-        <th "margin-top: -80px">Date Posted</th>
-      </tr>
-      {% for lec in lectures %}
-        <tr id = lecture-{{lec['_id']}} class="lec-row">
+  <div class="row classtable">
+    <div class="col-md-6">
+      <h4>{{info['display_name']}}</h4>
+      <table class ="lecture_table" id = "lec_table">
+        <tr>
+          <th> </th>
+          <th>Lecture</th>
+          <th>Date Posted</th>
+          <th></th>
+        </tr>
+        {% for lec in lectures %}
+          <tr id = lecture-{{lec['_id']}} class="lec-row">
+            {% if lec['is_playlist'] %}
+              <td>
+                <a id="show-videos-{{lec['_id']}}" data-toggle="collapse" onclick="toggleVideos('toggle-icon-{{lec['_id']}}')" data-target="#playlists-{{lec['_id']}}">
+                <span class="fa fa-chevron-down qa-entry" aria-hidden="true" id="toggle-icon-{{lec['_id']}}"></span></a></td>
+              <td><a href={{ url_for('lecture', cls=lec['cls'], lecture_number=lec['lecture_number'], playlist_number="0")}}>{{ lec['name'] }}</a></td>
+            {% else %}
+            <td></td>
+              <td><a href={{ url_for('lecture', cls=lec['cls'], lecture_number=lec['lecture_number'])}}>{{ lec['name'] }}</a></td>
+            {% endif %}
+            <td>{{lec['date']}}</td>
+            {% if role == consts.INSTRUCTOR %}
+              <td><i class="fa fa-close" style="color:red" type=submit onclick="deleteLecture('{{lec['_id']}}')"></i></td>
+            {% endif %}
+          </tr>
           {% if lec['is_playlist'] %}
+          <tr id="playlists-{{lec['_id']}}" class = "collapse">
+            <td> </td>
             <td>
-              <a id="show-videos-{{lec['_id']}}" data-toggle="collapse" onclick="toggleVideos('toggle-icon-{{lec['_id']}}')" data-target="#playlists-{{lec['_id']}}">
-              <span class="fa fa-chevron-down qa-entry" aria-hidden="true"></span></a></td>
-            <td><a href={{ url_for('lecture', cls=lec['cls'], lecture_number=lec['lecture_number'], playlist_number=0)}}>{{ lec['name'] }}</a></td>
-          {% else %}
-          <td></td>
-            <td><a href={{ url_for('lecture', cls=lec['cls'], lecture_number=lec['lecture_number'])}}>{{ lec['name'] }}</a></td>
-          {% endif %}
-          <td>{{lec['date']}}</td>
-          {% if role == consts.INSTRUCTOR %}
-            <td><i class="fa fa-close" style="color:red" type=submit onclick="deleteLecture('{{lec['_id']}}')"></i></td>
-          {% endif %}
-        </div>
-      </tr>
-        {% if lec['is_playlist'] %}
-        <span id="playlists-{{lec['_id']}}" class = "collapse">
-          {% for video in range(lec['videos']|length) %}
-          <p>
-            <tr class="collapse">
-                <td> </td>
-                <td>
-                  <a href={{ url_for('lecture', cls=lec['cls'], lecture_number=lec['lecture_number'], playlist_number= video) }}> Lecture Video {{ video }} </a>
-                </td>
-                <td> </td>
-                <td> </td>
-            </tr>
-          </p>
-          {% endfor %}
-          </span>
-      {% endif %}
-      {% endfor %}
-      <div class="btn-group">
-</div>
-    </table>
-  </th>
-  <th class = "classsections" style = "margin-top: -80px">
-    {% if role == consts.INSTRUCTOR %}
-      <form action="" method="post">
-          <h4>Create a Lecture</h4>
-          {{ form.csrf }}
-          <p>Lecture Title {{ form.title }}</p>
-          <p>Lecture Date {{ form.date }}</p>
-          <p>Youtube Lecture/Playlist Link {{ form.link }}</p>
-          <p id="submit">{{ form.submit() }}</p>
-      </form>
-    {% endif %}
-    {% with messages = get_flashed_messages() %}
-      {% if messages %}
-        <ul class=flashes>
-        {% for message in messages %}
-          <li>{{ message }}</li>
+              {% for video in range(lec['videos']|length) %}
+                <a href={{ url_for('lecture', cls=lec['cls'], lecture_number=lec['lecture_number'], playlist_number= video) }}> Lecture Video {{ video + 1 }}</a>
+                {% if not loop.last %}
+                  <br>
+                {% endif %}
+              {% endfor %}
+            </td>
+            <td> </td>
+            <td> </td>
+          </tr>
+        {% endif %}
         {% endfor %}
-        </ul>
-      {% endif %}
-    {% endwith %}
-  </th>
-  </tr>
-  </table>
+      </table>
+    </div>
+    <div class="col-md-6">
+        {% if role == consts.INSTRUCTOR %}
+          <form action="" method="post">
+              <h4>Create a Lecture</h4>
+              {{ form.csrf }}
+              <p>Lecture Title {{ form.title }}</p>
+              <p>Lecture Date {{ form.date }}</p>
+              <p>Youtube Lecture/Playlist Link {{ form.link }}</p>
+              <p id="submit">{{ form.submit() }}</p>
+          </form>
+        {% endif %}
+        {% with messages = get_flashed_messages() %}
+          {% if messages %}
+            <ul class=flashes>
+            {% for message in messages %}
+              <li>{{ message }}</li>
+            {% endfor %}
+            </ul>
+          {% endif %}
+        {% endwith %}
+    </div>
 
 </div>
 
