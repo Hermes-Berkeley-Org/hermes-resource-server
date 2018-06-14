@@ -80,13 +80,14 @@ th {
 	text-align: center;
 }
 
+
 #lec_table th {
 	font-size: 1.5em;
 	color: white;
 	background-color: #18BC9C;
 }
 
-#lec_table tr:nth-child(odd) {
+#lec_table tr.lec-row:nth-of-type(odd) {
 	background-color: #eee;
 }
 
