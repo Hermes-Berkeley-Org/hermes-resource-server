@@ -34,7 +34,7 @@
             <td> </td>
             <td>
               {% for video in range(lec['videos']|length) %}
-                <a href={{ url_for('lecture', cls=lec['cls'], lecture_number=lec['lecture_number'], playlist_number= video) }}> Lecture Video {{ video + 1 }}</a>
+                <a href={{ url_for('lecture', cls=lec['cls'], lecture_number=lec['lecture_number'], playlist_number= video) }}>Lecture Video {{ video + 1 }}</a>
                 {% if not loop.last %}
                   <br>
                 {% endif %}
