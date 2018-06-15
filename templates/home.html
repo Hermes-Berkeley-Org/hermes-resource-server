@@ -21,7 +21,7 @@
                 {% endif %}
                 <div class="col-md-4"><a href="{{ url_for('classpage', class_ok_id=class['ok_id']) }}"><div class="class-box"><h6>{{class['display_name']}} ({{class['role'].capitalize()}})</h6></div></a></div>
                 {% if counter.append(counter.pop() + 1) %}{% endif %}
-                {% if counter == [3] %} 
+                {% if counter == [3] %}
                     </div> <!-- End row -->
                     {% if counter.pop() %}{% endif %}
                     {% if counter.append(0) %}{% endif %}
@@ -32,7 +32,7 @@
                 {% endif %}
                 <div class="col-md-4"><a href="{{ url_for('create_class', class_ok_id=class['ok_id']) }}"><div class="class-box"><h6>{{class['display_name']}} ({{class['role'].capitalize()}})</h6></div></a></div>
                 {% if counter.append(counter.pop() + 1) %}{% endif %}
-                {% if counter == [3] %} 
+                {% if counter == [3] %}
                     </div> <!-- End row -->
                     {% if counter.pop() %}{% endif %}
                     {% if counter.append(0) %}{% endif %}
@@ -56,7 +56,7 @@
             {% endif %}
             <div class="col-md-4"><a href="{{ url_for('classpage', class_ok_id=class['ok_id']) }}"><div class="class-box"><h6>{{class['display_name']}}</h6></div></a></div>
             {% if counter.append(counter.pop() + 1) %}{% endif %}
-            {% if counter == [3] %} 
+            {% if counter == [3] %}
                 </div> <!-- End row -->
                 {% if counter.pop() %}{% endif %}
                 {% if counter.append(0) %}{% endif %}
@@ -82,7 +82,7 @@
                 {% endif %}
                 <div class="col-md-4"><a href="{{ url_for('classpage', class_ok_id=class['ok_id']) }}"><div class="class-box"><h6>{{class['display_name']}} ({{class['semester']}}) ({{class['role'].capitalize()}})</h6></div></a></div>
                 {% if counter.append(counter.pop() + 1) %}{% endif %}
-                {% if counter == [3] %} 
+                {% if counter == [3] %}
                     </div> <!-- End row -->
                 {% endif %}
             {% else %}
@@ -91,7 +91,7 @@
                 {% endif %}
                 <div class="col-md-4"><a href="{{ url_for('create_class', class_ok_id=class['ok_id']) }}"><div class="class-box"><h6>{{class['display_name']}} ({{class['semester']}}) ({{class['role'].capitalize()}})</h6></div></a></div>
                 {% if counter.append(counter.pop() + 1) %}{% endif %}
-                {% if counter == [3] %} 
+                {% if counter == [3] %}
                     </div> <!-- End row -->
                 {% endif %}
             {% endif %}
@@ -113,7 +113,7 @@
             {% endif %}
             <div class="col-md-4"><a href="{{ url_for('classpage', class_ok_id=class['ok_id']) }}"><div class="class-box"><h6>{{class['display_name']}} ({{class['semester']}}) ({{class['role'].capitalize()}})</h6></div></a></div>
             {% if counter.append(counter.pop() + 1) %}{% endif %}
-            {% if counter == [3] %} 
+            {% if counter == [3] %}
                 </div> <!-- End row -->
             {% endif %}
         {% endif %}
