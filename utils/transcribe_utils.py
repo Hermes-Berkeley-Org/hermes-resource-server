@@ -92,10 +92,12 @@ def read_from_youtube(link, youtube, is_playlist):
     return transcript
 
 def get_video_duration(link):
-    return pafy.new(link).duration
+    pafy_video = pafy.new(link)
+    if pafy_video:
+        return pafy_video.duration
 
 def get_playlist_video_duration(links):
-    return [pafy.new(vid).duration for vid in links]
+    return [get_video_duration(link) for link in links]
 
 def scrape(link):
     try:
@@ -126,12 +128,19 @@ def scrape(link):
         return []
 
 def get_video_titles(video_id, youtube):
-    return pafy.new(video_id).title
+    pafy_video = pafy.new(video_id)
+    if pafy_video:
+        return pafy_video.title
+
 
 def get_playlist_titles(video_ids, youtube):
     title_lst = []
     for vid in video_ids:
-        title_lst.append(youtube.videos().list(part="snippet", id = vid).execute()["items"][0]["snippet"]["title"])
+        response = youtube.videos().list(part="snippet", id = vid).execute()
+        title = None
+        if response and 'items' in response and len(response['items']) > 0:
+            title = response["items"][0]["snippet"]["title"]
+        title_lst.append(title)
     return title_lst
 
 def clean_link(link):
