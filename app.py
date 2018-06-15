@@ -382,20 +382,26 @@ def create_client(app):
             if form.validate():
                 num_lectures = len(cls['lectures'])
                 ses = requests.Session()
+
+                success = False
+                error_message = None
+
                 url = ses.head(request.form["link"], allow_redirects=True).url
                 if "list=" in url:
                     is_playlist = True
                     youtube_id = url.split("list=")[1]
                     youtube_id = youtube_id.split("&")[0]
                     logger.info("youtube_id " + youtube_id)
-                    youtube_vids=youtube.playlistItems().list(
+                    youtube_vids = youtube.playlistItems().list(
                         part='contentDetails',
                         maxResults=25,
-                        playlistId= youtube_id
+                        playlistId = youtube_id
                     ).execute()
-                    youtube_vid= [vid["contentDetails"]["videoId"] for vid in youtube_vids["items"]]
-                    duration = get_playlist_video_duration(youtube_vid)
-                    title = get_playlist_titles(youtube_vid, youtube)
+                    playlist_items = youtube_vids.get('items')
+                    if playlist_items:
+                        youtube_vid = [vid["contentDetails"]["videoId"] for vid in playlist_items]
+                        duration = get_playlist_video_duration(youtube_vid)
+                        title = get_playlist_titles(youtube_vid, youtube)
                 elif "v=" in url:
                     youtube_vid= request.form['link']
                     is_playlist = False
