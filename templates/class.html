@@ -1,51 +1,56 @@
 {% extends 'header.html' %}
-{% block title %}Hermes | {{info["Name"]}}{% endblock %}
+{% block title %}Hermes | {{info["display_name"]}}{% endblock %}
 {% block head %}{{ super() }}{% endblock %}
 {% block content %}
 <div class="wrapper text-primary">
   <div class="row classtable">
     <div class="col-md-6">
       <h4>{{info['display_name']}}</h4>
-      <table class ="lecture_table" id = "lec_table">
-        <tr>
-          <th> </th>
-          <th>Lecture</th>
-          <th>Date Posted</th>
-          <th></th>
-        </tr>
-        {% for lec in lectures %}
-          <tr id = lecture-{{lec['_id']}} class="lec-row">
-            {% if lec['is_playlist'] %}
-              <td>
-                <a id="show-videos-{{lec['_id']}}" data-toggle="collapse" onclick="toggleVideos('toggle-icon-{{lec['_id']}}')" data-target="#playlists-{{lec['_id']}}">
-                <span class="fa fa-chevron-down qa-entry" aria-hidden="true" id="toggle-icon-{{lec['_id']}}"></span></a></td>
-              <td><a href={{ url_for('lecture', cls=lec['cls'], lecture_number=lec['lecture_number'], playlist_number="0")}}>{{ lec['name'] }}</a></td>
+      <div id="lec_table">
+        <div class="row" id="lec_table_header">
+          <div class="col-md-1"></div>
+          <div class="col-md-6">Lecture</div>
+          <div class="col-md-4">Date Posted</div>
+          <div class="col-md-1"></div>
+        </div>
+        <div id="lecture-list">
+          {% for lec in lectures %}
+            {% if loop.index % 2 == 0 %}
+            <div class="row lec-row gray-row" id="lecture-{{lec['_id']}}">
             {% else %}
-            <td></td>
-              <td><a href={{ url_for('lecture', cls=lec['cls'], lecture_number=lec['lecture_number'])}}>{{ lec['name'] }}</a></td>
+            <div class="row lec-row" id="lecture-{{lec['_id']}}">
             {% endif %}
-            <td>{{lec['date']}}</td>
-            {% if role == consts.INSTRUCTOR %}
-              <td><i class="fa fa-close" style="color:red" type=submit onclick="deleteLecture('{{lec['_id']}}')"></i></td>
-            {% endif %}
-          </tr>
-          {% if lec['is_playlist'] %}
-          <tr id="playlists-{{lec['_id']}}" class = "collapse">
-            <td> </td>
-            <td>
-              {% for video in range(lec['videos']|length) %}
-                <a href={{ url_for('lecture', cls=lec['cls'], lecture_number=lec['lecture_number'], playlist_number= video) }}>Lecture Video {{ video + 1 }}</a>
-                {% if not loop.last %}
-                  <br>
-                {% endif %}
-              {% endfor %}
-            </td>
-            <td> </td>
-            <td> </td>
-          </tr>
-        {% endif %}
-        {% endfor %}
-      </table>
+              {% if lec['is_playlist'] %}
+                <div class="col-md-1">
+                  <a id="show-videos-{{lec['_id']}}" data-toggle="collapse" onclick="toggleVideos('toggle-icon-{{lec['_id']}}')" data-target="#playlists-{{lec['_id']}}">
+                  <span class="fa fa-chevron-down qa-entry" aria-hidden="true" id="toggle-icon-{{lec['_id']}}"></span></a>
+                </div>
+                <div class="col-md-6">
+                  <a href={{ url_for('lecture', cls=lec['cls'], lecture_number=lec['lecture_number'], playlist_number="0")}}>{{ lec['name'] }}</a>
+                </div>
+              {% else %}
+                <div class="col-md-6 offset-md-1"><a href={{ url_for('lecture', cls=lec['cls'], lecture_number=lec['lecture_number'])}}>{{ lec['name'] }}</a></div>
+              {% endif %}
+              <div class="col-md-4">{{lec['date']}}</div>
+              {% if role == consts.INSTRUCTOR %}
+                <div class="col-md-1"><i class="fa fa-close" style="color:red" type=submit onclick="deleteLecture('{{lec['_id']}}')"></i></div>
+              {% endif %}
+            </div>
+            {% if lec['is_playlist'] %}
+            <div class="row extra-content collapse" id="playlists-{{lec['_id']}}">
+              <div class="col-md-6 offset-md-1">
+                {% for video in range(lec['videos']|length) %}
+                  <a href={{ url_for('lecture', cls=lec['cls'], lecture_number=lec['lecture_number'], playlist_number= video) }}>Lecture Video {{ video + 1 }}</a>
+                  {% if not loop.last %}
+                    <br>
+                  {% endif %}
+                {% endfor %}
+              </div>
+            </div>
+          {% endif %}
+          {% endfor %}
+        </div>
+      </div>
     </div>
     <div class="col-md-6">
         {% if role == consts.INSTRUCTOR %}
