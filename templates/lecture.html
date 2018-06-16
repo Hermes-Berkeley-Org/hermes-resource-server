@@ -25,8 +25,8 @@ ul#menu li {
         <button class="btn btn-primary submission" type=submit onclick="submitVitaminAnswer()">Submit</button>
   </div>
   <div class="row">
-    <div class="col-md-7">
-      <div id="ytplayer"></div>
+    <div class="col-md-6">
+      <div class="yt-wrapper" id="ytplayer"></div>
       {% if playlist_number %}
       <div class="navbar">
       {% if playlist_number|int != 0|int %}
@@ -78,7 +78,7 @@ ul#menu li {
             </table>
       </div>
     </div>
-    <div class="col-md-4">
+    <div class="col-md-5">
       <div id="questions">
           <div class="form-group">
             <input id='question' class="form-control" placeholder='Enter your question here'></input>
@@ -104,38 +104,39 @@ ul#menu li {
                 <a data-toggle="collapse" onclick="toggleResponses('partition-icon-{{loop.index}}')" data-target="#partition-{{loop.index}}"><span style="font-size: 18px" id="partition-icon-{{loop.index}}" class="fa fa-chevron-down qa-entry" aria-hidden="true"></span> {{interval[0]}} - {{interval[1]}}</a>
             {% endif %}
 
-            <span style="display: block">
+            <!-- <span style="display: block"> -->
             <div id="partition-{{loop.index}}" class="collapse">
 
 
             {% for question in question_set %}
-              <a id="show-answers-{{question['_id']}}" data-toggle="collapse" onclick="toggleResponses('toggle-icon-{{question['_id']}}')" data-target="#answers-{{question['_id']}}">
+              <a id="show-answers-{{question['_id']}}" data-toggle="collapse" onclick="toggleResponses('toggle-icon-{{question['_id']}}')" data-target="#answers-container-{{question['_id']}}">
 
                 <p>
                   <span class="fa fa-chevron-down qa-entry" id="toggle-icon-{{question['_id']}}" aria-hidden="true"></span></a>
                   <span id= "each-question-{{question['_id']}}">
                     <span id="upvotes-{{question['_id']}}">
                       <button class="btn btn-default btn-sm likes"  type=submit onclick='upvoteQuestion("{{user['_id']}}", "{{question['_id']}}")'>
-                      {% if user_id in question['upvotes'] %}
+                      {% if user['_id']|string in question['upvotes'] %}
                       <i class="fa fa-thumbs-up" aria-hidden="true"></i> Like  <span id = "upvotes-{{question['_id']}}-count" class ="clicked">{{ question['upvotes']|length }}</span>
                       {% else %}
                       <i class="fa fa-thumbs-o-up" aria-hidden="true"></i> Like <span id = "upvotes-{{question['_id']}}-count" class = "notclicked"> {{ question['upvotes']|length }}</span>
                       {% endif %}
                   </button></span>
-                {% if question['anon'] == "true" and role == consts.STUDENT %}
+                {% if question['anon'] == "true" and user['role'] == consts.STUDENT %}
                   <span class="question-tag-lg"> Anonymous {{question['timestamp']}}</span>
                 {% else %}
                   <span class="question-tag-lg"> {{question['name']}} {{question['timestamp']}}</span>
                 {% endif %}
-                <span class="qa-entry-lg" id = "question-text-{{question['_id']}}"> {{question['text']}}</span>
-                {% if question['ok_id'] == user['ok_id'] or role == consts.INSTRUCTOR %}
+                <span class="qa-entry-lg" id = "question-text-{{question['_id']}}"> {{question['text']}}
+                {% if question['ok_id'] == user['ok_id'] or user['role']|clearance_for(consts.STAFF) %}
                   <i class="fa fa-pencil" aria-hidden="true" type="submit" onclick='convertQuestionToInput("{{question['_id']}}")'></i>
                   <a onclick='deleteQuestion("{{question['_id']}}")'><span class="fa fa-close" style="color:red"></span></a>
                 {% endif %}
               </span>
+              <!-- </span> -->
               </p>
-            <div id="answers-container-{{question['_id']}}">
-            <div id="answers-{{question['_id']}}" class="collapse">
+            <div id="answers-container-{{question['_id']}}" class="collapse">
+            <div id="answers-{{question['_id']}}">
                 {% for answer in db['Answers'].find({'question_id': question['_id']}) %}
                     <div id="each-answer-{{answer['_id']}}">
                       <p><span id="upvotes-{{answer['_id']}}" class="qa-entry">
@@ -158,7 +159,7 @@ ul#menu li {
                             </span>
                           </span>
                     {% endif %}
-                    {% if answer['user'] == user['_id'] or user['role'] == consts.INSTRUCTOR %}
+                    {% if answer['user'] == user['_id'] or user['role']|clearance_for(consts.STAFF) %}
                         <i class="fa fa-pencil" aria-hidden="true" type="submit" onclick='convertAnswerToInput("{{answer['_id']}}", "{{question['_id']}}")'></i>
                       <i class="fa fa-close" style="color:red" onclick='deleteAnswer("{{answer['_id']}}", "{{question['_id']}}")'></i>
                     {% endif %}
@@ -183,7 +184,7 @@ ul#menu li {
             {% endfor %}
           </div>
         </span>
-
+          <br>
           {% endfor %}
         </section>
       </div>
@@ -205,8 +206,6 @@ ul#menu li {
   var player;
   function onYouTubePlayerAPIReady() {
     player = new YT.Player('ytplayer', {
-      height: window.innerHeight / 2,
-      width: window.innerWidth / 2,
       videoId: '{{ video_info["video_id"] }}',
       playerVars: {rel: 0},
       events: {
@@ -659,7 +658,7 @@ ul#menu li {
 
 
   function convertAnswerToInput(answer, question){
-    var txt = document.getElementById(`answer-text-${answer}`).innerHTML.trim();
+    var txt = $(`#answer-text-${answer}`).text().trim();
 
     var spn = document.createElement("span");
 
@@ -681,7 +680,7 @@ ul#menu li {
     d.replaceWith(spn);
 }
   function convertQuestionToInput(questionId){
-    txt = document.getElementById(`question-text-${questionId}`).innerHTML;
+    txt = $(`#question-text-${questionId}`).text().trim();
 
     var spn = document.createElement("span");
 
@@ -738,11 +737,7 @@ ul#menu li {
           url: "{{ url_for('edit_answer') }}",
           data,
           success: function (data) {
-            $(`#answers-container-${questionId}`).load(window.location.href + ` #answers-container-${questionId}`, function () {
-               $(`#show-answers-${questionId}`).trigger("click", function () {
-                   toggleTopQuestions()
-               });
-           });
+            $(`#answers-${questionId}`).load(window.location.href + ` #answers-${questionId}`);
          }
        });
   }
@@ -762,11 +757,7 @@ ul#menu li {
       url: "{{ url_for('delete_answer') }}",
       data,
       success: function (data) {
-        $(`#answers-container-${question}`).load(window.location.href + ` #answers-container-${question}`, function () {
-            $(`#show-answers-${question}`).trigger("click", function () {
-                toggleTopQuestions()
-            });
-        });
+        $(`#answers-${question}`).load(window.location.href + ` #answers-${question}`);
       }
     });
   }
@@ -786,9 +777,7 @@ ul#menu li {
         data,
         success: function (data) {
 
-          $(`#upvotes-${answer}`).load(window.location.href + ` #upvotes-${answer}`, function () {
-              toggleTopQuestions()
-          });
+          $(`#upvotes-${answer}`).load(window.location.href + ` #upvotes-${answer}`);
         }
       });
     }
@@ -806,9 +795,7 @@ ul#menu li {
         url: "{{ url_for('upvote_question') }}",
         data,
         success: function (data) {
-          $(`#upvotes-${question}`).load(window.location.href + ` #upvotes-${question}`, function () {
-              toggleTopQuestions()
-          });
+          $(`#upvotes-${question}`).load(window.location.href + ` #upvotes-${question}`);
         }
       });
     }
@@ -840,13 +827,7 @@ ul#menu li {
             url: "{{ url_for('write_answer') }}",
             data,
             success: function (data) {
-              $(`#answers-container-${questionId}`).load(window.location.href + ` #answers-container-${questionId}`, function () {
-                  $(`#show-answers-${questionId}`).trigger("click", function () {
-                      toggleTopQuestions()
-                  });
-              });
-
-
+              $(`#answers-${questionId}`).load(window.location.href + ` #answers-${questionId}`);
             }
           });
       }

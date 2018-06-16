@@ -12,6 +12,8 @@ from urllib.parse import parse_qs, urlencode, urlparse
 
 import pafy
 
+from googleapiclient.errors import HttpError
+
 LENGTH_REQUIRED = 100
 THRESHOLD = 0.0
 
@@ -20,25 +22,26 @@ def get_youtube_id(link):
     params = parse_qs(url.query)
     return params['v'][0] if 'v' in params else None
 
-def transcribe(link, mode, is_playlist = False,youtube=None, transcription_classifier=None, error_on_failure=False, ):
-    try:
-        transcription = None
-        if mode == 'api':
-            transcription = read_from_youtube(link, youtube, is_playlist)
-        elif mode == 'scrape':
-            transcription = scrape(link)
+def transcribe(
+        mode='api',
+        video_id=None,
+        youtube_link=None,
+        youtube=None,
+        transcription_classifier=None,
+    ):
+    transcription = None
+    if mode == 'api':
+        transcription = read_from_youtube(
+            youtube, video_id=video_id, youtube_link=youtube_link
+        )
+    elif mode == 'scrape':
+        transcription = scrape(youtube_link)
 
-        preds = None
-        if transcription_classifier:
-            preds = list(classify(transcription, transcription_classifier))
+    preds = None
+    if transcription_classifier:
+        preds = list(classify(transcription, transcription_classifier))
 
-        return transcription, preds
-
-    except Exception as e:
-        if error_on_failure:
-            raise e
-        else:
-            return [], []
+    return transcription, preds
 
 def classify(transcription, transcription_classifier):
     curr_text = []
@@ -54,48 +57,48 @@ def classify(transcription, transcription_classifier):
             curr_text = []
     yield (None, (last, len(transcription) // 2 + 1))
 
-def read_from_youtube(link, youtube, is_playlist):
-    """ Gets the transcript from a youtube video
-    :param str link: Either a video id if the initial link was a playlist
-    or video link if a video link was passed in
-    :param youtube: Youtube API
-    :param boolean is_playlist: Tells if link passed in is an id or video link
-    based off if it came from a list of ids (playlist) or not
-    :return: A list of dictionaries used as the transcript for a video
-    """
-    if is_playlist:
-        video_id = link
-    else:
-        video_id = get_youtube_id(link)
+def read_from_youtube(youtube, video_id=None, youtube_link=None):
+    if not video_id:
+        if not youtube_link:
+            raise ValueError('Must specify either a video ID or a YouTube link')
+        else:
+            video_id = get_youtube_id(youtube_link)
     def get_caption_id(video_id):
         results = youtube.captions().list(
             part="snippet",
-            videoId= video_id
+            videoId=video_id
         ).execute()
         for item in results["items"]:
             return item["id"]
-    caption_id = get_caption_id(video_id)
-    tfmt = "ttml"
-    subtitle_html = youtube.captions().download(
-        id=caption_id,
-        tfmt=tfmt
-    ).execute()
-    soup = BeautifulSoup(subtitle_html, 'html.parser')
-    transcript = []
-    for p in soup.find_all('p'):
-        transcript.append({
-            'begin': p.get('begin'),
-            'end': p.get('end'),
-            'text': p.text,
-            'suggestions': {}
-        })
-    return transcript
+    try:
+        caption_id = get_caption_id(video_id)
+        tfmt = "ttml"
+        subtitle_html = youtube.captions().download(
+            id=caption_id,
+            tfmt=tfmt
+        ).execute()
+        soup = BeautifulSoup(subtitle_html, 'html.parser')
+        transcript = []
+        for p in soup.find_all('p'):
+            transcript.append({
+                'begin': p.get('begin'),
+                'end': p.get('end'),
+                'text': p.text,
+                'suggestions': {}
+            })
+        return transcript
+    except HttpError as e:
+        raise ValueError('Error retrieving the caption track')
 
-def get_video_duration(link):
-    return pafy.new(link).duration
+def get_video_duration(link_or_id):
+    pafy_video = pafy.new(link_or_id)
+    if pafy_video:
+        return pafy_video.duration
 
-def get_playlist_video_duration(links):
-    return [pafy.new(vid).duration for vid in links]
+def get_video_title(link_or_id):
+    pafy_video = pafy.new(link_or_id)
+    if pafy_video:
+        return pafy_video.title
 
 def scrape(link):
     try:
@@ -124,15 +127,6 @@ def scrape(link):
     except TimeoutException:
         driver.quit()
         return []
-
-def get_video_titles(video_id, youtube):
-    return pafy.new(video_id).title
-
-def get_playlist_titles(video_ids, youtube):
-    title_lst = []
-    for vid in video_ids:
-        title_lst.append(youtube.videos().list(part="snippet", id = vid).execute()["items"][0]["snippet"]["title"])
-    return title_lst
 
 def clean_link(link):
     res = link.split('?')
