@@ -45,8 +45,13 @@ API_SERVICE_NAME = 'youtube'
 API_VERSION = 'v3'
 
 logger = logging.getLogger('app_logger')
-logger.addHandler(logging.StreamHandler(stream=sys.stdout))
+sh = logging.StreamHandler(stream=sys.stdout)
+sh.setFormatter(
+    logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+)
+logger.addHandler(sh)
 logger.setLevel(logging.INFO)
+
 
 def create_client(app):
 
@@ -426,9 +431,9 @@ def create_client(app):
                                     titles.append(
                                         transcribe_utils.get_video_title(id)
                                     )
-                                except ValueError as e:
+                                except (ValueError, OSError) as e:
                                     playlist_success = False
-                                    flash('There was a problem with video {0} in the playlist'.format(i))
+                                    flash('There was a problem with video {0} in the playlist. Please make sure this video is not deleted or unavailable.'.format(i))
                                     break
                             if playlist_success:
                                 lecture.set('durations', durations)
@@ -448,7 +453,7 @@ def create_client(app):
                             lecture.set('video_title', title)
                             lecture.set('is_playlist', False)
                             success = True
-                        except ValueError as e:
+                        except (ValueError, OSError) as e:
                             flash('There was a problem with this video')
 
                 if success:
@@ -542,8 +547,11 @@ def create_client(app):
     @post_on_behalf_of(consts.STUDENT)
     def delete_question():
         role, data = get_role(request.form.get('class_ok_id'))
-        is_instructor = (role == consts.INSTRUCTOR)
-        Question.delete_question(request.form.to_dict(), db, is_instructor)
+        Question.delete_question(
+            request.form.to_dict(),
+            db,
+            has_clearance_for(role, consts.STAFF)
+        )
         logger.info("Successfully deleted question.")
         return jsonify(success=True), 200
 
@@ -551,8 +559,11 @@ def create_client(app):
     @post_on_behalf_of(consts.STUDENT)
     def edit_question():
         role, data = get_role(request.form.get('class_ok_id'))
-        is_instructor = (role == consts.INSTRUCTOR)
-        Question.edit_question(request.form.to_dict(), db, is_instructor)
+        Question.edit_question(
+            request.form.to_dict(),
+            db,
+            has_clearance_for(role, consts.STAFF)
+        )
         logger.info("Successfully edited question.")
         return jsonify(success=True), 200
 
@@ -574,8 +585,11 @@ def create_client(app):
     @post_on_behalf_of(consts.STUDENT)
     def delete_answer():
         role, data = get_role(request.form.get('class_ok_id'))
-        is_instructor = (role == consts.INSTRUCTOR)
-        Answer.delete_answer(request.form.to_dict(), db, is_instructor)
+        Answer.delete_answer(
+            request.form.to_dict(),
+            db,
+            has_clearance_for(role, consts.STAFF)
+        )
         logger.info("Successfully deleted answer.")
         return jsonify(success=True), 200
 
@@ -583,8 +597,11 @@ def create_client(app):
     @post_on_behalf_of(consts.STUDENT)
     def edit_answer():
         role, data = get_role(request.form.get('class_ok_id'))
-        is_instructor = (role == consts.INSTRUCTOR)
-        Answer.edit_answer(request.form.to_dict(), db, is_instructor)
+        Answer.edit_answer(
+            request.form.to_dict(),
+            db,
+            has_clearance_for(role, consts.STAFF)
+        )
         logger.info("Successfully edited answer.")
         return jsonify(success=True), 200
 
@@ -616,7 +633,7 @@ def create_client(app):
         return ret
 
     @app.template_filter('clearance_for')
-    def clearance_for(user_role, clearance_role):
+    def has_clearance_for(user_role, clearance_role):
         return consts.OK_ROLES.index(user_role) >= consts.OK_ROLES.index(clearance_role)
 
     @app.errorhandler(404)

@@ -286,11 +286,11 @@ class Question(DBObject):
         ).inserted_id
 
     @staticmethod
-    def edit_question(data, db, is_instructor):
+    def edit_question(data, db, has_clearance):
         edit = data['text']
         question_id = data['questionId']
         question = find_one_by_id(question_id, Question.collection, db)
-        if question and (is_instructor or question['user'] == data['user_id']):
+        if question and (has_clearance or question['user'] == data['user_id']):
             return db[Question.collection].update_one(
                 {'_id': ObjectId(data['questionId'])},
                 {
@@ -300,10 +300,10 @@ class Question(DBObject):
                 })
 
     @staticmethod
-    def delete_question(data, db, is_instructor):
+    def delete_question(data, db, has_clearance):
         question_id = data['question_id']
         question = find_one_by_id(question_id, Question.collection, db)
-        if question and (is_instructor or question['user'] == data['user_id']):
+        if question and (has_clearance or question['user'] == data['user_id']):
             return db[Question.collection].delete_one(
                 {'_id': ObjectId(question_id)}
             )
@@ -363,10 +363,10 @@ class Answer(DBObject):
         ).inserted_id
 
     @staticmethod
-    def edit_answer(data, db, is_instructor):
+    def edit_answer(data, db, has_clearance):
         edit = data['text']
         answer = find_one_by_id(data['answerId'], Answer.collection, db)
-        if answer and (is_instructor or answer['user'] == data['user_id']):
+        if answer and (has_clearance or answer['user'] == data['user_id']):
             return db[Answer.collection].update_one(
                 {'_id': ObjectId(data['answerId'])},
                 {
@@ -408,11 +408,11 @@ class Answer(DBObject):
             )
 
     @staticmethod
-    def delete_answer(data, db, is_instructor):
+    def delete_answer(data, db, has_clearance):
         answer_id = data['answer_id']
 
         answer = find_one_by_id(answer_id, Answer.collection, db)
-        if answer and (is_instructor or answer['user'] == data['user_id']):
+        if answer and (has_clearance or answer['user'] == data['user_id']):
             return db[Answer.collection].delete_one(
                 {'_id': ObjectId(answer_id)}
             )
