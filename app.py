@@ -530,8 +530,8 @@ def create_client(app):
                 if not playlist_number:
                     return redirect(url_for('error', code=404))
                 play_num = int(playlist_number)
-                video_info['video_id'] = lecture_obj["videos"][play_num]
-                video_info['num_videos'] = len(lecture_obj['videos'])
+                video_info['video_id'] = lecture_obj['youtube_video_ids'][play_num]
+                video_info['num_videos'] = len(lecture_obj['youtube_video_ids'])
             else:
                 video_info['video_id'] = transcribe_utils.get_youtube_id(lecture_obj['link'])
                 video_info['num_videos'] = 1
