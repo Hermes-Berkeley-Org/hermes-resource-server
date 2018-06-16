@@ -3,82 +3,76 @@
 {% block head %}{{ super() }}{% endblock %}
 {% block content %}
 <div class="wrapper text-primary">
-  <table class = "classtable">
-    <tr>
-    <th class = "classsections">
-    <h4 style = "margin-top: -60px">{{info['display_name']}}</h4>
-    <table class ="lecture_table" id = "lec_table">
-      <tr>
-        <th style = "margin-top: -80px">Lecture</th>
-        <th "margin-top: -80px">Date Posted</th>
-        {% if role == consts.INSTRUCTOR %}
-          <th></th>
-          <th></th>
-        {% endif %}
-      </tr>
-      {% for lec in lectures %}
-        <tr id = lecture-{{lec['_id']}} class="lec-row">
-          {% if lec['is_playlist'] %}
-          <a id="show-playlist-{{lec['_id']}}" data-toggle="collapse" onclick="toggleResponses('toggle-icon-{{lec['_id']}}')" data-target="#playlist-{{lec['_id']}}">
-            <p><span class="fa fa-chevron-down qa-entry" id="toggle-icon-{{lec['_id']}}" aria-hidden="true"></span></a>
-            <td><a href={{ url_for('lecture', cls=lec['cls'], lecture_number=lec['lecture_number'], playlist_number=0)}}>{{ lec['name'] }}</a></td>
-          {% else %}
-            <td><a href={{ url_for('lecture', cls=lec['cls'], lecture_number=lec['lecture_number'])}}>{{ lec['name'] }}</a></td>
-          {% endif %}
-          &nbsp; &nbsp;
-          <td>{{lec['date']}}</td>
-          {% if role == consts.INSTRUCTOR %}
-            {% if lec['is_playlist'] %}
-              <td><a href={{ url_for('edit_lecture', cls = lec['cls'], lecture_number = lec['lecture_number'], playlist_number=0) }}><i class="fa fa-pencil" aria-hidden="true"></i></a></td>
-            {% else %}
-              <td><a href={{ url_for('edit_lecture', cls = lec['cls'], lecture_number = lec['lecture_number']) }}><i class="fa fa-pencil" aria-hidden="true"></i></a></td>
-            {% endif %}
-            <td><i class="fa fa-close" style="color:red" type=submit onclick="deleteLecture('{{lec['_id']}}')"></i></td>
-          {% endif %}
+  <div class="row classtable">
+    <div class="col-md-6">
+      <h4>{{info['display_name']}}</h4>
+      <div id="lec_table">
+        <div class="row" id="lec_table_header">
+          <div class="col-md-1"></div>
+          <div class="col-md-6">Lecture</div>
+          <div class="col-md-4">Date Posted</div>
+          <div class="col-md-1"></div>
         </div>
-        </tr>
-        {% if lec['playlist'] %}
-        <td><div id="playlist-{{lec['_id']}}" class="collapse">
-          <div class="dropdown show">
-      <a class="btn btn-secondary dropdown-toggle" href="#" role="button" id="dropdownMenuLink" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-        Dropdown link</td>
-      </a>
-
-      <div class="dropdown-menu" aria-labelledby="dropdownMenuLink">
-        <a class="dropdown-item" href="#">Action</a>
-        <a class="dropdown-item" href="#">Another action</a>
-        <a class="dropdown-item" href="#">Something else here</a>
+        <div id="lecture-list">
+          {% for lec in lectures %}
+            {% if loop.index % 2 == 0 %}
+            <div class="row lec-row gray-row" id="lecture-{{lec['_id']}}">
+            {% else %}
+            <div class="row lec-row" id="lecture-{{lec['_id']}}">
+            {% endif %}
+              {% if lec['is_playlist'] %}
+                <div class="col-md-1">
+                  <a id="show-videos-{{lec['_id']}}" data-toggle="collapse" onclick="toggleVideos('toggle-icon-{{lec['_id']}}')" data-target="#playlists-{{lec['_id']}}">
+                  <span class="fa fa-chevron-down qa-entry" aria-hidden="true" id="toggle-icon-{{lec['_id']}}"></span></a>
+                </div>
+                <div class="col-md-6">
+                  <a href={{ url_for('lecture', cls=lec['cls'], lecture_number=lec['lecture_number'], playlist_number="0")}}>{{ lec['name'] }}</a>
+                </div>
+              {% else %}
+                <div class="col-md-6 offset-md-1"><a href={{ url_for('lecture', cls=lec['cls'], lecture_number=lec['lecture_number'])}}>{{ lec['name'] }}</a></div>
+              {% endif %}
+              <div class="col-md-4">{{lec['date']}}</div>
+              {% if role == consts.INSTRUCTOR %}
+                <div class="col-md-1"><i class="fa fa-close" style="color:red" type=submit onclick="deleteLecture('{{lec['_id']}}')"></i></div>
+              {% endif %}
+            </div>
+            {% if lec['is_playlist'] %}
+            <div class="row extra-content collapse" id="playlists-{{lec['_id']}}">
+              <div class="col-md-6 offset-md-1">
+                {% for video in range(lec['videos']|length) %}
+                  <a href={{ url_for('lecture', cls=lec['cls'], lecture_number=lec['lecture_number'], playlist_number= video) }}>Lecture Video {{ video + 1 }}</a>
+                  {% if not loop.last %}
+                    <br>
+                  {% endif %}
+                {% endfor %}
+              </div>
+            </div>
+          {% endif %}
+          {% endfor %}
+        </div>
       </div>
     </div>
+    <div class="col-md-6">
+        {% if role == consts.INSTRUCTOR %}
+          <form action="" method="post">
+              <h4>Create a Lecture</h4>
+              {{ form.csrf }}
+              <p>Lecture Title {{ form.title }}</p>
+              <p>Lecture Date {{ form.date }}</p>
+              <p>Youtube Lecture/Playlist Link {{ form.link }}</p>
+              <p id="submit">{{ form.submit() }}</p>
+          </form>
         {% endif %}
-      {% endfor %}
-      <div class="btn-group">
-</div>
-    </table>
-  </th>
-  <th class = "classsections" style = "margin-top: -80px">
-    {% if role == consts.INSTRUCTOR %}
-      <form action="" method="post">
-          <h4>Create a Lecture</h4>
-          {{ form.csrf }}
-          <p>Lecture Title {{ form.title }}</p>
-          <p>Lecture Date {{ form.date }}</p>
-          <p>Youtube Lecture/Playlist Link {{ form.link }}</p>
-          <p id="submit">{{ form.submit() }}</p>
-      </form>
-    {% endif %}
-    {% with messages = get_flashed_messages() %}
-      {% if messages %}
-        <ul class=flashes>
-        {% for message in messages %}
-          <li class="flash">{{ message }}</li>
-        {% endfor %}
-        </ul>
-      {% endif %}
-    {% endwith %}
-  </th>
-  </tr>
-  </table>
+        {% with messages = get_flashed_messages() %}
+          {% if messages %}
+            <ul class=flashes>
+            {% for message in messages %}
+              <li class="flash">{{ message }}</li>
+            {% endfor %}
+            </ul>
+          {% endif %}
+        {% endwith %}
+    </div>
 
 </div>
 
@@ -116,6 +110,19 @@
         if (openDropdown.classList.contains('show')) {
           openDropdown.classList.remove('show');
         }
+      }
+    }
+  }
+
+  function toggleVideos(buttonId) {
+    elem = document.getElementById(buttonId);
+    if (elem) {
+      if (elem.classList.contains('fa-chevron-down')) {
+        elem.classList.remove('fa-chevron-down');
+        elem.classList.add('fa-chevron-up');
+      } else {
+        elem.classList.remove('fa-chevron-up');
+        elem.classList.add('fa-chevron-down');
       }
     }
   }
