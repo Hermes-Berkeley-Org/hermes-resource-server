@@ -214,7 +214,8 @@
                choice4: choices[3],
                lecture_id: "{{ lecture }}",
                playlist_number: "{{ playlist_number }}",
-               api_key: "{{ api_key }}"
+               user_id: '{{ user["_id"] }}',
+               class_ok_id: '{{ cls }}'
             }
 
             console.log(`${JSON.stringify(data)}`);
@@ -240,7 +241,8 @@
     function deleteVitamin(vitamin) {
         var data = {
           vitamin_id: vitamin,
-          api_key: "{{ api_key }}"
+          user_id: '{{ user["_id"] }}',
+          class_ok_id: '{{ cls }}'
         }
 
         $.ajax({
