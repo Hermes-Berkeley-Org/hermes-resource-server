@@ -269,9 +269,9 @@ def create_client(app):
     def home():
         user = get_user_data()
         def class_exists(participation):
-            return db[Class.collection].find({'ok_id': participation['course']['id']}).count() > 0
+            return db[Class.collection].find({'ok_id': participation['id']}).count() > 0
         def class_is_active(participation):
-            return db[Class.collection].find({'ok_id': participation['course']['id']}).count() > 0
+            return db[Class.collection].find({'ok_id': participation['id']}).count()> 0
         def is_instructor(participation):
             return participation['role'] == consts.INSTRUCTOR
         if user:
@@ -282,7 +282,7 @@ def create_client(app):
                 admin_inactive_classes = []
                 valid_student_inactive_classes = []
                 for cls in classes:
-                    exists = class_exists(cls)
+                    exists = class_exists(cls['course'])
                     active = cls['course']['active']
                     cls['class_exists'] = exists
                     if is_instructor(cls) and active:
@@ -293,10 +293,6 @@ def create_client(app):
                         valid_student_active_classes.append(cls)
                     elif not is_instructor(cls) and not active and exists:
                         valid_student_inactive_classes.append(cls)
-                print(admin_inactive_classes)
-                print(admin_active_classes)
-                print(valid_student_active_classes)
-                print(valid_student_inactive_classes)
                 return render_template(
                     'home.html',
                     user=user,
@@ -376,9 +372,9 @@ def create_client(app):
     def get_role(class_ok_id, user_id=None):
         user = get_user_data(user_id=user_id)
         if user:
-            for participation in user['classes']:
-                if participation['ok_id'] == int(class_ok_id):
-                    return participation['role'], participation
+            for participation in get_updated_user_classes():
+                if participation['course']['id'] == int(class_ok_id):
+                    return participation['role'], participation['course']
         return None, None
 
     @app.route('/class/<class_ok_id>', methods=['GET', 'POST'])
