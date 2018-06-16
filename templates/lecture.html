@@ -36,9 +36,9 @@ ul#menu li {
       {% endif %}
       {% for lec in range(video_info['num_videos']) %}
       {% if playlist_number|int == lec|int %}
-        <b><u><font size ="2" color="black"> {{lec}}. {{lecture['vid_title'][lec]}}</font></u></b>
+        <b><u><font size ="2" color="black"> {{lec}}. {{lecture['video_titles'][lec]}}</font></u></b>
       {% else %}
-        <font size ="2"><a href={{ url_for('lecture', cls=cls['ok_id'], lecture_number=lecture['lecture_number'], playlist_number= lec) }}>{{lec}}. {{lecture['vid_title'][lec]}}</a></font>
+        <font size ="2"><a href={{ url_for('lecture', cls=cls['ok_id'], lecture_number=lecture['lecture_number'], playlist_number= lec) }}>{{lec}}. {{lecture['video_titles'][lec]}}</a></font>
       {% endif %}
       {% endfor %}
       {% if playlist_number|int < (video_info['num_videos'] - 1)|int %}
@@ -528,7 +528,7 @@ ul#menu li {
                 {% endfor %}
                 document.getElementById('black-transparent-screen').classList.add('show');
                 document.getElementById('vitamin-problem').classList.add('show');
-              } 
+              }
           {% endfor %}
       }, 1000);
 
@@ -578,7 +578,7 @@ ul#menu li {
     }
     if (allCorrect) {
         removeForm();
-    } 
+    }
   }
 
   function stateChange() {
