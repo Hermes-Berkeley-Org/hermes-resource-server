@@ -73,10 +73,6 @@ th {
 	padding-left: 5px; */
 }
 
-.classsections {
-	width:50%;
-}
-
 .classtable {
 	width: 100%;
 	margin-bottom: 3px;
@@ -84,18 +80,32 @@ th {
 	text-align: center;
 }
 
-#lec_table th {
+
+#lec_table #lec_table_header {
 	font-size: 1.5em;
 	color: white;
 	background-color: #18BC9C;
+	font-weight: bold;
+	margin-left: 0px;
+	margin-right: 0px;
 }
 
-#lec_table tr:nth-child(odd) {
+#lec_table #lecture-list {
+	overflow-y: auto;
+	height: 60vh;
+	width: 100%;
+}
+
+#lec_table #lecture-list .lec-row.gray-row {
 	background-color: #eee;
 }
 
-#lec_table tr.lec-row:hover {
+#lec_table #lecture-list .lec-row:hover {
 	background: #fefbd8;
+}
+
+#lec_table #lecture-list .extra-content {
+	background: rgb(24, 188, 156, 0.1);
 }
 
 #transcript {
