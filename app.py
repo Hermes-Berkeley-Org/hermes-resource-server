@@ -473,6 +473,7 @@ def create_client(app):
         cls_obj = db['Classes'].find_one({'ok_id': int(cls)})
         class_ok_id = cls_obj["ok_id"]
         lecture_obj = db['Lectures'].find_one({'cls': cls_obj, 'lecture_number': int(lecture_number)})
+        user = get_user_data()
         role, data = get_role(class_ok_id)
         if role == consts.INSTRUCTOR:
             lecture_obj = db['Lectures'].find_one({'cls': cls, 'lecture_number': int(lecture_number)})
@@ -488,6 +489,7 @@ def create_client(app):
             return render_template(
                 'edit_lecture.html',
                 id = id,
+                user=user,
                 cls_name = cls_obj['display_name'],
                 cls_num = cls,
                 lecture = str(lecture_obj['_id']),
@@ -604,30 +606,18 @@ def create_client(app):
         return jsonify(success=True), 200
 
     @app.route('/add_vitamin', methods=['GET', 'POST'])
+    @post_on_behalf_of(consts.INSTRUCTOR)
     def add_vitamin():
-        if request.method == 'POST':
-            if request.form['api_key'] == app.config['HERMES_API_KEY']:
-                Vitamin.add_vitamin(request.form.to_dict(), db)
-                logger.info("Successfully added vitamin.")
-                return jsonify(success=True), 200
-            else:
-                return jsonify(success=False), 403
-        else:
-            logger.info("Illegal request type: %s", request.method)
-            return redirect(url_for('error', code=500))
+        Vitamin.add_vitamin(request.form.to_dict(), db)
+        logger.info("Successfully added vitamin.")
+        return jsonify(success=True), 200
 
     @app.route('/delete_vitamin', methods=['GET', 'POST'])
+    @post_on_behalf_of(consts.INSTRUCTOR)
     def delete_vitamin():
-        if request.method == 'POST':
-            if request.form['api_key'] == app.config['HERMES_API_KEY']:
-                Vitamin.delete_vitamin(request.form.to_dict(), db)
-                logger.info("Successfully deleted vitamin.")
-                return jsonify(success=True), 200
-            else:
-                return jsonify(success=False), 403
-        else:
-            logger.info("Illegal request type: %s", request.method)
-            return redirect(url_for('error', code=500))
+        Vitamin.delete_vitamin(request.form.to_dict(), db)
+        logger.info("Successfully deleted vitamin.")
+        return jsonify(success=True), 200
 
     @app.template_filter('exclude')
     def exclude(lst, excl):
