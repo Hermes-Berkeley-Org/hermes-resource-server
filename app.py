@@ -270,8 +270,6 @@ def create_client(app):
         user = get_user_data()
         def class_exists(participation):
             return db[Class.collection].find({'ok_id': participation['id']}).count() > 0
-        def class_is_active(participation):
-            return db[Class.collection].find({'ok_id': participation['id']}).count()> 0
         def is_instructor(participation):
             return participation['role'] == consts.INSTRUCTOR
         if user:
@@ -296,10 +294,10 @@ def create_client(app):
                 return render_template(
                     'home.html',
                     user=user,
-                    admin_active_classes = admin_active_classes,
-                    valid_student_active_classes = valid_student_active_classes,
-                    admin_inactive_classes = admin_inactive_classes,
-                    valid_student_inactive_classes = valid_student_inactive_classes,
+                    admin_active_classes=admin_active_classes,
+                    valid_student_active_classes=valid_student_active_classes,
+                    admin_inactive_classes=admin_inactive_classes,
+                    valid_student_inactive_classes=valid_student_inactive_classes,
                 )
         logger.info("Displaying home.")
         return redirect(url_for('index'))
