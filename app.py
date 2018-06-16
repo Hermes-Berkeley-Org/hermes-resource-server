@@ -1,7 +1,7 @@
 from flask import Flask
 from flask import render_template, request, redirect, url_for, flash, session, jsonify
 from pymongo import MongoClient
-import os
+import sys, os
 from config import Config
 
 from datetime import datetime
@@ -11,14 +11,13 @@ from bson.objectid import ObjectId
 import logging
 
 from utils.webpage_utils import CreateLectureForm, CreateClassForm
-from utils import db_utils, app_utils
+from utils import db_utils, app_utils, transcribe_utils
 from utils.db_utils import User, Class, Lecture, Note, Question, Answer, Vitamin
-from utils.transcribe_utils import transcribe, get_youtube_id, get_video_duration, get_video_titles, get_playlist_titles, get_playlist_video_duration
 from utils.textbook_utils import CLASSIFIERS
 
 import consts
 
-import urllib.parse
+from urllib.parse import urlparse, parse_qs
 from werkzeug import security
 from flask_oauthlib.client import OAuth
 
@@ -27,6 +26,9 @@ from functools import wraps
 import google.oauth2.credentials
 import google_auth_oauthlib.flow
 import googleapiclient.discovery
+
+from google.auth.exceptions import RefreshError
+from requests.exceptions import RequestException
 
 import requests
 
@@ -43,7 +45,13 @@ API_SERVICE_NAME = 'youtube'
 API_VERSION = 'v3'
 
 logger = logging.getLogger('app_logger')
+sh = logging.StreamHandler(stream=sys.stdout)
+sh.setFormatter(
+    logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+)
+logger.addHandler(sh)
 logger.setLevel(logging.INFO)
+
 
 def create_client(app):
 
@@ -293,7 +301,7 @@ def create_client(app):
             preds = lecture_obj.get('preds')
             if not preds:
                 preds = [(None, [0, len(lecture_obj['transcript']) // 2 + 1])]
-            video_info['video_id'] = get_youtube_id(lecture_obj['link'])
+            video_info['video_id'] = transcribe_utils.get_youtube_id(lecture_obj['link'])
             transcript = lecture_obj['transcript']
             video_info['partition_titles'] = list(
                 app_utils.generate_partition_titles(
@@ -305,20 +313,22 @@ def create_client(app):
             video_info['num_videos'] = 1
         else:
             play_num = int(playlist_number)
-            link = "https://www.youtube.com/watch?v=" + lecture_obj["videos"][play_num]
+            link = "https://www.youtube.com/watch?v={0}".format(
+                lecture_obj['youtube_video_ids'][play_num]
+            )
             preds = lecture_obj.get('preds')[play_num]
             if not preds:
                 preds = [(None, [0, len(lecture_obj['transcript'][play_num]) // 2 + 1])]
-            video_info['video_id'] = get_youtube_id(link)
-            transcript = lecture_obj['transcript'][play_num]
+            video_info['video_id'] = transcribe_utils.get_youtube_id(link)
+            transcript = lecture_obj['transcripts'][play_num]
             video_info['partition_titles'] = list(
                 app_utils.generate_partition_titles(
-                    lecture_obj['duration'][play_num],
+                    lecture_obj['durations'][play_num],
                     questions_interval
                 )
             )
-            video_info['duration'] = lecture_obj['duration'][play_num]
-            video_info['num_videos'] = len(lecture_obj['videos'])
+            video_info['duration'] = lecture_obj['durations'][play_num]
+            video_info['num_videos'] = len(lecture_obj['youtube_video_ids'])
         vitamins = db['Vitamins'].find({'$and':[{'lecture_id': str(lecture_obj["_id"])}, {'playlist_number': str(playlist_number)}]})
         if lecture_obj and cls_obj:
             logger.info("Displaying lecture.")
@@ -373,11 +383,11 @@ def create_client(app):
                 youtube = googleapiclient.discovery.build(
                     API_SERVICE_NAME, API_VERSION, credentials=credentials, cache_discovery=False)
                 try:
-                    test_response = youtube.search().list(
+                    youtube.search().list(
                         q='test',
                         part='id,snippet'
                     ).execute()
-                except:
+                except RefreshError as e:
                     return redirect(url_for('google_authorize', class_ok_id=class_ok_id))
 
         if request.method == 'POST':
@@ -385,80 +395,116 @@ def create_client(app):
                 logger.info("Error: user access level is %s", role)
                 redirect(url_for('error', code=403))
             if form.validate():
-                num_lectures = len(cls['lectures'])
                 ses = requests.Session()
-                url = ses.head(request.form["link"], allow_redirects=True).url
-                if "list=" in url:
-                    is_playlist = True
-                    youtube_id = url.split("list=")[1]
-                    youtube_id = youtube_id.split("&")[0]
-                    logger.info("youtube_id " + youtube_id)
-                    youtube_vids=youtube.playlistItems().list(
-                        part='contentDetails',
-                        maxResults=25,
-                        playlistId= youtube_id
-                    ).execute()
-                    youtube_vid= [vid["contentDetails"]["videoId"] for vid in youtube_vids["items"]]
-                    duration = get_playlist_video_duration(youtube_vid)
-                    title = get_playlist_titles(youtube_vid, youtube)
-                elif "v=" in url:
-                    youtube_vid= request.form['link']
-                    is_playlist = False
-                    duration = get_video_duration(youtube_vid)
-                    title = get_video_titles(youtube_vid, youtube)
-                else:
-                    logger.info("Enter a valid link")
-                    redirect(url_for('error', code=403))
+
+                success = False
+
+                try:
+                    url = ses.head(request.form["link"], allow_redirects=True).url
+                    params = parse_qs(urlparse(url).query)
+                except RequestException as e:
+                    flash('Please enter a valid URL')
+
                 lecture = Lecture(
                     name=request.form['title'],
                     url_name=db_utils.encode_url(request.form['title']),
                     date=request.form['date'],
                     link=request.form['link'],
-                    lecture_number=num_lectures,
-                    is_playlist= is_playlist,
-                    duration=duration,
+                    lecture_number=len(cls['lectures']),
                     cls=class_ok_id,
-                    videos = youtube_vid,
-                    vid_title = title
                 )
-                id = Class.add_lecture(cls, lecture, db)
 
-                ts_classifier = None
-                if cls['display_name'] in CLASSIFIERS:
-                    ts_classifier = CLASSIFIERS[cls['display_name']](db, cls['ok_id'])
-                if(not is_playlist):
-                    transcript, preds = transcribe(
-                        request.form['link'],
-                        app.config['TRANSCRIPTION_MODE'],
-                        is_playlist = False,
-                        youtube=youtube,
-                        transcription_classifier=ts_classifier,
-                        error_on_failure=True
-                    )
-                    Lecture.add_transcript(id, transcript, preds, db)
-                else:
-                    transcript_lst = []
-                    preds_lst = []
-                    for vid in youtube_vid:
-                        transcript, preds = transcribe(
-                            vid,
-                            app.config['TRANSCRIPTION_MODE'],
-                            is_playlist = True,
-                            youtube=youtube,
-                            transcription_classifier=ts_classifier,
-                            error_on_failure = True
-                        )
-                        transcript_lst.append(transcript)
-                        preds_lst.append(preds)
-                    Lecture.add_transcript(id, transcript_lst, preds_lst, db)
+                if url and params:
+                    if 'list' in params and len(params['list']) > 0:
+                        youtube_id = params['list'][0]
+                        youtube_vids = youtube.playlistItems().list(
+                            part='contentDetails',
+                            maxResults=25,
+                            playlistId = youtube_id
+                        ).execute()
+                        playlist_items = youtube_vids.get('items')
+                        if playlist_items:
+                            youtube_ids = [vid["contentDetails"]["videoId"] for vid in playlist_items]
+                            durations = []
+                            titles = []
+                            playlist_success = True
+                            for i, id in enumerate(youtube_ids):
+                                try:
+                                    durations.append(
+                                        transcribe_utils.get_video_duration(id)
+                                    )
+                                    titles.append(
+                                        transcribe_utils.get_video_title(id)
+                                    )
+                                except (ValueError, OSError) as e:
+                                    playlist_success = False
+                                    flash('There was a problem with video {0} in the playlist. Please make sure this video is not deleted or unavailable.'.format(i))
+                                    break
+                            if playlist_success:
+                                lecture.set('durations', durations)
+                                lecture.set('youtube_video_ids', youtube_ids)
+                                lecture.set('video_titles', titles)
+                                lecture.set('is_playlist', True)
+                                success = True
+                        else:
+                            flash('Something went wrong. Please try again later.')
+                    elif 'v' in params and len(params['v']) > 0:
+                        youtube_link = request.form['link']
+                        try:
+                            duration = transcribe_utils.get_video_duration(youtube_link)
+                            title = transcribe_utils.get_video_title(youtube_link)
+                            lecture.set('duration', duration)
+                            lecture.set('youtube_video_link', youtube_link)
+                            lecture.set('video_title', title)
+                            lecture.set('is_playlist', False)
+                            success = True
+                        except (ValueError, OSError) as e:
+                            flash('There was a problem with this video')
 
+                if success:
+                    ts_classifier = None
+                    if cls['display_name'] in CLASSIFIERS:
+                        ts_classifier = CLASSIFIERS[cls['display_name']](db, cls['ok_id'])
 
+                    if not lecture.get('is_playlist'):
+                        try:
+                            transcript, preds = transcribe_utils.transcribe(
+                                mode=app.config['TRANSCRIPTION_MODE'],
+                                youtube_link=request.form['link'],
+                                youtube=youtube,
+                                transcription_classifier=ts_classifier,
+                            )
+                            id = Class.add_lecture(cls, lecture, db)
+                            Lecture.add_transcript(id, transcript, preds, db)
+                        except ValueError as e:
+                            flash('There was a problem retrieving the caption track for this video. {0}'.format(consts.NO_CAPTION_TRACK_MESSAGE))
+                    else:
+                        transcript_lst = []
+                        preds_lst = []
+                        playlist_captions_success = True
+                        for i, youtube_id in enumerate(lecture.get('youtube_video_ids') or []):
+                            try:
+                                transcript, preds = transcribe_utils.transcribe(
+                                    mode=app.config['TRANSCRIPTION_MODE'],
+                                    video_id=youtube_id,
+                                    youtube=youtube,
+                                    transcription_classifier=ts_classifier,
+                                )
+                                transcript_lst.append(transcript)
+                                preds_lst.append(preds)
+                            except ValueError as e:
+                                flash('There was a problem retrieving the caption track for video {0}. {1}'.format(i, consts.NO_CAPTION_TRACK_MESSAGE))
+                                playlist_captions_success = False
+                                break
+                        if playlist_captions_success:
+                            id = Class.add_lecture(cls, lecture, db)
+                            Lecture.add_transcripts(id, transcript_lst, preds_lst, db)
             else:
                 flash('All fields required')
         return render_template(
             'class.html',
             info=cls,
-            lectures=db['Lectures'].find({'cls': class_ok_id}),
+            lectures=db['Lectures'].find({'cls': class_ok_id}).sort([('date', 1)]),
             form=form,
             user=user,
             role=role,
@@ -481,10 +527,10 @@ def create_client(app):
             if playlist_number:
                 play_num = int(playlist_number)
                 link = "https://www.youtube.com/watch?v=" + lecture_obj["videos"][play_num]
-                id = get_youtube_id(link)
+                id = transcribe_utils.get_youtube_id(link)
                 num_videos = len(lecture_obj['videos'])
             else:
-                id = get_youtube_id(lecture_obj['link'])
+                id = transcribe_utils.get_youtube_id(lecture_obj['link'])
                 num_videos = 1
             return render_template(
                 'edit_lecture.html',
@@ -545,8 +591,11 @@ def create_client(app):
     @post_on_behalf_of(consts.STUDENT)
     def delete_question():
         role, data = get_role(request.form.get('class_ok_id'))
-        is_instructor = (role == consts.INSTRUCTOR)
-        Question.delete_question(request.form.to_dict(), db, is_instructor)
+        Question.delete_question(
+            request.form.to_dict(),
+            db,
+            has_clearance_for(role, consts.STAFF)
+        )
         logger.info("Successfully deleted question.")
         return jsonify(success=True), 200
 
@@ -554,8 +603,11 @@ def create_client(app):
     @post_on_behalf_of(consts.STUDENT)
     def edit_question():
         role, data = get_role(request.form.get('class_ok_id'))
-        is_instructor = (role == consts.INSTRUCTOR)
-        Question.edit_question(request.form.to_dict(), db, is_instructor)
+        Question.edit_question(
+            request.form.to_dict(),
+            db,
+            has_clearance_for(role, consts.STAFF)
+        )
         logger.info("Successfully edited question.")
         return jsonify(success=True), 200
 
@@ -577,8 +629,11 @@ def create_client(app):
     @post_on_behalf_of(consts.STUDENT)
     def delete_answer():
         role, data = get_role(request.form.get('class_ok_id'))
-        is_instructor = (role == consts.INSTRUCTOR)
-        Answer.delete_answer(request.form.to_dict(), db, is_instructor)
+        Answer.delete_answer(
+            request.form.to_dict(),
+            db,
+            has_clearance_for(role, consts.STAFF)
+        )
         logger.info("Successfully deleted answer.")
         return jsonify(success=True), 200
 
@@ -586,8 +641,11 @@ def create_client(app):
     @post_on_behalf_of(consts.STUDENT)
     def edit_answer():
         role, data = get_role(request.form.get('class_ok_id'))
-        is_instructor = (role == consts.INSTRUCTOR)
-        Answer.edit_answer(request.form.to_dict(), db, is_instructor)
+        Answer.edit_answer(
+            request.form.to_dict(),
+            db,
+            has_clearance_for(role, consts.STAFF)
+        )
         logger.info("Successfully edited answer.")
         return jsonify(success=True), 200
 
@@ -631,6 +689,10 @@ def create_client(app):
             if flag:
                 ret.append(elem)
         return ret
+
+    @app.template_filter('clearance_for')
+    def has_clearance_for(user_role, clearance_role):
+        return consts.OK_ROLES.index(user_role) >= consts.OK_ROLES.index(clearance_role)
 
     @app.errorhandler(404)
     def page_not_found(e):

@@ -89,6 +89,7 @@ section#questions_table div:after {
 }
 
 .qa-entry-lg {
+  line-height: 16px;
   font-size: 14px;
 }
 
@@ -98,6 +99,7 @@ section#questions_table div:after {
 }
 
 .qa-entry {
+  line-height: 14px;
   font-size: 12px;
 }
 

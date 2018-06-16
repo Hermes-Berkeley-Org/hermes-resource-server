@@ -162,3 +162,14 @@ ul.dropdown-menu li:hover {
 .input-reduce-padding {
 	padding: 1px 3px;
 }
+
+.yt-wrapper {
+  width: 100%;
+  position: relative;
+}
+
+.flash {
+	list-style-type: none;
+	color: #ff0000;
+	font-size: 12px
+}

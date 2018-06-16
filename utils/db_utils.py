@@ -199,6 +199,21 @@ class Lecture(DBObject):
         )
 
     @staticmethod
+    def add_transcripts(lecture_id, transcripts, preds, db):
+        db[Lecture.collection].update_one(
+            {
+              '_id': lecture_id
+            },
+            {
+              '$set': {
+                'transcripts': transcripts,
+                'preds': preds
+              }
+            },
+            upsert=False
+        )
+
+    @staticmethod
     def suggest_transcript(data, db):
         lecture = find_one_by_id(data['lecture_id'], Lecture.collection, db)
         def replace_transcript_elem(lecture, index, text, user_id):
@@ -209,8 +224,8 @@ class Lecture(DBObject):
                 best_suggestion, most_votes = max(suggestions.items(), key=itemgetter(1))
                 if most_votes > TRANSCRIPT_SUGGESTIONS_NECESSARY:
                     transcript_elem['text'] = best_suggestion
-            is_playlist = data['playlist_number'] != 'None'
-            transcripts = [lecture['transcript']] if not is_playlist else lecture['transcript']
+            is_playlist = lecture['is_playlist']
+            transcripts = lecture.get('transcripts') or [lecture['transcript']]
             playlist_number = int(data['playlist_number']) if is_playlist else 0
             transcript = transcripts[playlist_number]
             transcript_elem = transcript[index]
@@ -340,11 +355,11 @@ class Question(DBObject):
         ).inserted_id
 
     @staticmethod
-    def edit_question(data, db, is_instructor):
+    def edit_question(data, db, has_clearance):
         edit = data['text']
         question_id = data['questionId']
         question = find_one_by_id(question_id, Question.collection, db)
-        if question and (is_instructor or question['user'] == data['user_id']):
+        if question and (has_clearance or question['user'] == data['user_id']):
             return db[Question.collection].update_one(
                 {'_id': ObjectId(data['questionId'])},
                 {
@@ -354,7 +369,7 @@ class Question(DBObject):
                 })
 
     @staticmethod
-    def delete_question(data, db, is_instructor):
+    def delete_question(data, db, has_clearance):
         question_id = data['question_id']
         answers = db[Answer.collection].find(
             {
@@ -366,7 +381,7 @@ class Question(DBObject):
             answer_data["answer_id"] = answer["_id"]
             Answer.delete_answer(answer_data, db, True)
         question = find_one_by_id(question_id, Question.collection, db)
-        if question and (is_instructor or question['user'] == data['user_id']):
+        if question and (has_clearance or question['user'] == data['user_id']):
             return db[Question.collection].delete_one(
                 {'_id': ObjectId(question_id)}
             )
@@ -426,10 +441,10 @@ class Answer(DBObject):
         ).inserted_id
 
     @staticmethod
-    def edit_answer(data, db, is_instructor):
+    def edit_answer(data, db, has_clearance):
         edit = data['text']
         answer = find_one_by_id(data['answerId'], Answer.collection, db)
-        if answer and (is_instructor or answer['user'] == data['user_id']):
+        if answer and (has_clearance or answer['user'] == data['user_id']):
             return db[Answer.collection].update_one(
                 {'_id': ObjectId(data['answerId'])},
                 {
@@ -471,10 +486,10 @@ class Answer(DBObject):
             )
 
     @staticmethod
-    def delete_answer(data, db, is_instructor):
+    def delete_answer(data, db, has_clearance):
         answer_id = data['answer_id']
         answer = find_one_by_id(answer_id, Answer.collection, db)
-        if answer and (is_instructor or answer['user'] == data['user_id']):
+        if answer and (has_clearance or answer['user'] == data['user_id']):
             return db[Answer.collection].delete_one(
                 {'_id': ObjectId(answer_id)}
             )
