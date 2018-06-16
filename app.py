@@ -494,7 +494,7 @@ def create_client(app):
         return render_template(
             'class.html',
             info=cls,
-            lectures=db['Lectures'].find({'cls': class_ok_id}),
+            lectures=db['Lectures'].find({'cls': class_ok_id}).sort([('date', 1)]),
             form=form,
             user=user,
             role=role,
