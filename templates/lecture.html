@@ -106,13 +106,13 @@ ul#menu li {
                       <i class="fa fa-thumbs-o-up" aria-hidden="true"></i> Like <span id = "upvotes-{{question['_id']}}-count" class = "notclicked"> {{ question['upvotes']|length }}</span>
                       {% endif %}
                   </button></span>
-                {% if question['anon'] == "true" and role == consts.STUDENT %}
+                {% if question['anon'] == "true" and user['role'] == consts.STUDENT %}
                   <span class="question-tag-lg"> Anonymous {{question['timestamp']}}</span>
                 {% else %}
                   <span class="question-tag-lg"> {{question['name']}} {{question['timestamp']}}</span>
                 {% endif %}
                 <span class="qa-entry-lg" id = "question-text-{{question['_id']}}"> {{question['text']}}
-                {% if question['ok_id'] == user['ok_id'] or role == consts.INSTRUCTOR %}
+                {% if question['ok_id'] == user['ok_id'] or user['role']|clearance_for(consts.STAFF) %}
                   <i class="fa fa-pencil" aria-hidden="true" type="submit" onclick='convertQuestionToInput("{{question['_id']}}")'></i>
                   <a onclick='deleteQuestion("{{question['_id']}}")'><span class="fa fa-close" style="color:red"></span></a>
                 {% endif %}
@@ -143,7 +143,7 @@ ul#menu li {
                             </span>
                           </span>
                     {% endif %}
-                    {% if answer['user'] == user['_id'] or user['role'] == consts.INSTRUCTOR %}
+                    {% if answer['user'] == user['_id'] or user['role']|clearance_for(consts.STAFF) %}
                         <i class="fa fa-pencil" aria-hidden="true" type="submit" onclick='convertAnswerToInput("{{answer['_id']}}", "{{question['_id']}}")'></i>
                       <i class="fa fa-close" style="color:red" onclick='deleteAnswer("{{answer['_id']}}", "{{question['_id']}}")'></i>
                     {% endif %}

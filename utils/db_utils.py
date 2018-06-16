@@ -195,6 +195,21 @@ class Lecture(DBObject):
         )
 
     @staticmethod
+    def add_transcripts(lecture_id, transcripts, preds, db):
+        db[Lecture.collection].update_one(
+            {
+              '_id': lecture_id
+            },
+            {
+              '$set': {
+                'transcripts': transcripts,
+                'preds': preds
+              }
+            },
+            upsert=False
+        )
+
+    @staticmethod
     def suggest_transcript(data, db):
         lecture = find_one_by_id(data['lecture_id'], Lecture.collection, db)
         def replace_transcript_elem(lecture, index, text, user_id):
@@ -205,8 +220,8 @@ class Lecture(DBObject):
                 best_suggestion, most_votes = max(suggestions.items(), key=itemgetter(1))
                 if most_votes > TRANSCRIPT_SUGGESTIONS_NECESSARY:
                     transcript_elem['text'] = best_suggestion
-            is_playlist = data['playlist_number'] != 'None'
-            transcripts = [lecture['transcript']] if not is_playlist else lecture['transcript']
+            is_playlist = lecture['is_playlist']
+            transcripts = lecture.get('transcripts') or [lecture['transcript']]
             playlist_number = int(data['playlist_number']) if is_playlist else 0
             transcript = transcripts[playlist_number]
             transcript_elem = transcript[index]
