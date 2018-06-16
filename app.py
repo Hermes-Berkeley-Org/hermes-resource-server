@@ -277,26 +277,33 @@ def create_client(app):
         if user:
             classes = get_updated_user_classes()
             if classes:
-                valid_classes = []
-                active_classes = []
-                inactive_classes = []
+                admin_active_classes = []
+                valid_student_active_classes = []
+                admin_inactive_classes = []
+                valid_student_inactive_classes = []
                 for cls in classes:
                     exists = class_exists(cls)
+                    active = cls['course']['active']
                     cls['class_exists'] = exists
-                    if is_instructor(cls) or exists:
-                        valid_classes.append(cls)
-                    if cls['course']['active']:
-                        active_classes.append(cls)
-                    else:
-                        inactive_classes.append(cls)
-                print(active_classes)
-                print(inactive_classes)
+                    if is_instructor(cls) and active:
+                        admin_active_classes.append(cls)
+                    elif is_instructor(cls) and not active:
+                        admin_inactive_classes.append(cls)
+                    elif not is_instructor(cls) and active and exists:
+                        valid_student_active_classes.append(cls)
+                    elif not is_instructor(cls) and not active and exists:
+                        valid_student_inactive_classes.append(cls)
+                print(admin_inactive_classes)
+                print(admin_active_classes)
+                print(valid_student_active_classes)
+                print(valid_student_inactive_classes)
                 return render_template(
                     'home.html',
                     user=user,
-                    valid_classes=valid_classes,
-                    active_classes=active_classes,
-                    inactive_classes = inactive_classes
+                    admin_active_classes = admin_active_classes,
+                    valid_student_active_classes = valid_student_active_classes,
+                    admin_inactive_classes = admin_inactive_classes,
+                    valid_student_inactive_classes = valid_student_inactive_classes,
                 )
         logger.info("Displaying home.")
         return redirect(url_for('index'))
