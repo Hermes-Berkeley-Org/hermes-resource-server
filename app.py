@@ -251,7 +251,6 @@ def create_client(app):
         if user_id:
             return db_utils.find_one_by_id(user_id, User.collection, db)
         ok_id = get_ok_id()
-        print(ok_id)
         if ok_id:
             db_result = db[User.collection].find_one({'ok_id': ok_id}) or {}
             return db_result
@@ -502,7 +501,7 @@ def create_client(app):
                 )
         else:
             logger.info("Error: user access level is %s", role)
-            return redirect(url_for('error'), code=403) 
+            return redirect(url_for('error'), code=403)
 
     @app.route('/create_class/<class_ok_id>', methods=['GET', 'POST'])
     def create_class(class_ok_id):

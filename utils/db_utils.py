@@ -237,6 +237,26 @@ class Lecture(DBObject):
 
     @staticmethod
     def delete_lecture(data, db):
+        questions = db[Question.collection].find(
+            {
+                'lecture_id': data['lectureid']
+            }
+        )
+        question_data = {}
+        for question in questions:
+            print("q delete")
+            question_data["question_id"] = question["_id"]
+            Question.delete_question(question_data, db, True)
+        vitamins = db[Vitamin.collection].find(
+            {
+                'lecture_id': data['lectureid']
+            }
+        )
+        vitamin_data = {}
+        for vitamin in vitamins:
+            print("vitamin delete")
+            vitamin_data["vitamin_id"] = vitamin["_id"]
+            Vitamin.delete_vitamin(vitamin_data, db)
         db[Lecture.collection].delete_one(
             {
                 '_id': ObjectId(data['lectureid'])
@@ -336,6 +356,15 @@ class Question(DBObject):
     @staticmethod
     def delete_question(data, db, is_instructor):
         question_id = data['question_id']
+        answers = db[Answer.collection].find(
+            {
+                'question_id': ObjectId(question_id)
+            }
+        )
+        answer_data={}
+        for answer in answers:
+            answer_data["answer_id"] = answer["_id"]
+            Answer.delete_answer(answer_data, db, True)
         question = find_one_by_id(question_id, Question.collection, db)
         if question and (is_instructor or question['user'] == data['user_id']):
             return db[Question.collection].delete_one(
@@ -444,7 +473,6 @@ class Answer(DBObject):
     @staticmethod
     def delete_answer(data, db, is_instructor):
         answer_id = data['answer_id']
-
         answer = find_one_by_id(answer_id, Answer.collection, db)
         if answer and (is_instructor or answer['user'] == data['user_id']):
             return db[Answer.collection].delete_one(
