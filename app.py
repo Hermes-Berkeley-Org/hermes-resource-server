@@ -270,22 +270,33 @@ def create_client(app):
         user = get_user_data()
         def class_exists(participation):
             return db[Class.collection].find({'ok_id': participation['course']['id']}).count() > 0
+        def class_is_active(participation):
+            return db[Class.collection].find({'ok_id': participation['course']['id']}).count() > 0
         def is_instructor(participation):
             return participation['role'] == consts.INSTRUCTOR
         if user:
             classes = get_updated_user_classes()
             if classes:
                 valid_classes = []
+                active_classes = []
+                inactive_classes = []
                 for cls in classes:
                     exists = class_exists(cls)
                     cls['class_exists'] = exists
                     if is_instructor(cls) or exists:
                         valid_classes.append(cls)
-                print(valid_classes)
+                    if cls['course']['active']:
+                        active_classes.append(cls)
+                    else:
+                        inactive_classes.append(cls)
+                print(active_classes)
+                print(inactive_classes)
                 return render_template(
                     'home.html',
                     user=user,
-                    classes=valid_classes
+                    valid_classes=valid_classes,
+                    active_classes=active_classes,
+                    inactive_classes = inactive_classes
                 )
         logger.info("Displaying home.")
         return redirect(url_for('index'))
