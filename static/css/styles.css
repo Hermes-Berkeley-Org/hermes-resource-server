@@ -163,3 +163,9 @@ ul.dropdown-menu li:hover {
   width: 100%;
   position: relative;
 }
+
+.flash {
+	list-style-type: none;
+	color: #ff0000;
+	font-size: 12px
+}
