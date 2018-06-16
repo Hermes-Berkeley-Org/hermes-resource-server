@@ -287,7 +287,6 @@ def create_client(app):
     @app.route('/class/<cls>/lecture/<lecture_number>/<playlist_number>')
     @login_required
     def lecture(cls, lecture_number, playlist_number=None):
-        logger.info(playlist_number)
         cls_obj = db['Classes'].find_one({'ok_id': int(cls)})
         lecture_obj = db['Lectures'].find_one(
             {'cls': cls, 'lecture_number': int(lecture_number)}
@@ -297,7 +296,7 @@ def create_client(app):
         questions_interval = 30
         lecture_obj['lecture_number'] = lecture_number
         video_info = {}
-        if not playlist_number:
+        if not lecture_obj.get('is_playlist'):
             preds = lecture_obj.get('preds')
             if not preds:
                 preds = [(None, [0, len(lecture_obj['transcript']) // 2 + 1])]
@@ -312,15 +311,17 @@ def create_client(app):
             video_info['duration'] = lecture_obj['duration']
             video_info['num_videos'] = 1
         else:
+            if not playlist_number:
+                return redirect(url_for('error', code=404))
             play_num = int(playlist_number)
             link = "https://www.youtube.com/watch?v={0}".format(
                 lecture_obj['youtube_video_ids'][play_num]
             )
             preds = lecture_obj.get('preds')[play_num]
-            if not preds:
-                preds = [(None, [0, len(lecture_obj['transcript'][play_num]) // 2 + 1])]
-            video_info['video_id'] = transcribe_utils.get_youtube_id(link)
             transcript = lecture_obj['transcripts'][play_num]
+            if not preds:
+                preds = [(None, [0, len(transcript) // 2 + 1])]
+            video_info['video_id'] = transcribe_utils.get_youtube_id(link)
             video_info['partition_titles'] = list(
                 app_utils.generate_partition_titles(
                     lecture_obj['durations'][play_num],
@@ -333,7 +334,7 @@ def create_client(app):
         if lecture_obj and cls_obj:
             logger.info("Displaying lecture.")
             if playlist_number:
-                logger.info("It is the ", play_num, " video in the playlist")
+                logger.info("It is video {0} in the playlist".format(playlist_number))
             return render_template(
                 'lecture.html',
                 video_info=video_info,
@@ -347,8 +348,7 @@ def create_client(app):
                 app_utils=app_utils,
                 consts=consts,
                 db=db,
-                vitamins=vitamins,
-                api_key=app.config['HERMES_API_KEY']
+                vitamins=vitamins
             )
         return redirect(url_for('error', code=404))
 
@@ -515,6 +515,7 @@ def create_client(app):
 
     @app.route('/class/<cls>/edit_lecture/<lecture_number>/', defaults={'playlist_number': None})
     @app.route('/class/<cls>/edit_lecture/<lecture_number>/<playlist_number>')
+    @login_required
     def edit_lecture(cls, lecture_number, playlist_number=None):
         cls_obj = db['Classes'].find_one({'ok_id': int(cls)})
         class_ok_id = cls_obj["ok_id"]
@@ -524,29 +525,25 @@ def create_client(app):
         if role == consts.INSTRUCTOR:
             lecture_obj = db['Lectures'].find_one({'cls': cls, 'lecture_number': int(lecture_number)})
             cls_obj = db['Classes'].find_one({'ok_id': int(cls)})
-            if playlist_number:
+            video_info = {}
+            if lecture_obj.get('is_playlist'):
+                if not playlist_number:
+                    return redirect(url_for('error', code=404))
                 play_num = int(playlist_number)
-                link = "https://www.youtube.com/watch?v=" + lecture_obj["videos"][play_num]
-                id = transcribe_utils.get_youtube_id(link)
-                num_videos = len(lecture_obj['videos'])
+                video_info['video_id'] = lecture_obj["videos"][play_num]
+                video_info['num_videos'] = len(lecture_obj['videos'])
             else:
-                id = transcribe_utils.get_youtube_id(lecture_obj['link'])
-                num_videos = 1
+                video_info['video_id'] = transcribe_utils.get_youtube_id(lecture_obj['link'])
+                video_info['num_videos'] = 1
             return render_template(
                 'edit_lecture.html',
-                id = id,
+                video_info=video_info,
                 user=user,
-                cls_name = cls_obj['display_name'],
-                cls_num = cls,
-                lecture = str(lecture_obj['_id']),
-                lecture_num = lecture_number,
-                num_videos = num_videos,
-                vid_titles = lecture_obj['vid_title'],
+                cls=cls_obj,
+                lecture=lecture_obj,
                 playlist_number=playlist_number,
-                name = lecture_obj['name'],
-                db = db,
-                api_key = app.config['HERMES_API_KEY']
-                )
+                db=db,
+            )
         else:
             logger.info("Error: user access level is %s", role)
             return redirect(url_for('error'), code=403)

@@ -51,3 +51,31 @@ var cleanTimestamp = function(timestamp) {
     output += roundedSeconds.toString();
     return output;
 }
+
+function convertToTimestamp(seconds) {
+  var remainder = (seconds % 60) | 0;
+  if (seconds < 3600) {
+    var minutes = (seconds / 60) | 0;
+    if (remainder >= 10) {
+      return minutes + ":" + remainder;
+    } else {
+      return minutes + ":0" + remainder;
+    }
+  } else {
+    var hours = (seconds / 3600) | 0;
+    var minutes = ((seconds - hours * 3600) / 60) | 0;
+    if (minutes >= 10) {
+      if (remainder >= 10) {
+        return hours + ":" + minutes + ":" + remainder;
+      } else {
+        return hours + ":" + minutes + ":0" + remainder;
+      }
+    } else {
+      if (remainder >= 10) {
+        return hours + ":0" + minutes + ":" + remainder;
+      } else {
+        return hours + ":0" + minutes + ":0" + remainder;
+      }
+    }
+  }
+}

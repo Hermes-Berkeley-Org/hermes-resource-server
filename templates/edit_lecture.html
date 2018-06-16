@@ -1,5 +1,5 @@
 {% extends 'header.html' %}
-{% block title %}Hermes | Edit {{ cls_name }} - {{ name }}{% endblock %}
+{% block title %}{{ cls['display_name'] }} - {{ lecture['name'] }}{% endblock %}
 {% block head %}{{ super() }}{% endblock %}
 {% block content %}
 <div class="wrapper text-primary">
@@ -47,31 +47,32 @@
 
     </div>
     <div class="row">
-        <div class="col-md-7">
-          <div id="ytplayer"></div>
+        <div class="col-md-6">
+          <div class="yt-wrapper" id="ytplayer"></div>
           {% if playlist_number %}
           <div class="navbar">
           {% if playlist_number|int != 0|int %}
-          <a href={{ url_for('edit_lecture', cls= cls_num, lecture_number= lecture_num, playlist_number= ((playlist_number|int - 1|int)|string)) }}>
-            <button class="btn btn-primary submission" >Previous Video</button>
+          <a href={{ url_for('lecture', cls=cls['ok_id'], lecture_number=lecture['lecture_number'], playlist_number= ((playlist_number|int - 1|int)|string)) }}>
+            <button class="btn btn-primary btn-sm submission" >Previous Video</button>
           </a>
           {% endif %}
-          {% for lec in range(num_videos) %}
+          {% for lec in range(video_info['num_videos']) %}
           {% if playlist_number|int == lec|int %}
-            <b><u><font size ="2" color="black"> {{lec}}. {{vid_titles[lec]}}</font></u></b>
+            <b><u><font size ="2" color="black"> {{lec}}. {{lecture['video_titles'][lec]}}</font></u></b>
           {% else %}
-            <font size ="2"><a href={{ url_for('edit_lecture', cls= cls_num, lecture_number= lecture_num, playlist_number= lec) }}>{{lec}}.{{vid_titles[lec]}}</a></font>
+            <font size ="2"><a href={{ url_for('lecture', cls=cls['ok_id'], lecture_number=lecture['lecture_number'], playlist_number= lec) }}>{{lec}}. {{lecture['video_titles'][lec]}}</a></font>
           {% endif %}
           {% endfor %}
-          {% if playlist_number|int < (num_videos-1)|int %}
-            <a href={{ url_for('edit_lecture', cls= cls_num, lecture_number= lecture_num, playlist_number= ((playlist_number|int + 1|int)|string)) }}>
-              <button class="btn btn-primary submission" >Next Video</button>
+          {% if playlist_number|int < (video_info['num_videos'] - 1)|int %}
+            <a href={{ url_for('lecture', cls=cls['ok_id'], lecture_number=lecture['lecture_number'], playlist_number= ((playlist_number|int + 1|int)|string)) }}>
+              <button class="btn btn-sm btn-primary submission" >Next Video</button>
             </a>
           {% endif %}
           </div>
           {% endif %}
+          <a href={{ url_for('classpage', class_ok_id=cls['ok_id'])}}><button class="btn btn-primary btn-sm submission">Return to {{cls['display_name']}}</button></a>
         </div>
-        <div class="col-md-4">
+        <div class="col-md-5">
             <div class="row">
                 <div class="col-md-6"></div>
                 <div class="col-md-6">
@@ -86,7 +87,7 @@
             <section id="vitamin-container">
                 <a data-toggle="collapse" onclick="toggleResponses('vitamin-icon')" data-target="#vitamins"><span style="font-size: 18px" id="vitamin-icon" class="fa fa-chevron-down qa-entry" aria-hidden="true"></span><strong>Vitamins</strong></a>
                 <div id="vitamins" class="collapse">
-                    {% for vitamin in db['Vitamins'].find({'$and':[{'lecture_id': lecture}, {'playlist_number': playlist_number|string }]}) %}
+                    {% for vitamin in db['Vitamins'].find({'$and':[{'lecture_id': lecture['_id']|string}, {'playlist_number': playlist_number|string }]}) %}
                         <a id="show-vitamin-{{vitamin['_id']}}" data-toggle="collapse" onclick="toggleResponses('toggle-icon-{{vitamin['_id']}}')" data-target="#vitamin-content-{{vitamin['_id']}}">
                             <p><span class="fa fa-chevron-down qa-entry" id="toggle-icon-{{vitamin['_id']}}" aria-hidden="true"></span>
                         </a>
@@ -114,6 +115,8 @@
     </div>
 </div>
 
+<script src="{{ url_for('static', filename='js/lectureUtils.js') }}"></script>
+
 <script>
     var tag = document.createElement('script');
     tag.src = "https://www.youtube.com/player_api";
@@ -123,38 +126,16 @@
     var player;
     function onYouTubePlayerAPIReady() {
         player = new YT.Player('ytplayer', {
-            height: window.innerHeight / 2,
-            width: window.innerWidth / 2,
-            videoId: '{{ id }}'
+            videoId: '{{ video_info["video_id"] }}',
+            events: {
+              'onReady': onPlayerReady
+            }
         });
     }
 
-    function convertToTimestamp(seconds) {
-      var remainder = (seconds % 60) | 0;
-      if (seconds < 3600) {
-        var minutes = (seconds / 60) | 0;
-        if (remainder >= 10) {
-          return minutes + ":" + remainder;
-        } else {
-          return minutes + ":0" + remainder;
-        }
-      } else {
-        var hours = (seconds / 3600) | 0;
-        var minutes = ((seconds - hours * 3600) / 60) | 0;
-        if (minutes >= 10) {
-          if (remainder >= 10) {
-            return hours + ":" + minutes + ":" + remainder;
-          } else {
-            return hours + ":" + minutes + ":0" + remainder;
-          }
-        } else {
-          if (remainder >= 10) {
-            return hours + ":0" + minutes + ":" + remainder;
-          } else {
-            return hours + ":0" + minutes + ":0" + remainder;
-          }
-        }
-      }
+    function onPlayerReady() {
+        $('#vitamin-icon').click();
+        player.playVideo();
     }
 
     function addVitaminForm() {
@@ -212,10 +193,10 @@
                choice2: choices[1],
                choice3: choices[2],
                choice4: choices[3],
-               lecture_id: "{{ lecture }}",
+               lecture_id: "{{ lecture['_id'] }}",
                playlist_number: "{{ playlist_number }}",
                user_id: '{{ user["_id"] }}',
-               class_ok_id: '{{ cls }}'
+               class_ok_id: '{{ cls["ok_id"] }}'
             }
 
             console.log(`${JSON.stringify(data)}`);
@@ -227,8 +208,7 @@
               success: function (data) {
                 $('#vitamin-container').load(window.location.href + ' #vitamin-container', function () {
                     removeForm();
-                    toggleResponses('vitamin-icon');
-                    $('#vitamins').collapse("show");
+                    $('#vitamin-icon').click();
                 });
 
               }
@@ -242,7 +222,7 @@
         var data = {
           vitamin_id: vitamin,
           user_id: '{{ user["_id"] }}',
-          class_ok_id: '{{ cls }}'
+          class_ok_id: '{{ cls["ok_id"] }}'
         }
 
         $.ajax({
@@ -251,8 +231,7 @@
           data: data,
           success: function (data) {
             $('#vitamin-container').load(window.location.href + ' #vitamin-container', function () {
-                toggleResponses('vitamin-icon');
-                $('#vitamins').collapse("show");
+                $('#vitamin-icon').click();
             });
           }
         })
