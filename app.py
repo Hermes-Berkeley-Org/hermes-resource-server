@@ -282,7 +282,7 @@ def create_client(app):
         def class_exists(participation):
             return db[Class.collection].find({'ok_id': participation['id']}).count() > 0
         def is_instructor(participation):
-            return participation['role'] == consts.INSTRUCTOR
+            return participation['role'] != consts.STUDENT
         if user:
             classes = get_updated_user_classes()
             if classes:
@@ -308,7 +308,8 @@ def create_client(app):
                     admin_active_classes=admin_active_classes,
                     valid_student_active_classes=valid_student_active_classes,
                     admin_inactive_classes=admin_inactive_classes,
-                    valid_student_inactive_classes=valid_student_inactive_classes
+                    valid_student_inactive_classes=valid_student_inactive_classes,
+                    consts = consts
                 )
         return redirect(url_for('index'))
 
