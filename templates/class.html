@@ -33,7 +33,14 @@
               {% endif %}
               <div class="col-md-4">{{lec['date']}}</div>
               {% if role == consts.INSTRUCTOR %}
-                <div class="col-md-1"><i class="fa fa-close" style="color:red" type=submit onclick="deleteLecture('{{lec['_id']}}')"></i></div>
+                <div class="col-sm-1">
+                {% if lec.get('is_playlist') %}
+                  <a href={{ url_for('edit_lecture', cls = lec['cls'], lecture_number = lec['lecture_number'], playlist_number=0) }}><i class="fa fa-pencil" aria-hidden="true"></i></a>
+                {% else %}
+                  <a href={{ url_for('edit_lecture', cls = lec['cls'], lecture_number = lec['lecture_number']) }}><i class="fa fa-pencil" aria-hidden="true"></i></a>
+                {% endif %}
+                </div>
+                <div class="col-sm-1"><i class="fa fa-close" style="color:red" type=submit onclick="deleteLecture('{{lec['_id']}}')"></i></div>
               {% endif %}
             </div>
             {% if lec['is_playlist'] %}
