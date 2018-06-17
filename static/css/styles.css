@@ -183,3 +183,7 @@ ul.dropdown-menu li:hover {
 	color: #ff0000;
 	font-size: 12px
 }
+
+.unregistered {
+	color: #ff0000;
+}

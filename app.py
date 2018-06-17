@@ -152,7 +152,6 @@ def create_client(app):
             User.remove_google_credentials(get_user_data()['_id'], db)
         if 'dev_token' in session:
             session.pop('dev_token', None)
-            print('POPPING DEV TOKEN')
         session['logged_in'] = False
         if 'google_credentials' in session:
             del session['google_credentials']
@@ -174,7 +173,6 @@ def create_client(app):
                 )
             )
             ok_resp = r.json()
-            print(session.get('dev_token'))
             if ok_resp and 'data' in ok_resp:
                 ok_data = ok_resp['data']
                 User.register_user(ok_data, db)
@@ -251,7 +249,6 @@ def create_client(app):
                     ok_data = ok_resp['data']
                     if 'id' in ok_data:
                         return ok_data['id']
-            print('DEV TOKEN NOT IN SESSION')
 
     def get_user_data(user_id=None):
         if not session.get('logged_in'):
@@ -402,6 +399,9 @@ def create_client(app):
         role, data = get_role(class_ok_id)
 
         cls = db['Classes'].find_one({'ok_id': int(class_ok_id)})
+
+        if not cls:
+            return redirect(url_for('error', code=404))
 
         if role == consts.INSTRUCTOR:
             if not user.get('google_credentials'):
