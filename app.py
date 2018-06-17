@@ -1,7 +1,9 @@
 from flask import Flask
 from flask import render_template, request, redirect, url_for, flash, session, jsonify
 from pymongo import MongoClient
-import sys, os
+import sys
+import os
+import re
 from config import Config
 
 from datetime import datetime
@@ -430,14 +432,16 @@ def create_client(app):
                 success = False
                 url = None
                 params = None
+                parse_obj = None
 
                 link = request.form['link']
                 if not link.startswith('http'):
                     link = 'http://{0}'.format(link)
 
                 try:
+                    parse_obj = urlparse(link)
                     url = ses.head(link, allow_redirects=True).url
-                    params = parse_qs(urlparse(url).query)
+                    params = parse_qs(parse_obj.query)
                 except RequestException as e:
                     flash('Please enter a valid URL')
 
@@ -450,13 +454,13 @@ def create_client(app):
                     cls=class_ok_id,
                 )
 
-                if url and params:
+                if parse_obj and 'youtube' in parse_obj.netloc and url and params:
                     if 'list' in params and len(params['list']) > 0:
                         youtube_id = params['list'][0]
                         youtube_vids = youtube.playlistItems().list(
                             part='contentDetails',
                             maxResults=25,
-                            playlistId = youtube_id
+                            playlistId=youtube_id
                         ).execute()
                         playlist_items = youtube_vids.get('items')
                         if playlist_items:
@@ -466,12 +470,12 @@ def create_client(app):
                             playlist_success = True
                             for i, id in enumerate(youtube_ids):
                                 try:
-                                    durations.append(
-                                        transcribe_utils.get_video_duration(id)
-                                    )
-                                    titles.append(
-                                        transcribe_utils.get_video_title(id)
-                                    )
+                                    title, duration = transcribe_utils.get_video_info(id, youtube)
+                                    if title and duration:
+                                        durations.append(duration)
+                                        titles.append(title)
+                                    else:
+                                        raise ValueError('Video does not have a title or duration')
                                 except (ValueError, OSError) as e:
                                     playlist_success = False
                                     flash('There was a problem with video {0} in the playlist. Please make sure this video is not deleted or unavailable.'.format(i))
@@ -485,12 +489,13 @@ def create_client(app):
                         else:
                             flash('Something went wrong. Please try again later.')
                     elif 'v' in params and len(params['v']) > 0:
-                        youtube_link = request.form['link']
                         try:
-                            duration = transcribe_utils.get_video_duration(youtube_link)
-                            title = transcribe_utils.get_video_title(youtube_link)
+                            youtube_id = params['v'][0]
+                            title, duration = transcribe_utils.get_video_info(youtube_id, youtube)
+                            if not (title and duration):
+                                raise ValueError('Video does not have a title or duration')
                             lecture.set('duration', duration)
-                            lecture.set('youtube_video_link', youtube_link)
+                            lecture.set('youtube_video_link', link)
                             lecture.set('video_title', title)
                             lecture.set('is_playlist', False)
                             success = True

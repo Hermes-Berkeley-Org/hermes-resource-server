@@ -10,8 +10,6 @@ from bs4 import BeautifulSoup
 
 from urllib.parse import parse_qs, urlencode, urlparse
 
-import pafy
-
 from googleapiclient.errors import HttpError
 
 LENGTH_REQUIRED = 100
@@ -20,7 +18,7 @@ THRESHOLD = 0.0
 def get_youtube_id(link):
     url = urlparse(link)
     params = parse_qs(url.query)
-    return params['v'][0] if 'v' in params else None
+    return params['v'][0] if 'v' in params and len(params['v']) > 0 else None
 
 def transcribe(
         mode='api',
@@ -68,14 +66,16 @@ def read_from_youtube(youtube, video_id=None, youtube_link=None):
             part="snippet",
             videoId=video_id
         ).execute()
-        for item in results["items"]:
-            return item["id"]
+        if 'items' in results:
+            for item in results["items"]:
+                return item["id"]
     try:
         caption_id = get_caption_id(video_id)
-        tfmt = "ttml"
+        if not caption_id:
+            raise ValueError('Error retrieving caption track: not a valid video ID')
         subtitle_html = youtube.captions().download(
             id=caption_id,
-            tfmt=tfmt
+            tfmt='ttml'
         ).execute()
         soup = BeautifulSoup(subtitle_html, 'html.parser')
         transcript = []
@@ -90,15 +90,39 @@ def read_from_youtube(youtube, video_id=None, youtube_link=None):
     except HttpError as e:
         raise ValueError('Error retrieving the caption track')
 
-def get_video_duration(link_or_id):
-    pafy_video = pafy.new(link_or_id)
-    if pafy_video:
-        return pafy_video.duration
-
-def get_video_title(link_or_id):
-    pafy_video = pafy.new(link_or_id)
-    if pafy_video:
-        return pafy_video.title
+def get_video_info(youtube_id, youtube):
+    def convert_youtube_timestamp(duration):
+        if duration:
+            time_content = duration[2:]
+            hours, minutes, seconds = 0, 0, 0
+            i = 0
+            while i < len(time_content):
+                value = ''
+                while time_content[i].isdigit():
+                    value += time_content[i]
+                    i += 1
+                label = time_content[i]
+                if label == 'H':
+                    hours = int(value)
+                elif label == 'M':
+                    minutes = int(value)
+                elif label == 'S':
+                    seconds = int(value)
+                i += 1
+            return '%02d:%02d:%02d' % (hours, minutes, seconds)
+    youtube_resp = youtube.videos().list(
+        id=youtube_id,
+        part='snippet,contentDetails'
+    ).execute()
+    results = youtube_resp.get('items') or []
+    if len(results) > 0:
+        youtube_info = results[0]
+        if youtube_info['kind'] == 'youtube#video':
+            if 'snippet' in youtube_info and 'contentDetails' in youtube_info:
+                return youtube_info['snippet'].get('title'), \
+                    convert_youtube_timestamp(
+                        youtube_info['contentDetails'].get('duration')
+                    )
 
 def scrape(link):
     try:
