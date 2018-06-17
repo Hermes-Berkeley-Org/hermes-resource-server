@@ -144,6 +144,7 @@ class Class(DBObject):
     @staticmethod
     def create_class(display_name, data, db):
         data['display_name'] = display_name
+        data['ok_id'] = data.pop('id', None)
         return insert(
             Class(
                 lectures=[],

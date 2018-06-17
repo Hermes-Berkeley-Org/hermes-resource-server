@@ -39,8 +39,8 @@
             {% if lec['is_playlist'] %}
             <div class="row extra-content collapse" id="playlists-{{lec['_id']}}">
               <div class="col-md-6 offset-md-1">
-                {% for video in range(lec['videos']|length) %}
-                  <a href={{ url_for('lecture', cls=lec['cls'], lecture_number=lec['lecture_number'], playlist_number= video) }}>Lecture Video {{ video + 1 }}</a>
+                {% for i in range(lec['youtube_video_ids']|length) %}
+                  <a href={{ url_for('lecture', cls=lec['cls'], lecture_number=lec['lecture_number'], playlist_number=i) }}>{{lec['video_titles'][i]}}</a>
                   {% if not loop.last %}
                     <br>
                   {% endif %}
