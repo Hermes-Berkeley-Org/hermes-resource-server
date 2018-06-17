@@ -226,7 +226,7 @@ class Lecture(DBObject):
                 if most_votes > TRANSCRIPT_SUGGESTIONS_NECESSARY:
                     transcript_elem['text'] = best_suggestion
             is_playlist = lecture['is_playlist']
-            transcripts = lecture.get('transcripts') or [lecture['transcript']]
+            transcripts = lecture.get('transcripts') if is_playlist else [lecture.get('transcript')]
             playlist_number = int(data['playlist_number']) if is_playlist else 0
             transcript = transcripts[playlist_number]
             transcript_elem = transcript[index]
@@ -240,16 +240,18 @@ class Lecture(DBObject):
             push_onto_transcript_if_elected(transcript_elem)
             transcripts[playlist_number] = transcript[:index] + [transcript_elem] + transcript[index+1:]
             return transcripts if is_playlist else transcripts[0]
-        db[Lecture.collection].update_one(
-            {
-                '_id': ObjectId(data['lecture_id'])
-            },
-            {
-                '$set': {
-                    'transcript': replace_transcript_elem(lecture, int(data['index']), data['text'], data['user_id'])
+        if 'transcripts' in lecture or 'transcript' in lecture:
+            key = 'transcripts' if lecture.get('is_playlist') else 'transcript'
+            db[Lecture.collection].update_one(
+                {
+                    '_id': ObjectId(data['lecture_id'])
+                },
+                {
+                    '$set': {
+                        key: replace_transcript_elem(lecture, int(data['index']), data['text'], data['user_id'])
+                    }
                 }
-            }
-        )
+            )
 
     @staticmethod
     def delete_lecture(data, db):
@@ -329,7 +331,7 @@ class Resource(DBObject):
             ),
             db
         )
-        
+
     @staticmethod
     def delete_resource(resource, db):
         resource_id = resource['resource_id']
