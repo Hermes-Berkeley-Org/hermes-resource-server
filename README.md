@@ -55,4 +55,4 @@ Download the client_secret.json file from the Drive and put it in a directory ca
 
 **Other Keys**
 
-Download both files in the "envs" folder from the Drive and put them in the deploy directory
+Download all files in the "envs" folder from the Drive and put them in the deploy directory
