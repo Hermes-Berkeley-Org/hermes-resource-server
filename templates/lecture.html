@@ -97,6 +97,7 @@ ul#menu li {
               </button>
       </div>
       <section id="resource_list">
+        {% if resources[0] %}
         <a data-toggle="collapse" onclick="toggleResponses('resource-icon')" data-target="#resources"><span style="font-size: 18px" id="resource-icon" class="fa fa-chevron-down qa-entry" aria-hidden="true"></span> <strong>Resources</strong></a>
           <div id="resources" class="collapse">
             <ul>
@@ -105,6 +106,7 @@ ul#menu li {
               {% endfor %}
             </ul>
           </div>
+        {% endif %}
       </section>
       <section id="questions_table">
           {% for question_set, interval in app_utils.partition(db['Questions'].find({'$and':[{'lecture_id': lecture['_id']|string}, {'playlist_number': playlist_number|string }]}), questions_interval, video_info['duration']) %}
