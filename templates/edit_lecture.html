@@ -12,40 +12,54 @@
             <input id='vitamin-question' class="form-control popup-input" placeholder='Enter your vitamin question here'></input>
         </div>
 
-          <div class="form-group">
-          <!-- <input id='vitamin-answer' class="form-control popup-input" placeholder='Enter your vitamin answer here'></input> -->
-            <div class="vitamin-answer">
-              <p id="instructions">Please enter 2-4 choices, then use the buttons to choose the correct answer.</p>
-              <p class="incorrect" id="incorrect-input"></p>
-              <div class="row">
-                <div class="col-md-6" style="display: inline;">
-                  <input id="button1" name="choices" type="radio" required>   <input id="choice1" class="form-control mcq-choices" placeholder="Choice A" />
-                </div>
-                <div class="col-md-6" style="display: inline;">
-                  <input id="button2" name="choices" type="radio" required>   <input id="choice2" class="form-control mcq-choices" placeholder="Choice B" />
-                </div>
+        <div class="form-group">
+        <!-- <input id='vitamin-answer' class="form-control popup-input" placeholder='Enter your vitamin answer here'></input> -->
+          <div class="vitamin-answer">
+            <p id="instructions">Please enter 2-4 choices, then use the buttons to choose the correct answer.</p>
+            <p class="incorrect" id="incorrect-input"></p>
+            <div class="row">
+              <div class="col-md-6" style="display: inline;">
+                <input id="button1" name="choices" type="radio" required>   <input id="choice1" class="form-control mcq-choices" placeholder="Choice A" />
               </div>
-              <div class="row">
-                <div class="col-md-6" style="display: inline;">
-                  <input id="button3" name="choices" type="radio" required>   <input id="choice3" class="form-control mcq-choices" placeholder="Choice C" />
-                </div>
-                <div class="col-md-6" style="display: inline;">
-                  <input id="button4" name="choices" type="radio" required>   <input id="choice4" class="form-control mcq-choices" placeholder="Choice D" />
-                </div>
+              <div class="col-md-6" style="display: inline;">
+                <input id="button2" name="choices" type="radio" required>   <input id="choice2" class="form-control mcq-choices" placeholder="Choice B" />
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-md-6" style="display: inline;">
+                <input id="button3" name="choices" type="radio" required>   <input id="choice3" class="form-control mcq-choices" placeholder="Choice C" />
+              </div>
+              <div class="col-md-6" style="display: inline;">
+                <input id="button4" name="choices" type="radio" required>   <input id="choice4" class="form-control mcq-choices" placeholder="Choice D" />
               </div>
             </div>
           </div>
-          <div class="row">
-              <div class="col-md-6">
-                  <center><button class="btn btn-danger" type=submit onclick="removeForm()"><i class="fa fa-ban"></i>  Cancel</button></center>
-              </div>
-              <div class="col-md-6">
-                  <center><button class="btn btn-primary" type=submit onclick="addVitamin()"><i class="fa fa-plus"></i>  Add Vitamin</button></center>
-              </div>
-          </div>
-
-
+        </div>
+        <div class="row">
+            <div class="col-md-6">
+                <center><button class="btn btn-danger" type=submit onclick="removeForm()"><i class="fa fa-ban"></i>  Cancel</button></center>
+            </div>
+            <div class="col-md-6">
+                <center><button class="btn btn-primary" type=submit onclick="addVitamin()"><i class="fa fa-plus"></i>  Add Vitamin</button></center>
+            </div>
+        </div>
     </div>
+
+    <div id="resource-form">
+      <h4>Add Resource</h4>
+        <div class="form-group">
+            <input id='resource-content' class="form-control popup-input" placeholder='Enter your resource link here'></input>
+        </div>
+        <div class="row">
+            <div class="col-md-6">
+                <center><button class="btn btn-danger" type=submit onclick="removeForm()"><i class="fa fa-ban"></i>  Cancel</button></center>
+            </div>
+            <div class="col-md-6">
+                <center><button class="btn btn-primary" type=submit onclick="addResource()"><i class="fa fa-plus"></i>  Add Resource</button></center>
+            </div>
+        </div>
+    </div>
+
     <div class="row">
         <div class="col-md-6">
           <div class="yt-wrapper" id="ytplayer"></div>
@@ -74,20 +88,17 @@
         </div>
         <div class="col-md-5">
             <div class="row">
-                <div class="col-md-6"></div>
+                <div class="col-md-6">
+                  <button class="btn btn-primary submission" type=submit onclick="addResourceForm()"><i class="fa fa-sticky-note"></i>  Add Resource</button>
+                </div>
                 <div class="col-md-6">
                     <button class="btn btn-primary submission" type=submit onclick="addVitaminForm()"><i class="fa fa-question"></i>  Add Vitamin</button>
                 </div>
-                <!--
-                <div class="col-md-6">
-                    <button class="btn btn-primary submission" type=submit onclick="addResourceForm()"><i class="fa fa-sticky-note"></i>  Add Resource</button>
-                </div>
-                -->
             </div>
             <section id="vitamin-container">
-                <a data-toggle="collapse" onclick="toggleResponses('vitamin-icon')" data-target="#vitamins"><span style="font-size: 18px" id="vitamin-icon" class="fa fa-chevron-down qa-entry" aria-hidden="true"></span><strong>Vitamins</strong></a>
+                <a data-toggle="collapse" onclick="toggleResponses('vitamin-icon')" data-target="#vitamins"><span style="font-size: 18px" id="vitamin-icon" class="fa fa-chevron-down qa-entry" aria-hidden="true"></span> <strong>Vitamins</strong></a>
                 <div id="vitamins" class="collapse">
-                    {% for vitamin in db['Vitamins'].find({'$and':[{'lecture_id': lecture['_id']|string}, {'playlist_number': playlist_number|string }]}) %}
+                    {% for vitamin in db['Vitamins'].find({'$and':[{'lecture_id': lecture['_id']|string}, {'playlist_number': playlist_number|string }]})|sort(attribute='seconds') %}
                         <a id="show-vitamin-{{vitamin['_id']}}" data-toggle="collapse" onclick="toggleResponses('toggle-icon-{{vitamin['_id']}}')" data-target="#vitamin-content-{{vitamin['_id']}}">
                             <p><span class="fa fa-chevron-down qa-entry" id="toggle-icon-{{vitamin['_id']}}" aria-hidden="true"></span>
                         </a>
@@ -109,7 +120,13 @@
                     {% endfor %}
                 </div>
             </section>
-            <section id="resource-container" class="collapse">
+            <section id="resource-container">
+              <a data-toggle="collapse" onclick="toggleResponses('resource-icon')" data-target="#resources"><span style="font-size: 18px" id="resource-icon" class="fa fa-chevron-down qa-entry" aria-hidden="true"></span> <strong>Resources</strong></a>
+                <div id="resources" class="collapse">
+                    {% for resource in db['Resources'].find({'$and':[{'lecture_id': lecture['_id']|string}, {'playlist_number': playlist_number|string }]}) %}
+                      <span class="qa-entry-lg"><i class="fa fa-close" style="color:red" onclick='deleteResource("{{resource['_id']}}")'></i>  <a href="{{ resource['link'] }}" target="_blank">{{ resource['link'] }}</a></span>
+                    {% endfor %}
+                </div>
             </section>
         </div>
     </div>
@@ -135,6 +152,7 @@
 
     function onPlayerReady() {
         $('#vitamin-icon').click();
+        $('#resource-icon').click();
         player.playVideo();
     }
 
@@ -152,6 +170,8 @@
 
     function addResourceForm() {
         player.pauseVideo();
+        document.getElementById('black-transparent-screen').classList.add('show');
+        document.getElementById('resource-form').classList.add('show');
     }
 
     function removeForm() {
@@ -232,6 +252,51 @@
           success: function (data) {
             $('#vitamin-container').load(window.location.href + ' #vitamin-container', function () {
                 $('#vitamin-icon').click();
+            });
+          }
+        })
+    }
+
+    function addResource() {
+      var resource = document.getElementById('resource-content').value;
+      if (resource.length > 0) {
+        var data = {
+          link: resource,
+          lecture_id: "{{ lecture['_id'] }}",
+          playlist_number: "{{ playlist_number }}",
+          user_id: '{{ user["_id"] }}',
+          class_ok_id: '{{ cls["ok_id"] }}'
+        }
+      }
+
+      $.ajax({
+        type: "POST",
+        url: "{{ url_for('add_resource') }}",
+        data,
+        success: function (data) {
+          $('#resource-container').load(window.location.href + ' #resource-container', function () {
+              removeForm();
+              $('#resource-icon').click();
+          });
+
+        }
+      });
+    }
+
+    function deleteResource(resource) {
+        var data = {
+          resource_id: resource,
+          user_id: '{{ user["_id"] }}',
+          class_ok_id: '{{ cls["ok_id"] }}'
+        }
+
+        $.ajax({
+          type: "POST",
+          url: "{{ url_for('delete_resource') }}",
+          data: data,
+          success: function (data) {
+            $('#resource-container').load(window.location.href + ' #resource-container', function () {
+                $('#resource-icon').click();
             });
           }
         })

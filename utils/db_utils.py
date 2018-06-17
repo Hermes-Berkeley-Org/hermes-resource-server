@@ -310,23 +310,32 @@ class Vitamin(DBObject):
             {'_id': ObjectId(vitamin_id)}
         )
 
-    @staticmethod
-    def add_resource(lecture_id, res_link, db):
-        resource = {
-            'link': res_link
-        }
-        db[Lecture.collection].update_one(
-            {
-              '_id': lecture_id
-            },
-            {
-              '$push': {
-                'resources': resource,
-              }
-            },
-            upsert=False
-        )
 
+
+class Resource(DBObject):
+
+    collection = 'Resources'
+
+    def __init__(self, **attr):
+        DBObject.__init__(self, **attr)
+
+    @staticmethod
+    def add_resource(data, db):
+        return insert(
+            Resource(
+                link = data['link'],
+                lecture_id = data['lecture_id'],
+                playlist_number = data['playlist_number']
+            ),
+            db
+        )
+        
+    @staticmethod
+    def delete_resource(resource, db):
+        resource_id = resource['resource_id']
+        db[Resource.collection].delete_one(
+            {'_id': ObjectId(resource_id)}
+        )
 
 class Question(DBObject):
 

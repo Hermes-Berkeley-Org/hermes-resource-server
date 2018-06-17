@@ -96,6 +96,16 @@ ul#menu li {
                 <i class="fa fa-refresh" aria-hidden="true"></i> Refresh
               </button>
       </div>
+      <section id="resource_list">
+        <a data-toggle="collapse" onclick="toggleResponses('resource-icon')" data-target="#resources"><span style="font-size: 18px" id="resource-icon" class="fa fa-chevron-down qa-entry" aria-hidden="true"></span> <strong>Resources</strong></a>
+          <div id="resources" class="collapse">
+            <ul>
+              {% for resource in resources %}
+                <li><span class="qa-entry-lg"><a href="{{ resource['link'] }}" target="_blank">{{ resource['link'] }}</a></span></li>
+              {% endfor %}
+            </ul>
+          </div>
+      </section>
       <section id="questions_table">
           {% for question_set, interval in app_utils.partition(db['Questions'].find({'$and':[{'lecture_id': lecture['_id']|string}, {'playlist_number': playlist_number|string }]}), questions_interval, video_info['duration']) %}
             {% if loop.index == 1 %}
