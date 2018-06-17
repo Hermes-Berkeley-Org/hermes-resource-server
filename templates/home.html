@@ -34,13 +34,15 @@
                       </div> <!-- End row -->
                   {% endif %}
               {% else %}
+                {% if class['role'] == consts.INSTRUCTOR %}
                   {% if loop.index%3 == 1 %}
                       <div class="row"> <!-- Start row -->
                   {% endif %}
-                  <div class="col-md-4"><a href="{{ url_for('create_class', class_ok_id=class['course']['id']) }}"><div class="class-box"><h6>{{class['course']['display_name']}} ({{class['course']['offering'].split("/")[2]}}) ({{class['role'].capitalize()}})</h6></div></a></div>
+                  <div class="col-md-4"><a href="{{ url_for('create_class', class_ok_id=class['course']['id']) }}"><div class="class-box"><h6 class = "unregistered">{{class['course']['display_name']}} ({{class['course']['offering'].split("/")[2]}}) ({{class['role'].capitalize()}})</h6></div></a></div>
                   {% if loop.index%3 == 0 %}
                       </div> <!-- End row -->
                   {% endif %}
+                {% endif %}
               {% endif %}
       {% endfor %}
       {% if (admin_active_classes|length)%3 != 1 and (admin_active_classes|length) %}
@@ -75,18 +77,20 @@
               {% if loop.index%3 == 1 %}
                       <div class="row"> <!-- Start row -->
                   {% endif %}
-                  <div class="col-md-4"><a href="{{ url_for('classpage', class_ok_id=class['course']['id']) }}"><div class="class-box"><h6 class="unregistered">{{class['course']['display_name']}} ({{class['course']['offering'].split("/")[2]}}) ({{class['role'].capitalize()}})</h6></div></a></div>
+                  <div class="col-md-4"><a href="{{ url_for('classpage', class_ok_id=class['course']['id']) }}"><div class="class-box"><h6>{{class['course']['display_name']}} ({{class['course']['offering'].split("/")[2]}}) ({{class['role'].capitalize()}})</h6></div></a></div>
                   {% if loop.index%3 == 0 %}
                       </div> <!-- End row -->
                   {% endif %}
               {% else %}
+                {% if class['role'] == consts.INSTRUCTOR %}
                   {% if loop.index%3 == 1 %}
                       <div class="row"> <!-- Start row -->
                   {% endif %}
-                  <div class="col-md-4"><a href="{{ url_for('create_class', class_ok_id=class['course']['id']) }}"><div class="class-box"><h6>{{class['course']['display_name']}} ({{class['course']['offering'].split("/")[2]}}) ({{class['role'].capitalize()}})</h6></div></a></div>
+                  <div class="col-md-4"><a href="{{ url_for('create_class', class_ok_id=class['course']['id']) }}"><div class="class-box"><h6 class="unregistered">{{class['course']['display_name']}} ({{class['course']['offering'].split("/")[2]}}) ({{class['role'].capitalize()}})</h6></div></a></div>
                   {% if loop.index%3 == 0 %}
                       </div> <!-- End row -->
                   {% endif %}
+                {% endif %}
             {% endif %}
       {% endfor %}
       {% if (admin_inactive_classes|length)%3 != 1  and (admin_inactive_classes|length)%}
