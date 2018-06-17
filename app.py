@@ -277,6 +277,7 @@ def create_client(app):
     @app.route('/home/')
     @login_required
     def home():
+        logger.info("Displaying home.")
         user = get_user_data()
         def class_exists(participation):
             return db[Class.collection].find({'ok_id': participation['id']}).count() > 0
@@ -307,9 +308,8 @@ def create_client(app):
                     admin_active_classes=admin_active_classes,
                     valid_student_active_classes=valid_student_active_classes,
                     admin_inactive_classes=admin_inactive_classes,
-                    valid_student_inactive_classes=valid_student_inactive_classes,
+                    valid_student_inactive_classes=valid_student_inactive_classes
                 )
-        logger.info("Displaying home.")
         return redirect(url_for('index'))
 
     @app.route('/class/<cls>/lecture/<lecture_number>/', defaults={'playlist_number': None})

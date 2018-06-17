@@ -4,102 +4,114 @@
 {% block content %}
 
 <div class="wrapper text-primary class-list">
+  {% if not(admin_inactive_classes|length or admin_active_classes|length or valid_student_active_classes|length or valid_student_inactive_classes|length)%}
+    <h1> You are not part of any classes</h1>
+    <font size = "+1">
+      To fix this do one of the following
+      <ul>
+        <li> Ask an instructor to enroll you in a class on  <a href="www.okpy.org">Ok (www.okpy.org)</a></li>
+        <li> Enroll a class on <a href="www.okpy.org">Ok (www.okpy.org)</a></li>
+    </ul>
+  While you're waiting to complete one of the above tasks enjoy this video
+  </font>
+    <iframe src="https://www.youtube.com/embed/1YQy-PX019I?ecver=1&amp;iv_load_policy=1&amp;rel=0&amp;yt:stretch=16:9&amp;autohide=1&amp;color=red&amp;width=560&amp;width=560" width="560" height="315" allowtransparency="true" frameborder="0"></iframe>
+  {% else %}
     <h2>Welcome, {{user['name']}}</h2>
-    <br />
-    <h3>Classes</h3>
-    <h4>Active Classes</h4>
-    {% if admin_active_classes|length %}
-        <h5>Staff Classes</h5>
-    {% endif %}
-    <div>
-    {% for class in admin_active_classes %}
-            {% if class['class_exists'] %}
-                {% if loop.index%3 == 1 %}
-                    <div class="row"> <!-- Start row -->
-                {% endif %}
-                <div class="col-md-4"><a href="{{ url_for('classpage', class_ok_id=class['course']['id']) }}"><div class="class-box"><h6>{{class['course']['display_name']}} ({{class['role'].capitalize()}})</h6></div></a></div>
-                {% if loop.index%3 == 0 %}
-                    </div> <!-- End row -->
-                {% endif %}
-            {% else %}
-                {% if loop.index%3 == 1 %}
-                    <div class="row"> <!-- Start row -->
-                {% endif %}
-                <div class="col-md-4"><a href="{{ url_for('create_class', class_ok_id=class['course']['id']) }}"><div class="class-box"><h6>{{class['course']['display_name']}} ({{class['course']['offering'].split("/")[2]}}) ({{class['role'].capitalize()}})</h6></div></a></div>
-                {% if loop.index%3 == 0 %}
-                    </div> <!-- End row -->
-                {% endif %}
-            {% endif %}
-    {% endfor %}
-    {% if (admin_active_classes|length)%3 != 1 and (admin_active_classes|length) %}
-        </div> <!-- No more classes, but finish row -->
-    {% endif %}
-    </div>
-    {% if valid_student_active_classes|length %}
-        <br><h5>Student Classes</h5>
-    {% endif %}
-    <div>
-    {% for class in valid_student_active_classes %}
-          {% if loop.index%3 == 1 %}
-              <div class="row"> <!-- Start row -->
-          {% endif %}
-          <div class="col-md-4"><a href="{{ url_for('classpage', class_ok_id=class['course']['id']) }}"><div class="class-box"><h6>{{class['course']['display_name']}} ({{class['course']['offering'].split("/")[2]}}) </h6></div></a></div>
-          {% if loop.index%3 == 0 %}
-              </div> <!-- End row -->
-          {% endif %}
-    {% endfor %}
-    {% if (valid_student_active_classes|length)%3 != 1 and (valid_student_active_classes|length) %}
-        </div> <!-- No more classes, but finish row -->
-    {% endif %}
-    </div>
-    <br><br>
-    <h4>Inactive Classes</h4>
-    {% if admin_inactive_classes|length %}
-        <br><h5>Staff Classes</h5>
-    {% endif %}
-    <div>
-    {% for class in admin_inactive_classes %}
-        {% if class['class_exists'] %}
+    <br></br>
+      <h3>Classes</h3>
+      <h4>Active Classes</h4>
+      {% if admin_active_classes|length %}
+          <h5>Staff Classes</h5>
+      {% endif %}
+      <div>
+      {% for class in admin_active_classes %}
+              {% if class['class_exists'] %}
+                  {% if loop.index%3 == 1 %}
+                      <div class="row"> <!-- Start row -->
+                  {% endif %}
+                  <div class="col-md-4"><a href="{{ url_for('classpage', class_ok_id=class['course']['id']) }}"><div class="class-box"><h6>{{class['course']['display_name']}} ({{class['role'].capitalize()}})</h6></div></a></div>
+                  {% if loop.index%3 == 0 %}
+                      </div> <!-- End row -->
+                  {% endif %}
+              {% else %}
+                  {% if loop.index%3 == 1 %}
+                      <div class="row"> <!-- Start row -->
+                  {% endif %}
+                  <div class="col-md-4"><a href="{{ url_for('create_class', class_ok_id=class['course']['id']) }}"><div class="class-box"><h6>{{class['course']['display_name']}} ({{class['course']['offering'].split("/")[2]}}) ({{class['role'].capitalize()}})</h6></div></a></div>
+                  {% if loop.index%3 == 0 %}
+                      </div> <!-- End row -->
+                  {% endif %}
+              {% endif %}
+      {% endfor %}
+      {% if (admin_active_classes|length)%3 != 1 and (admin_active_classes|length) %}
+          </div> <!-- No more classes, but finish row -->
+      {% endif %}
+      </div>
+      {% if valid_student_active_classes|length %}
+          <br><h5>Student Classes</h5>
+      {% endif %}
+      <div>
+      {% for class in valid_student_active_classes %}
             {% if loop.index%3 == 1 %}
-                    <div class="row"> <!-- Start row -->
-                {% endif %}
-                <div class="col-md-4"><a href="{{ url_for('classpage', class_ok_id=class['course']['id']) }}"><div class="class-box"><h6 class="unregistered">{{class['course']['display_name']}} ({{class['course']['offering'].split("/")[2]}}) ({{class['role'].capitalize()}})</h6></div></a></div>
-                {% if loop.index%3 == 0 %}
-                    </div> <!-- End row -->
-                {% endif %}
-            {% else %}
-                {% if loop.index%3 == 1 %}
-                    <div class="row"> <!-- Start row -->
-                {% endif %}
-                <div class="col-md-4"><a href="{{ url_for('create_class', class_ok_id=class['course']['id']) }}"><div class="class-box"><h6>{{class['course']['display_name']}} ({{class['course']['offering'].split("/")[2]}}) ({{class['role'].capitalize()}})</h6></div></a></div>
-                {% if loop.index%3 == 0 %}
-                    </div> <!-- End row -->
-                {% endif %}
-          {% endif %}
-    {% endfor %}
-    {% if (admin_inactive_classes|length)%3 != 1  and (admin_inactive_classes|length)%}
-        </div> <!-- No more classes, but finish row -->
-    {% endif %}
-    </div>
-    {% if valid_student_inactive_classes|length %}
-
-        <br><h5>Student Classes</h5>
-    {% endif %}
-    <div>
-    {% for class in valid_student_inactive_classes %}
-          {% if loop.index%3 == 1 %}
-              <div class="row"> <!-- Start row -->
-          {% endif %}
-          <div class="col-md-4"><a href="{{ url_for('classpage', class_ok_id=class['course']['id']) }}"><div class="class-box"><h6>{{class['course']['display_name']}} ({{class['course']['offering'].split("/")[2]}}) ({{class['role'].capitalize()}})</h6></div></a></div>
-          {% if loop.index%3 == 0 %}
+                <div class="row"> <!-- Start row -->
+            {% endif %}
+            <div class="col-md-4"><a href="{{ url_for('classpage', class_ok_id=class['course']['id']) }}"><div class="class-box"><h6>{{class['course']['display_name']}} ({{class['course']['offering'].split("/")[2]}}) </h6></div></a></div>
+            {% if loop.index%3 == 0 %}
                 </div> <!-- End row -->
-          {% endif %}
-    {% endfor %}
-    {% if (valid_student_inactive_classes|length)%3 != 1 and (valid_student_inactive_classes|length) %}
-        </div> <!-- No more classes, but finish row -->
-    {% endif %}
-    </div>
+            {% endif %}
+      {% endfor %}
+      {% if (valid_student_active_classes|length)%3 != 1 and (valid_student_active_classes|length) %}
+          </div> <!-- No more classes, but finish row -->
+      {% endif %}
+      </div>
+      <br><br>
+      <h4>Inactive Classes</h4>
+      {% if admin_inactive_classes|length %}
+          <br><h5>Staff Classes</h5>
+      {% endif %}
+      <div>
+      {% for class in admin_inactive_classes %}
+          {% if class['class_exists'] %}
+              {% if loop.index%3 == 1 %}
+                      <div class="row"> <!-- Start row -->
+                  {% endif %}
+                  <div class="col-md-4"><a href="{{ url_for('classpage', class_ok_id=class['course']['id']) }}"><div class="class-box"><h6 class="unregistered">{{class['course']['display_name']}} ({{class['course']['offering'].split("/")[2]}}) ({{class['role'].capitalize()}})</h6></div></a></div>
+                  {% if loop.index%3 == 0 %}
+                      </div> <!-- End row -->
+                  {% endif %}
+              {% else %}
+                  {% if loop.index%3 == 1 %}
+                      <div class="row"> <!-- Start row -->
+                  {% endif %}
+                  <div class="col-md-4"><a href="{{ url_for('create_class', class_ok_id=class['course']['id']) }}"><div class="class-box"><h6>{{class['course']['display_name']}} ({{class['course']['offering'].split("/")[2]}}) ({{class['role'].capitalize()}})</h6></div></a></div>
+                  {% if loop.index%3 == 0 %}
+                      </div> <!-- End row -->
+                  {% endif %}
+            {% endif %}
+      {% endfor %}
+      {% if (admin_inactive_classes|length)%3 != 1  and (admin_inactive_classes|length)%}
+          </div> <!-- No more classes, but finish row -->
+      {% endif %}
+      </div>
+      {% if valid_student_inactive_classes|length %}
 
+          <br><h5>Student Classes</h5>
+      {% endif %}
+      <div>
+      {% for class in valid_student_inactive_classes %}
+            {% if loop.index%3 == 1 %}
+                <div class="row"> <!-- Start row -->
+            {% endif %}
+            <div class="col-md-4"><a href="{{ url_for('classpage', class_ok_id=class['course']['id']) }}"><div class="class-box"><h6>{{class['course']['display_name']}} ({{class['course']['offering'].split("/")[2]}}) ({{class['role'].capitalize()}})</h6></div></a></div>
+            {% if loop.index%3 == 0 %}
+                  </div> <!-- End row -->
+            {% endif %}
+      {% endfor %}
+      {% if (valid_student_inactive_classes|length)%3 != 1 and (valid_student_inactive_classes|length) %}
+          </div> <!-- No more classes, but finish row -->
+      {% endif %}
+      </div>
+      {% endif %}
 </div>
 
 <script>
