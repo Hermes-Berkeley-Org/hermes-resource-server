@@ -428,9 +428,15 @@ def create_client(app):
                 ses = requests.Session()
 
                 success = False
+                url = None
+                params = None
+
+                link = request.form['link']
+                if not link.startswith('http'):
+                    link = 'http://{0}'.format(link)
 
                 try:
-                    url = ses.head(request.form["link"], allow_redirects=True).url
+                    url = ses.head(link, allow_redirects=True).url
                     params = parse_qs(urlparse(url).query)
                 except RequestException as e:
                     flash('Please enter a valid URL')
@@ -490,6 +496,8 @@ def create_client(app):
                             success = True
                         except (ValueError, OSError) as e:
                             flash('There was a problem with this video')
+                    else:
+                        flash('Please enter a valid YouTube video/playlist')
 
                 if success:
                     ts_classifier = None
@@ -529,6 +537,8 @@ def create_client(app):
                         if playlist_captions_success:
                             id = Class.add_lecture(cls, lecture, db)
                             Lecture.add_transcripts(id, transcript_lst, preds_lst, db)
+                else:
+                    flash('Please enter a valid YouTube video/playlist')
             else:
                 flash('All fields required')
         return render_template(
