@@ -10,8 +10,8 @@
         <div class="row" id="lec_table_header">
           <div class="col-md-1"></div>
           <div class="col-md-6">Lecture</div>
-          <div class="col-md-4">Date Posted</div>
-          <div class="col-md-1"></div>
+          <div class="col-md-3">Date</div>
+          <div class="col-md-2"></div>
         </div>
         <div id="lecture-list">
           {% for lec in lectures %}
@@ -31,17 +31,17 @@
               {% else %}
                 <div class="col-md-6 offset-md-1"><a href={{ url_for('lecture', cls=lec['cls'], lecture_number=lec['lecture_number'])}}>{{ lec['name'] }}</a></div>
               {% endif %}
-              <div class="col-md-4">{{lec['date']}}</div>
+              <div class="col-md-3">{{lec['date']}}</div>
+              <div class="col-md-2 text-right">
               {% if role == consts.INSTRUCTOR %}
-                <div class="col-sm-1">
                 {% if lec.get('is_playlist') %}
                   <a href={{ url_for('edit_lecture', cls = lec['cls'], lecture_number = lec['lecture_number'], playlist_number=0) }}><i class="fa fa-pencil" aria-hidden="true"></i></a>
                 {% else %}
                   <a href={{ url_for('edit_lecture', cls = lec['cls'], lecture_number = lec['lecture_number']) }}><i class="fa fa-pencil" aria-hidden="true"></i></a>
                 {% endif %}
-                </div>
-                <div class="col-sm-1"><i class="fa fa-close" style="color:red" type=submit onclick="deleteLecture('{{lec['_id']}}')"></i></div>
+                <i class="fa fa-close" style="color:red" type=submit onclick="deleteLecture('{{lec['_id']}}')"></i>
               {% endif %}
+              </div>
             </div>
             {% if lec['is_playlist'] %}
             <div class="row extra-content collapse" id="playlists-{{lec['_id']}}">
