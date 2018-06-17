@@ -752,6 +752,11 @@ def create_client(app):
     def has_clearance_for(user_role, clearance_role):
         return consts.OK_ROLES.index(user_role) >= consts.OK_ROLES.index(clearance_role)
 
+    @app.template_filter('external_link')
+    def create_link(link):
+        return link if link.startswith('http') else 'http://{0}'.format(link)
+
+
     @app.errorhandler(404)
     def page_not_found(e):
     	return redirect(url_for('error', code=404))

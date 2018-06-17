@@ -102,7 +102,7 @@ ul#menu li {
           <div id="resources" class="collapse">
             <ul>
               {% for resource in resources %}
-                <li><span class="qa-entry-lg"><a href="{{ resource['link'] }}" target="_blank">{{ resource['link'] }}</a></span></li>
+                <li><span class="qa-entry-lg"><a href="{{ resource['link']|external_link }}" target="_blank">{{ resource['link'] }}</a></span></li>
               {% endfor %}
             </ul>
           </div>
