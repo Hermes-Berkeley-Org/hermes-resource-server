@@ -282,33 +282,43 @@ def create_client(app):
         def class_exists(participation):
             return db[Class.collection].find({'ok_id': participation['id']}).count() > 0
         def is_instructor(participation):
-            return participation['role'] != consts.STUDENT
+            return participation['role'] == consts.INSTRUCTOR
+        def is_staff_not_instructor(participation):
+            return participation['role'] != consts.STUDENT and participation['role'] != consts.INSTRUCTOR
         if user:
             classes = get_updated_user_classes()
             if classes:
-                admin_active_classes = []
+                valid_staff_active_classes = []
+                valid_staff_inactive_classes = []
+                invalid_instructor_active_classes = []
+                invalid_instructor_inactive_classes = []
                 valid_student_active_classes = []
-                admin_inactive_classes = []
                 valid_student_inactive_classes = []
                 for cls in classes:
                     exists = class_exists(cls['course'])
                     active = cls['course']['active']
                     cls['class_exists'] = exists
-                    if is_instructor(cls) and active:
-                        admin_active_classes.append(cls)
-                    elif is_instructor(cls) and not active:
-                        admin_inactive_classes.append(cls)
-                    elif not is_instructor(cls) and active and exists:
+                    if (is_instructor(cls) or is_staff_not_instructor(cls)) and active and exists:
+                        valid_staff_active_classes.append(cls)
+                    elif (is_instructor(cls) or is_staff_not_instructor(cls)) and not active and exists:
+                        valid_staff_inactive_classes.append(cls)
+                    elif is_instructor(cls) and active and not exists:
+                        invalid_instructor_active_classes.append(cls)
+                    elif is_instructor(cls) and not active and not exists:
+                        invalid_instructor_inactive_classes.append(cls)
+                    elif not is_instructor(cls) and not is_staff_not_instructor(cls) and active and exists:
                         valid_student_active_classes.append(cls)
-                    elif not is_instructor(cls) and not active and exists:
+                    elif not is_instructor(cls) and not is_staff_not_instructor(cls) and not active and exists:
                         valid_student_inactive_classes.append(cls)
                 return render_template(
                     'home.html',
                     user=user,
-                    admin_active_classes=admin_active_classes,
-                    valid_student_active_classes=valid_student_active_classes,
-                    admin_inactive_classes=admin_inactive_classes,
-                    valid_student_inactive_classes=valid_student_inactive_classes,
+                    valid_staff_active_classes = valid_staff_active_classes,
+                    valid_staff_inactive_classes = valid_staff_inactive_classes,
+                    invalid_instructor_active_classes = invalid_instructor_active_classes,
+                    invalid_instructor_inactive_classes = invalid_instructor_inactive_classes,
+                    valid_student_active_classes = valid_student_active_classes,
+                    valid_student_inactive_classes = valid_student_inactive_classes,
                     consts = consts
                 )
         return redirect(url_for('index'))
