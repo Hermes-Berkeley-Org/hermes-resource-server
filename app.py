@@ -14,7 +14,7 @@ import logging
 
 from utils.webpage_utils import CreateLectureForm, CreateClassForm
 from utils import db_utils, app_utils, transcribe_utils
-from utils.db_utils import User, Class, Lecture, Note, Question, Answer, Vitamin
+from utils.db_utils import User, Class, Lecture, Note, Question, Answer, Vitamin, Resource
 from utils.textbook_utils import CLASSIFIERS
 
 import consts
@@ -360,6 +360,7 @@ def create_client(app):
             video_info['duration'] = lecture_obj['durations'][play_num]
             video_info['num_videos'] = len(lecture_obj['youtube_video_ids'])
         vitamins = db['Vitamins'].find({'$and':[{'lecture_id': str(lecture_obj["_id"])}, {'playlist_number': str(playlist_number)}]})
+        resources = db['Resources'].find({'$and':[{'lecture_id': str(lecture_obj["_id"])}, {'playlist_number': str(playlist_number)}]})
         if lecture_obj and cls_obj:
             logger.info("Displaying lecture.")
             if playlist_number:
@@ -377,7 +378,8 @@ def create_client(app):
                 app_utils=app_utils,
                 consts=consts,
                 db=db,
-                vitamins=vitamins
+                vitamins=vitamins,
+                resources=resources
             )
         return redirect(url_for('error', code=404))
 
@@ -717,6 +719,20 @@ def create_client(app):
     def delete_vitamin():
         Vitamin.delete_vitamin(request.form.to_dict(), db)
         logger.info("Successfully deleted vitamin.")
+        return jsonify(success=True), 200
+
+    @app.route('/add_resource', methods=['GET', 'POST'])
+    @post_on_behalf_of(consts.INSTRUCTOR)
+    def add_resource():
+        Resource.add_resource(request.form.to_dict(), db)
+        logger.info("Successfully added resource.")
+        return jsonify(success=True), 200
+
+    @app.route('/delete_resource', methods=['GET', 'POST'])
+    @post_on_behalf_of(consts.INSTRUCTOR)
+    def delete_resource():
+        Resource.delete_resource(request.form.to_dict(), db)
+        logger.info("Successfully deleted resource.")
         return jsonify(success=True), 200
 
     @app.template_filter('exclude')

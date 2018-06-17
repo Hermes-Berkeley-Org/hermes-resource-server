@@ -38,7 +38,20 @@
 	padding: 3%;
 }
 
-#vitamin-form.show, #vitamin-problem.show {
+#resource-form {
+	position: absolute;
+	overflow-y: auto;
+	left: 25%;
+	top: -200%;
+	width: 50%;
+	height: 50%;
+	background-color: #fff;
+	z-index: 10002;
+	border-radius: 15px;
+	padding: 3%;
+}
+
+#vitamin-form.show, #vitamin-problem.show, #resource-form.show {
 	top: 18.75%;
 	-webkit-animation: slideIn 0.5s;
     animation: slideIn 0.5s;
