@@ -3,8 +3,6 @@ venv/
 .env
 .DS_Store
 .idea/
-keys/
-keys/*
 deploy/private_env
 deploy/heroku_env
 .ipynb_checkpoints/
