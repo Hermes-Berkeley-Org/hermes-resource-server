@@ -110,11 +110,7 @@ ul#menu li {
       </section>
       <section id="questions_table">
           {% for question_set, interval in app_utils.partition(db['Questions'].find({'$and':[{'lecture_id': lecture['_id']|string}, {'playlist_number': playlist_number|string }]}), questions_interval, video_info['duration']) %}
-            {% if loop.index == 1 %}
-                <a data-toggle="collapse" onclick="toggleResponses('partition-icon-{{loop.index}}')" data-target="#partition-{{loop.index}}"><span style="font-size: 18px" id="partition-icon-{{loop.index}}" class="fa fa-chevron-down qa-entry" aria-hidden="true"></span><strong>Top Questions</strong></a>
-            {% else %}
-                <a data-toggle="collapse" onclick="toggleResponses('partition-icon-{{loop.index}}')" data-target="#partition-{{loop.index}}"><span style="font-size: 18px" id="partition-icon-{{loop.index}}" class="fa fa-chevron-down qa-entry" aria-hidden="true"></span> {{interval[0]}} - {{interval[1]}}</a>
-            {% endif %}
+            <a data-toggle="collapse" onclick="toggleResponses('partition-icon-{{loop.index}}')" data-target="#partition-{{loop.index}}"><span style="font-size: 18px" id="partition-icon-{{loop.index}}" class="fa fa-chevron-down qa-entry" aria-hidden="true"></span> {{interval[0]}} - {{interval[1]}}</a>
 
             <!-- <span style="display: block"> -->
             <div id="partition-{{loop.index}}" class="collapse">
@@ -126,14 +122,15 @@ ul#menu li {
                 <p>
                   <span class="fa fa-chevron-down qa-entry" id="toggle-icon-{{question['_id']}}" aria-hidden="true"></span></a>
                   <span id= "each-question-{{question['_id']}}">
-                    <span id="upvotes-{{question['_id']}}">
+                    <!-- <span id="upvotes-{{question['_id']}}">
                       <button class="btn btn-default btn-sm likes"  type=submit onclick='upvoteQuestion("{{user['_id']}}", "{{question['_id']}}")'>
                       {% if user['_id']|string in question['upvotes'] %}
                       <i class="fa fa-thumbs-up" aria-hidden="true"></i> Like  <span id = "upvotes-{{question['_id']}}-count" class ="clicked">{{ question['upvotes']|length }}</span>
                       {% else %}
                       <i class="fa fa-thumbs-o-up" aria-hidden="true"></i> Like <span id = "upvotes-{{question['_id']}}-count" class = "notclicked"> {{ question['upvotes']|length }}</span>
                       {% endif %}
-                  </button></span>
+                      </button>
+                    </span> -->
                 {% if question['anon'] == "true" and user['role'] == consts.STUDENT %}
                   <span class="question-tag-lg"> Anonymous {{question['timestamp']}}</span>
                 {% else %}
@@ -151,7 +148,7 @@ ul#menu li {
             <div id="answers-{{question['_id']}}">
                 {% for answer in db['Answers'].find({'question_id': question['_id']}) %}
                     <div id="each-answer-{{answer['_id']}}">
-                      <p><span id="upvotes-{{answer['_id']}}" class="qa-entry">
+                      <!-- <span id="upvotes-{{answer['_id']}}" class="qa-entry">
                       <button class="btn btn-default btn-sm likes" type=submit onclick='upvoteAnswer("{{user['_id']}}", "{{answer['_id']}}")'>
                           {% if user['_id']|string in answer['upvotes'] %}
                           <span id = "upvotes-{{answer['_id']}}-count" class = "notclicked">
@@ -160,7 +157,7 @@ ul#menu li {
                           <i class="fa fa-thumbs-o-up" aria-hidden="true"></i> Like  <span id = "upvotes-{{answer['_id']}}-count" class = "clicked"> {{ answer['upvotes']|length }} </span>
                           {% endif %}
                       </button>
-                    </span>
+                      </span> -->
                     {% if answer['anon'] == "true" and user['role'] == consts.STUDENT %}
                         <span class="question-tag"> Anonymous</span>
                           <span class="qa-entry"> {{answer['text']}}</span>
@@ -598,8 +595,8 @@ ul#menu li {
   }
 
   function toggleTopQuestions() {
-      toggleResponses('partition-icon-1');
-      $('#partition-1').collapse("show");
+      // toggleResponses('partition-icon-1');
+      // $('#partition-1').collapse("show");
   }
 
   function toggleResponses(buttonId) {
