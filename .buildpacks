@@ -1,0 +1,2 @@
+git://github.com/heroku/heroku-buildpack-python.git
+https://github.com/megacool/heroku-buildpack-python-nltk

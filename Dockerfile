@@ -1,4 +1,4 @@
-FROM hermes:latest
+FROM ubuntu:latest
 MAINTAINER Ajay Raj "araj@berkeley.edu"
 RUN apt-get update -y
 RUN apt-get install -y python3 python3-dev python3-pip nginx

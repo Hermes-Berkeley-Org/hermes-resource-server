@@ -1,0 +1,24 @@
+{% extends 'header.html' %}
+{% block title %}404 Not Found{% endblock %}
+{% block head %}{{ super() }}{% endblock %}
+{% block content %}
+
+    <header class="masthead bg-white text-primary text-center full-section">
+	    <div class="container">
+	        <!--<img class="img-fluid mb-5 d-block mx-auto" src="img/profile.png" alt="">-->
+	        <h1 class="text-uppercase mb-0">404 Page Not Found</h1>
+	        <hr class="star-primary mb-5">
+	        <h2 class="font-weight-light mb-0">Sorry, the page you requested was not found.</h2>
+	        <div class="text-center mt-4">
+          		<a class="btn btn-primary btn-xl" href="{{ url_for('home') }}">
+	            Return to Home Page
+	          </a>
+	        </div>
+      	</div>
+	</header>
+
+{% endblock %}
+
+{% block footer %}
+{{ super() }}
+{% endblock %}
