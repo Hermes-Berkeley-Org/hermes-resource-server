@@ -789,5 +789,4 @@ def create_client(app):
     	elif code == '500':
     		return render_template('500.html')
 
-
 create_client(app)

@@ -44,3 +44,10 @@ Download the client_secret.json file from the Drive and put it in a directory ca
 **Other Keys**
 
 Download all files in the "envs" folder from the Drive and put them in the deploy directory
+
+## Docker Support
+
+```
+docker build -t hermes:latest .
+docker run -p 3000:3000 --name hermes --env-file deploy/docker-env hermes:latest
+```
