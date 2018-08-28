@@ -329,6 +329,16 @@ ul#menu li {
             toggleResponses(collapseButton.children()[0].id);
             div.collapse('show');
           }
+          var partitionNumber = 1;
+          var questionSet = $(`#partition-${partitionNumber}`);
+          while (questionSet.length) {
+            if (questionSet.attr('id') != div.attr('id') && questionSet.attr('class').split(' ').indexOf('show') != -1) {
+              toggleResponses(`partition-icon-${partitionNumber}`);
+              questionSet.collapse('hide'); 
+            }
+            partitionNumber += 1;
+            questionSet = $(`#partition-${partitionNumber}`);
+          }
       };
 
       var displayFullTranscript = function () {
