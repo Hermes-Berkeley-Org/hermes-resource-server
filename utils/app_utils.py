@@ -28,8 +28,7 @@ def edit_distance(s1, s2):
     return E[m][n]
 
 
-def get_curr_semester():
-    today = datetime.today()
+def get_curr_semester(today=datetime.today()):
     month, year = today.month, today.year
     def get_season(month):
         if month < 6:

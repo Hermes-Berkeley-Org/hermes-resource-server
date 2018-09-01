@@ -1,0 +1,76 @@
+#!/usr/bin/env bash
+# protected_branch='prepush'
+current_branch=$(git symbolic-ref HEAD | sed -e 's,.*/\(.*\),\1,')
+
+
+#!/usr/bin/env bash
+
+# if any command inside script returns error, exit and return that error
+set -e
+
+# magic line to ensure that we're always inside the root of our application,
+# no matter from which directory we'll run script
+# thanks to it we can just enter `./scripts/run-tests.bash`
+
+# let's fake failing test for now
+echo "Running tests"
+flag=0
+passed=0
+total=7
+if python3 ./test/test_app.py; then
+	echo "test_app Passed"
+	passed=$((passed + 1))
+else
+	flag=1
+	echo "test_app_utils Failed"
+fi
+if python3 ./test/test_app_utils.py; then
+	echo "test_app_utils Passed"
+	passed=$((passed + 1))
+else
+	flag=1
+	echo "test_app_utils Failed"
+fi
+if python3 ./test/test_db_utils.py; then
+	echo "test_db_utils Passed"
+	passed=$((passed + 1))
+else
+	flag=1
+	echo "test_db_utils Failed"
+fi
+if python3 ./test/test_question_utils.py; then
+	echo "test_question_utils Passed"
+	passed=$((passed + 1))
+else
+	flag=1
+	echo "test_question_utils Failed"
+fi
+if python3 ./test/test_textbook_utils.py; then
+	echo "test_textbook_utils Passed"
+	passed=$((passed + 1))
+else
+	flag=1
+	echo "test_textbook_utils Failed"
+fi
+if python3 ./test/test_transcribe_utils.py; then
+	echo "test_transcribe_utils Passed"
+	passed=$((passed + 1))
+else
+	flag=1
+	echo "test_transcribe_utils Failed"
+fi
+if python3 ./test/test_webpage_utils.py; then
+	echo "test_webpage_utils Passed"
+	passed=$((passed + 1))
+else
+	flag=1
+	echo "test_webpage_utils Failed"
+fi
+if [ "$flag" == 1 ]; then
+		echo "Test Cases Failed"
+		echo "$passed/$total Test Cases Passed"
+		exit 1
+else
+		echo "$passed/$total Test Cases Passed"
+		exit 0
+fi
