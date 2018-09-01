@@ -31,19 +31,19 @@ ul#menu li {
       <div class="navbar">
       {% if playlist_number|int != 0|int %}
       <a href={{ url_for('lecture', cls=cls['ok_id'], lecture_number=lecture['lecture_number'], playlist_number= ((playlist_number|int - 1|int)|string)) }}>
-        <button class="btn btn-primary btn-sm submission" >Previous Video</button>
+        <
       </a>
       {% endif %}
       {% for lec in range(video_info['num_videos']) %}
       {% if playlist_number|int == lec|int %}
-        <b><u><font size ="2" color="black"> {{lec}}. {{lecture['video_titles'][lec]}}</font></u></b>
+        <b><u><font size ="2" color="black"> {{lec}}</font></u></b>
       {% else %}
-        <font size ="2"><a href={{ url_for('lecture', cls=cls['ok_id'], lecture_number=lecture['lecture_number'], playlist_number= lec) }}>{{lec}}. {{lecture['video_titles'][lec]}}</a></font>
+        <font size ="2"><a href={{ url_for('lecture', cls=cls['ok_id'], lecture_number=lecture['lecture_number'], playlist_number= lec) }}>{{lec}}</a></font>
       {% endif %}
       {% endfor %}
       {% if playlist_number|int < (video_info['num_videos'] - 1)|int %}
         <a href={{ url_for('lecture', cls=cls['ok_id'], lecture_number=lecture['lecture_number'], playlist_number= ((playlist_number|int + 1|int)|string)) }}>
-          <button class="btn btn-sm btn-primary submission" >Next Video</button>
+          >
         </a>
       {% endif %}
       </div>
@@ -334,7 +334,7 @@ ul#menu li {
           while (questionSet.length) {
             if (questionSet.attr('id') != div.attr('id') && questionSet.attr('class').split(' ').indexOf('show') != -1) {
               toggleResponses(`partition-icon-${partitionNumber}`);
-              questionSet.collapse('hide'); 
+              questionSet.collapse('hide');
             }
             partitionNumber += 1;
             questionSet = $(`#partition-${partitionNumber}`);
