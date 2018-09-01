@@ -1,0 +1,8 @@
+#!/bin/bash
+export FLASK_APP=app.py
+export OK_SERVER=https://okpy.org
+export OK_MODE=authenticate
+export TESTING_OK_ID=lejRej
+export TRANSCRIPTION_MODE=api
+export OAUTHLIB_INSECURE_TRANSPORT=1
+export FLASK_DEBUG=1
