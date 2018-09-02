@@ -402,22 +402,170 @@ def create_client(app):
                     return participation['role'], participation['course']
         return None, None
 
+    def add_transcript(cls, lecture, youtube, url):
+        ts_classifier = None
+        if cls['display_name'] in CLASSIFIERS:
+            ts_classifier = CLASSIFIERS[cls['display_name']](db, cls['ok_id'])
+        if not lecture.get('is_playlist'):
+            try:
+                print(url)
+                transcript, preds = transcribe_utils.transcribe(
+                    mode=app.config['TRANSCRIPTION_MODE'],
+                    youtube_link=url,
+                    youtube=youtube,
+                    transcription_classifier=ts_classifier,
+                )
+                id = Class.add_lecture(cls, lecture, db)
+                Lecture.add_transcript(id, transcript, preds, db)
+            except ValueError as e:
+                flash('There was a problem retrieving the caption track for this video. {0}'.format(consts.NO_CAPTION_TRACK_MESSAGE))
+        else:
+            transcript_lst = []
+            preds_lst = []
+            playlist_captions_success = True
+            for i, youtube_id in enumerate(lecture.get('youtube_video_ids') or []):
+                try:
+                    transcript, preds = transcribe_utils.transcribe(
+                        mode=app.config['TRANSCRIPTION_MODE'],
+                        video_id=youtube_id,
+                        youtube=youtube,
+                        transcription_classifier=ts_classifier,
+                        )
+                    transcript_lst.append(transcript)
+                    preds_lst.append(preds)
+                except ValueError as e:
+                    flash('There was a problem retrieving the caption track for video {0}. {1}'.format(i, consts.NO_CAPTION_TRACK_MESSAGE))
+                    playlist_captions_success = False
+                    break
+            if playlist_captions_success:
+                id = Class.add_lecture(cls, lecture, db)
+                Lecture.add_transcripts(id, transcript_lst, preds_lst, db)
+
+    def get_video_info(params, lecture, youtube,link):
+        try:
+            youtube_id = params['v'][0]
+            title, duration = transcribe_utils.get_video_info(youtube_id, youtube)
+            if not (title and duration):
+                raise ValueError('Video does not have a title or duration')
+            lecture.set('duration', duration)
+            lecture.set('youtube_video_link', link)
+            lecture.set('video_title', title)
+            lecture.set('is_playlist', False)
+            return True
+        except (ValueError, OSError) as e:
+            flash('There was a problem with this video')
+
+
+    def get_playlist_info(params, lecture, youtube):
+        youtube_id = params['list'][0]
+        youtube_vids = youtube.playlistItems().list(
+            part='contentDetails',
+            maxResults=25,
+            playlistId=youtube_id
+        ).execute()
+        playlist_items = youtube_vids.get('items')
+        if playlist_items:
+            youtube_ids = [vid["contentDetails"]["videoId"] for vid in playlist_items]
+            durations = []
+            titles = []
+            playlist_success = True
+            for i, id in enumerate(youtube_ids):
+                try:
+                    title, duration = transcribe_utils.get_video_info(id, youtube)
+                    if title and duration:
+                        durations.append(duration)
+                        titles.append(title)
+                    else:
+                        raise ValueError('Video does not have a title or duration')
+                except (ValueError, OSError) as e:
+                    playlist_success = False
+                    flash('There was a problem with video {0} in the playlist. Please make sure this video is not deleted or unavailable.'.format(i))
+                    break
+            if playlist_success:
+                lecture.set('durations', durations)
+                lecture.set('youtube_video_ids', youtube_ids)
+                lecture.set('video_titles', titles)
+                lecture.set('is_playlist', True)
+                return True
+        else:
+            flash('Something went wrong. Please try again later.')
+
+
+    def submit_lecture(form, user, youtube, role, cls, class_ok_id):
+        """
+        WtForm form: Form that Professor submits with link, date, title
+        param User: User Data
+        param Youtube: Youtube API Client
+        String role: User's role in the class
+        Dictionary cls: Current class's data
+        Int class_ok_id: class's ok id
+        return: A lecture template
+
+        note:: urlparse takes a url and parse it into an Object with
+        various fields (scheme, netloc, path, params, query, and fragment)
+        note:: parse_qs takes in a string and parses the query parameters and
+        returns a dictionary of the parameters and their values
+        """
+        if form.validate():
+            ses = requests.Session()
+            success = False
+            url = None
+            params = None
+            parse_obj = None
+            link = request.form['link']
+            if not link.startswith('http'):
+                link = 'http://{0}'.format(link)
+            try:
+                url = ses.head(link, allow_redirects=True).url
+                parse_obj = urlparse(url)
+                logger.info(parse_obj)
+                params = parse_qs(parse_obj.query)
+                logger.info(params)
+            except RequestException as e:
+                flash('Please enter a valid URL')
+            lecture = Lecture(
+                name=request.form['title'],
+                url_name=db_utils.encode_url(request.form['title']),
+                date=request.form['date'],
+                link=url,
+                lecture_number=len(cls['lectures']),
+                cls=class_ok_id,
+            )
+            if parse_obj and 'youtube' in parse_obj.netloc and url and params:
+                if 'list' in params and len(params['list']) > 0:
+                    success = get_playlist_info(params, lecture, youtube)
+                elif 'v' in params and len(params['v']) > 0:
+                    success = get_video_info(params, lecture, youtube, link)
+                else:
+                    flash('Please enter a valid YouTube video/playlist')
+            if success:
+                add_transcript(cls, lecture, youtube, url)
+            else:
+                flash('Please enter a valid YouTube video/playlist')
+        else:
+            flash('All fields required')
+        return render_template(
+            'class.html',
+            info=cls,
+            lectures=db['Lectures'].find({'cls': class_ok_id}).sort([('date', 1)]),
+            form=form,
+            user=user,
+            role=role,
+            consts=consts,
+            api_key=app.config['HERMES_API_KEY']
+        )
+
     @app.route('/class/<class_ok_id>', methods=['GET', 'POST'])
     @login_required
     def classpage(class_ok_id):
 
         form = CreateLectureForm(request.form)
         user = get_user_data()
-
         youtube = None
-
         role, data = get_role(class_ok_id)
-
         cls = db['Classes'].find_one({'ok_id': int(class_ok_id)})
-
         if not cls:
             return redirect(url_for('error', code=404))
-
         if role == consts.INSTRUCTOR:
             if not user.get('google_credentials'):
                 return redirect(url_for('google_authorize', class_ok_id=class_ok_id))
@@ -434,131 +582,11 @@ def create_client(app):
                     ).execute()
                 except RefreshError as e:
                     return redirect(url_for('google_authorize', class_ok_id=class_ok_id))
-
         if request.method == 'POST':
             if role != consts.INSTRUCTOR:
                 logger.info("Error: user access level is %s", role)
                 redirect(url_for('error', code=403))
-            if form.validate():
-                ses = requests.Session()
-
-                success = False
-                url = None
-                params = None
-                parse_obj = None
-
-                link = request.form['link']
-                if not link.startswith('http'):
-                    link = 'http://{0}'.format(link)
-
-                try:
-                    parse_obj = urlparse(link)
-                    url = ses.head(link, allow_redirects=True).url
-                    params = parse_qs(parse_obj.query)
-                except RequestException as e:
-                    flash('Please enter a valid URL')
-
-                lecture = Lecture(
-                    name=request.form['title'],
-                    url_name=db_utils.encode_url(request.form['title']),
-                    date=request.form['date'],
-                    link=request.form['link'],
-                    lecture_number=len(cls['lectures']),
-                    cls=class_ok_id,
-                )
-
-                if parse_obj and 'youtube' in parse_obj.netloc and url and params:
-                    if 'list' in params and len(params['list']) > 0:
-                        youtube_id = params['list'][0]
-                        youtube_vids = youtube.playlistItems().list(
-                            part='contentDetails',
-                            maxResults=25,
-                            playlistId=youtube_id
-                        ).execute()
-                        playlist_items = youtube_vids.get('items')
-                        if playlist_items:
-                            youtube_ids = [vid["contentDetails"]["videoId"] for vid in playlist_items]
-                            durations = []
-                            titles = []
-                            playlist_success = True
-                            for i, id in enumerate(youtube_ids):
-                                try:
-                                    title, duration = transcribe_utils.get_video_info(id, youtube)
-                                    if title and duration:
-                                        durations.append(duration)
-                                        titles.append(title)
-                                    else:
-                                        raise ValueError('Video does not have a title or duration')
-                                except (ValueError, OSError) as e:
-                                    playlist_success = False
-                                    flash('There was a problem with video {0} in the playlist. Please make sure this video is not deleted or unavailable.'.format(i))
-                                    break
-                            if playlist_success:
-                                lecture.set('durations', durations)
-                                lecture.set('youtube_video_ids', youtube_ids)
-                                lecture.set('video_titles', titles)
-                                lecture.set('is_playlist', True)
-                                success = True
-                        else:
-                            flash('Something went wrong. Please try again later.')
-                    elif 'v' in params and len(params['v']) > 0:
-                        try:
-                            youtube_id = params['v'][0]
-                            title, duration = transcribe_utils.get_video_info(youtube_id, youtube)
-                            if not (title and duration):
-                                raise ValueError('Video does not have a title or duration')
-                            lecture.set('duration', duration)
-                            lecture.set('youtube_video_link', link)
-                            lecture.set('video_title', title)
-                            lecture.set('is_playlist', False)
-                            success = True
-                        except (ValueError, OSError) as e:
-                            flash('There was a problem with this video')
-                    else:
-                        flash('Please enter a valid YouTube video/playlist')
-
-                if success:
-                    ts_classifier = None
-                    if cls['display_name'] in CLASSIFIERS:
-                        ts_classifier = CLASSIFIERS[cls['display_name']](db, cls['ok_id'])
-
-                    if not lecture.get('is_playlist'):
-                        try:
-                            transcript, preds = transcribe_utils.transcribe(
-                                mode=app.config['TRANSCRIPTION_MODE'],
-                                youtube_link=request.form['link'],
-                                youtube=youtube,
-                                transcription_classifier=ts_classifier,
-                            )
-                            id = Class.add_lecture(cls, lecture, db)
-                            Lecture.add_transcript(id, transcript, preds, db)
-                        except ValueError as e:
-                            flash('There was a problem retrieving the caption track for this video. {0}'.format(consts.NO_CAPTION_TRACK_MESSAGE))
-                    else:
-                        transcript_lst = []
-                        preds_lst = []
-                        playlist_captions_success = True
-                        for i, youtube_id in enumerate(lecture.get('youtube_video_ids') or []):
-                            try:
-                                transcript, preds = transcribe_utils.transcribe(
-                                    mode=app.config['TRANSCRIPTION_MODE'],
-                                    video_id=youtube_id,
-                                    youtube=youtube,
-                                    transcription_classifier=ts_classifier,
-                                )
-                                transcript_lst.append(transcript)
-                                preds_lst.append(preds)
-                            except ValueError as e:
-                                flash('There was a problem retrieving the caption track for video {0}. {1}'.format(i, consts.NO_CAPTION_TRACK_MESSAGE))
-                                playlist_captions_success = False
-                                break
-                        if playlist_captions_success:
-                            id = Class.add_lecture(cls, lecture, db)
-                            Lecture.add_transcripts(id, transcript_lst, preds_lst, db)
-                else:
-                    flash('Please enter a valid YouTube video/playlist')
-            else:
-                flash('All fields required')
+            return submit_lecture(form, user, youtube, role, cls, class_ok_id)
         return render_template(
             'class.html',
             info=cls,
