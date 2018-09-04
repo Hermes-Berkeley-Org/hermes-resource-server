@@ -533,7 +533,7 @@ def create_client(app):
                             )
                             Lecture.add_transcript(id, transcript, preds, db)
                         except ValueError as e:
-                            flash('There was a problem retrieving the caption track for this video. {0}'.format(consts.NO_CAPTION_TRACK_MESSAGE))
+                            flash('We have added the lecture, but there was a problem retrieving the caption track for this video. {0}'.format(consts.NO_CAPTION_TRACK_MESSAGE))
                     else:
                         transcript_lst = []
                         preds_lst = []
@@ -547,7 +547,7 @@ def create_client(app):
                                     transcription_classifier=ts_classifier,
                                 )
                             except ValueError as e:
-                                flash('There was a problem retrieving the caption track for video {0}. {1}'.format(i, consts.NO_CAPTION_TRACK_MESSAGE))
+                                flash('We have added the lecture, but there was a problem retrieving the caption track for video {0}. {1}'.format(i, consts.NO_CAPTION_TRACK_MESSAGE))
                                 # playlist_captions_success = False
                                 # break
                             transcript_lst.append(transcript)
