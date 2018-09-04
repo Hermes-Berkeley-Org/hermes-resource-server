@@ -337,11 +337,11 @@ def create_client(app):
         lecture_obj['lecture_number'] = lecture_number
         video_info = {}
         if not lecture_obj.get('is_playlist'):
+            transcript = lecture_obj.get('transcript') or []
             preds = lecture_obj.get('preds')
             if not preds:
-                preds = [(None, [0, len(lecture_obj['transcript']) // 2 + 1])]
+                preds = [(None, [0, len(transcript) // 2 + 1])]
             video_info['video_id'] = transcribe_utils.get_youtube_id(lecture_obj['link'])
-            transcript = lecture_obj['transcript']
             video_info['partition_titles'] = list(
                 app_utils.generate_partition_titles(
                     lecture_obj['duration'],
@@ -358,7 +358,7 @@ def create_client(app):
                 lecture_obj['youtube_video_ids'][play_num]
             )
             preds = lecture_obj.get('preds')[play_num]
-            transcript = lecture_obj['transcripts'][play_num]
+            transcript = lecture_obj['transcripts'][play_num] or []
             if not preds:
                 preds = [(None, [0, len(transcript) // 2 + 1])]
             video_info['video_id'] = transcribe_utils.get_youtube_id(link)
@@ -524,21 +524,21 @@ def create_client(app):
 
                     if not lecture.get('is_playlist'):
                         try:
+                            id = Class.add_lecture(cls, lecture, db)
                             transcript, preds = transcribe_utils.transcribe(
                                 mode=app.config['TRANSCRIPTION_MODE'],
                                 youtube_link=request.form['link'],
                                 youtube=youtube,
                                 transcription_classifier=ts_classifier,
                             )
-                            id = Class.add_lecture(cls, lecture, db)
                             Lecture.add_transcript(id, transcript, preds, db)
                         except ValueError as e:
-                            flash('There was a problem retrieving the caption track for this video. {0}'.format(consts.NO_CAPTION_TRACK_MESSAGE))
+                            flash('We have added the lecture, but there was a problem retrieving the caption track for this video. {0}'.format(consts.NO_CAPTION_TRACK_MESSAGE))
                     else:
                         transcript_lst = []
                         preds_lst = []
-                        playlist_captions_success = True
                         for i, youtube_id in enumerate(lecture.get('youtube_video_ids') or []):
+                            transcript, preds = None, None
                             try:
                                 transcript, preds = transcribe_utils.transcribe(
                                     mode=app.config['TRANSCRIPTION_MODE'],
@@ -546,15 +546,14 @@ def create_client(app):
                                     youtube=youtube,
                                     transcription_classifier=ts_classifier,
                                 )
-                                transcript_lst.append(transcript)
-                                preds_lst.append(preds)
                             except ValueError as e:
-                                flash('There was a problem retrieving the caption track for video {0}. {1}'.format(i, consts.NO_CAPTION_TRACK_MESSAGE))
-                                playlist_captions_success = False
-                                break
-                        if playlist_captions_success:
-                            id = Class.add_lecture(cls, lecture, db)
-                            Lecture.add_transcripts(id, transcript_lst, preds_lst, db)
+                                flash('We have added the lecture, but there was a problem retrieving the caption track for video {0}. {1}'.format(i, consts.NO_CAPTION_TRACK_MESSAGE))
+                                # playlist_captions_success = False
+                                # break
+                            transcript_lst.append(transcript)
+                            preds_lst.append(preds)
+                        id = Class.add_lecture(cls, lecture, db)
+                        Lecture.add_transcripts(id, transcript_lst, preds_lst, db)
                 else:
                     flash('Please enter a valid YouTube video/playlist')
             else:
