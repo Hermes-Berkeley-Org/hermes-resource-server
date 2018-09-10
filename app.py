@@ -4,6 +4,9 @@ from pymongo import MongoClient
 import sys
 import os
 import re
+import pprint
+from json import dumps as json_dump
+from bson.json_util import dumps as bson_dump
 from config import Config
 
 from datetime import datetime
@@ -310,6 +313,14 @@ def create_client(app):
                         valid_student_active_classes.append(cls)
                     elif not is_instructor(cls) and not is_staff_not_instructor(cls) and not active and exists:
                         valid_student_inactive_classes.append(cls)
+                logger.info(bson_dump({
+                        "user":user,
+                        "valid_staff_active_classes":valid_staff_active_classes,
+                        "valid_staff_inactive_classes":valid_staff_inactive_classes,
+                        "invalid_instructor_active_classes":invalid_instructor_active_classes,
+                        "valid_student_active_classes":valid_student_active_classes,
+                        "valid_student_inactive_classes":valid_student_inactive_classes,
+                }))
                 return render_template(
                     'home.html',
                     user=user,
@@ -318,8 +329,7 @@ def create_client(app):
                     invalid_instructor_active_classes = invalid_instructor_active_classes,
                     invalid_instructor_inactive_classes = invalid_instructor_inactive_classes,
                     valid_student_active_classes = valid_student_active_classes,
-                    valid_student_inactive_classes = valid_student_inactive_classes,
-                    consts = consts
+                    valid_student_inactive_classes = valid_student_inactive_classes
                 )
         return redirect(url_for('index'))
 
@@ -621,6 +631,17 @@ def create_client(app):
             else:
                 video_info['video_id'] = transcribe_utils.get_youtube_id(lecture_obj['link'])
                 video_info['num_videos'] = 1
+            vitamins = (db['Vitamins'].find_one({ 'lecture_id': str(lecture_obj.get("_id")), 'playlist_number': str(playlist_number)}))
+            questions = (db['Resources'].find_one({ 'lecture_id': str(lecture_obj.get("_id")), 'playlist_number': str(playlist_number)}))
+            logger.info(bson_dump({
+                "video_info":video_info,
+                "user":user,
+                "cls":cls_obj,
+                "lecture":lecture_obj,
+                "playlist_number":playlist_number,
+                "vitamins":vitamins,
+                "question":questions
+            }))
             return render_template(
                 'edit_lecture.html',
                 video_info=video_info,
@@ -628,7 +649,7 @@ def create_client(app):
                 cls=cls_obj,
                 lecture=lecture_obj,
                 playlist_number=playlist_number,
-                db=db,
+                db=db
             )
         else:
             logger.info("Error: user access level is %s", role)
