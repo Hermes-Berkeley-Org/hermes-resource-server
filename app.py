@@ -313,24 +313,14 @@ def create_client(app):
                         valid_student_active_classes.append(cls)
                     elif not is_instructor(cls) and not is_staff_not_instructor(cls) and not active and exists:
                         valid_student_inactive_classes.append(cls)
-                logger.info(bson_dump({
+                return bson_dump({
                         "user":user,
                         "valid_staff_active_classes":valid_staff_active_classes,
                         "valid_staff_inactive_classes":valid_staff_inactive_classes,
                         "invalid_instructor_active_classes":invalid_instructor_active_classes,
                         "valid_student_active_classes":valid_student_active_classes,
                         "valid_student_inactive_classes":valid_student_inactive_classes,
-                }))
-                return render_template(
-                    'home.html',
-                    user=user,
-                    valid_staff_active_classes = valid_staff_active_classes,
-                    valid_staff_inactive_classes = valid_staff_inactive_classes,
-                    invalid_instructor_active_classes = invalid_instructor_active_classes,
-                    invalid_instructor_inactive_classes = invalid_instructor_inactive_classes,
-                    valid_student_active_classes = valid_student_active_classes,
-                    valid_student_inactive_classes = valid_student_inactive_classes
-                )
+                })
         return redirect(url_for('index'))
 
     @app.route('/class/<cls>/lecture/<lecture_number>/', defaults={'playlist_number': None})
