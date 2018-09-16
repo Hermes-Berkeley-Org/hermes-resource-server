@@ -281,6 +281,24 @@ class Lecture(DBObject):
             }
         )
 
+class Playlist(DBObject):
+    collection = 'Playlists'
+
+    def __init__(self, **attr):
+        DBObject.__init__(self, **attr)
+
+    @staticmethod
+    def add_lecture(playlist_id, lecture_id, db):
+        db[Playlist.collection].update_one(
+            {
+                '_id': playlist_id
+            },
+            {
+                $push: { lectures: lecture_id }
+            }
+        )
+
+
 class Vitamin(DBObject):
 
     collection = 'Vitamins'
