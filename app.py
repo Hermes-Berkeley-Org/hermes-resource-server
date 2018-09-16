@@ -89,7 +89,8 @@ def create_client(app):
         if not get_user_data():
             session['logged_in'] = False
         logger.info("Successfully routed to index.")
-        return render_template('index.html')
+        return jsonify(success=True)
+        # return render_template('index.html')
 
     @app.route('/about')
     def about():
@@ -234,61 +235,66 @@ def create_client(app):
         User.add_admin_google_credentials(user['_id'], credentials, db)
         return redirect(url_for('classpage', class_ok_id=class_ok_id))
 
-    @remote.tokengetter
     def get_oauth_token():
-        return session.get('dev_token')
+        return "p2EYfeV41vrihyxXRLiDGMHeiuEiOr"
 
-    def get_ok_id():
-        if app.config['OK_MODE'] == 'bypass':
-            return app.config['TESTING_OK_ID']
-        else:
-            if 'dev_token' in session:
-                token = session['dev_token'][0]
+        # request.headers.get('Authorization')
+
+
+    def get_ok_id(func):
+        @wraps(func)
+        def get_id(*args, **kwargs):
+            if app.config['OK_MODE'] == 'bypass':
+                return app.config['TESTING_OK_ID']
+            else:
                 r = requests.get('{0}/api/v3/user/?access_token={1}'.format(
-                        app.config['OK_SERVER'],
-                        token
+                    app.config['OK_SERVER'],
+                    get_oauth_token()
                     )
                 )
+                logger.info(r)
+                if not r:
+                    logger.info("Request not allowed")
+                    return jsonify(success=False), 403
                 ok_resp = r.json()
+                logger.info(ok_resp)
                 if ok_resp and 'data' in ok_resp:
                     ok_data = ok_resp['data']
                     if 'id' in ok_data:
-                        return ok_data['id']
+                        return func(ok_id=ok_data['id'], *args,**kwargs)
+                return jsonify(success=False), 403
+        return get_id
 
-    def get_user_data(user_id=None):
-        if not session.get('logged_in'):
-            return
+    @get_ok_id
+    def get_user_data(user_id=None, ok_id = None):
         if user_id:
             return db_utils.find_one_by_id(user_id, User.collection, db)
-        ok_id = get_ok_id()
         if ok_id:
             db_result = db[User.collection].find_one({'ok_id': ok_id}) or {}
             return db_result
 
     def get_updated_user_classes():
-        if 'dev_token' in session:
-            token = session['dev_token'][0]
-            r = requests.get('{0}/api/v3/user/?access_token={1}'.format(
-                    app.config['OK_SERVER'],
-                    token
-                )
+        token = get_oauth_token()
+        r = requests.get('{0}/api/v3/user/?access_token={1}'.format(
+                app.config['OK_SERVER'],
+                get_oauth_token()
             )
-            ok_resp = r.json()
-            if 'data' in ok_resp and 'participations' in ok_resp['data']:
-                return ok_resp['data']['participations']
+        )
+        ok_resp = r.json()
+        if 'data' in ok_resp and 'participations' in ok_resp['data']:
+            return ok_resp['data']['participations']
 
     @app.route('/home/')
-    @login_required
-    def home():
-        logger.info("Displaying home.")
-        user = get_user_data()
+    # @login_required
+    @get_ok_id
+    def home(ok_id=None):
         def class_exists(participation):
             return db[Class.collection].find({'ok_id': participation['id']}).count() > 0
         def is_instructor(participation):
             return participation['role'] == consts.INSTRUCTOR
         def is_staff_not_instructor(participation):
             return participation['role'] != consts.STUDENT and participation['role'] != consts.INSTRUCTOR
-        if user:
+        if ok_id:
             classes = get_updated_user_classes()
             if classes:
                 valid_staff_active_classes = []
@@ -313,19 +319,20 @@ def create_client(app):
                         valid_student_active_classes.append(cls)
                     elif not is_instructor(cls) and not is_staff_not_instructor(cls) and not active and exists:
                         valid_student_inactive_classes.append(cls)
-                return bson_dump({
-                        "user":user,
+                return json_dump({
+                        "user":ok_id,
                         "valid_staff_active_classes":valid_staff_active_classes,
                         "valid_staff_inactive_classes":valid_staff_inactive_classes,
                         "invalid_instructor_active_classes":invalid_instructor_active_classes,
                         "valid_student_active_classes":valid_student_active_classes,
                         "valid_student_inactive_classes":valid_student_inactive_classes,
                 })
-        return redirect(url_for('index'))
+        return jsonify(success=False), 403
+        # return redirect(url_for('index'))
 
     @app.route('/class/<cls>/lecture/<lecture_number>/', defaults={'playlist_number': None})
     @app.route('/class/<cls>/lecture/<lecture_number>/<playlist_number>')
-    @login_required
+    # @login_required
     def lecture(cls, lecture_number, playlist_number=None):
         cls_obj = db['Classes'].find_one({'ok_id': int(cls)})
         lecture_obj = db['Lectures'].find_one(
@@ -455,7 +462,6 @@ def create_client(app):
         except (ValueError, OSError) as e:
             flash('There was a problem with this video')
 
-
     def get_playlist_info(params, lecture, youtube):
         youtube_id = params['list'][0]
         youtube_vids = youtube.playlistItems().list(
@@ -489,7 +495,6 @@ def create_client(app):
                 return True
         else:
             flash('Something went wrong. Please try again later.')
-
 
     def submit_lecture(form, user, youtube, role, cls, class_ok_id):
         """
@@ -544,20 +549,30 @@ def create_client(app):
                 flash('Please enter a valid YouTube video/playlist')
         else:
             flash('All fields required')
-        return render_template(
-            'class.html',
-            info=cls,
-            lectures=db['Lectures'].find({'cls': class_ok_id}).sort([('date', 1)]),
-            form=form,
-            user=user,
-            role=role,
-            consts=consts,
-            api_key=app.config['HERMES_API_KEY']
-        )
+        return bson_dump({
+            info:cls,
+            lectures:db['Lectures'].find({'cls': class_ok_id}).sort([('date', 1)]),
+            form:form,
+            user:user,
+            role:role,
+            consts:consts,
+            api_key:app.config['HERMES_API_KEY']
+        })
+        # return render_template(
+        #     'class.html',
+        #     info=cls,
+        #     lectures=db['Lectures'].find({'cls': class_ok_id}).sort([('date', 1)]),
+        #     form=form,
+        #     user=user,
+        #     role=role,
+        #     consts=consts,
+        #     api_key=app.config['HERMES_API_KEY']
+        # )
 
     @app.route('/class/<class_ok_id>', methods=['GET', 'POST'])
-    @login_required
-    def classpage(class_ok_id):
+    # @login_required
+    @get_ok_id
+    def classpage(class_ok_id, ok_id = None):
 
         form = CreateLectureForm(request.form)
         user = get_user_data()
@@ -565,7 +580,7 @@ def create_client(app):
         role, data = get_role(class_ok_id)
         cls = db['Classes'].find_one({'ok_id': int(class_ok_id)})
         if not cls:
-            return redirect(url_for('error', code=404))
+            return jsonify(success=False), 403
         if role == consts.INSTRUCTOR:
             if not user.get('google_credentials'):
                 return redirect(url_for('google_authorize', class_ok_id=class_ok_id))
@@ -587,16 +602,15 @@ def create_client(app):
                 logger.info("Error: user access level is %s", role)
                 redirect(url_for('error', code=403))
             return submit_lecture(form, user, youtube, role, cls, class_ok_id)
-        return render_template(
-            'class.html',
-            info=cls,
-            lectures=db['Lectures'].find({'cls': class_ok_id}).sort([('date', 1)]),
-            form=form,
-            user=user,
-            role=role,
-            consts=consts,
-            api_key=app.config['HERMES_API_KEY']
-        )
+        return bson_dump({
+            info:cls,
+            lectures:db['Lectures'].find({'cls': class_ok_id}).sort([('date', 1)]),
+            form:form,
+            user:user,
+            role:role,
+            consts:consts,
+            api_key:app.config['HERMES_API_KEY']
+        })
 
 
     @app.route('/class/<cls>/edit_lecture/<lecture_number>/', defaults={'playlist_number': None})
@@ -623,7 +637,7 @@ def create_client(app):
                 video_info['num_videos'] = 1
             vitamins = (db['Vitamins'].find_one({ 'lecture_id': str(lecture_obj.get("_id")), 'playlist_number': str(playlist_number)}))
             questions = (db['Resources'].find_one({ 'lecture_id': str(lecture_obj.get("_id")), 'playlist_number': str(playlist_number)}))
-            logger.info(bson_dump({
+            return (bson_dump({
                 "video_info":video_info,
                 "user":user,
                 "cls":cls_obj,
@@ -632,15 +646,15 @@ def create_client(app):
                 "vitamins":vitamins,
                 "question":questions
             }))
-            return render_template(
-                'edit_lecture.html',
-                video_info=video_info,
-                user=user,
-                cls=cls_obj,
-                lecture=lecture_obj,
-                playlist_number=playlist_number,
-                db=db
-            )
+            # return render_template(
+            #     'edit_lecture.html',
+            #     video_info=video_info,
+            #     user=user,
+            #     cls=cls_obj,
+            #     lecture=lecture_obj,
+            #     playlist_number=playlist_number,
+            #     db=db
+            # )
         else:
             logger.info("Error: user access level is %s", role)
             return redirect(url_for('error'), code=403)
@@ -658,14 +672,18 @@ def create_client(app):
                 return redirect(url_for('classpage', _external=True, class_ok_id=class_ok_id))
             else:
                 logger.info("Creating class.")
-                return render_template(
-                    'create_class.html',
-                    init_display_name=data['display_name'],
-                    form=form
-                )
+                return json_dump({
+                    init_display_name:data['display_name'],
+                    form:form
+                })
+                # return render_template(
+                #     'create_class.html',
+                #     init_display_name=data['display_name'],
+                #     form=form
+                # )
         else:
             logger.info("Error: user access level is %s", role)
-            return redirect(url_for('error'), code=403)
+            return redirect(url_for('error', code=403))
 
     @app.route('/delete_lecture', methods=['POST'])
     @post_on_behalf_of(consts.INSTRUCTOR)
@@ -822,10 +840,10 @@ def create_client(app):
     @app.route('/error/<code>')
     def error(code):
     	if code == '404':
-    		return render_template('404.html')
+    		return jsonify(success=False), 404
     	elif code == '403':
-    		return render_template('403.html')
+    		return jsonify(success=False), 403
     	elif code == '500':
-    		return render_template('500.html')
+    		return jsonify(success=True), 500
 
 create_client(app)
