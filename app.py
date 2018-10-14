@@ -25,6 +25,7 @@ import consts
 from urllib.parse import urlparse, parse_qs
 from werkzeug import security
 from flask_oauthlib.client import OAuth
+from flask_cors import CORS
 
 from functools import wraps
 
@@ -38,6 +39,7 @@ from requests.exceptions import RequestException
 import requests
 
 app = Flask(__name__)
+CORS(app, resources={r"/*": {"origins": "http://localhost:3000"}})
 app.config.from_object(Config)
 
 client = MongoClient(os.environ.get('MONGODB_URI'))
@@ -205,10 +207,8 @@ def google_authorized():
     User.add_admin_google_credentials(user['_id'], credentials, db)
     return redirect(url_for('classpage', class_ok_id=class_ok_id))
 
-#@TODO: Actually get the from the headers.
 def get_oauth_token():
-    return "p2EYfeV41vrihyxXRLiDGMHeiuEiOr"
-    # request.headers.get('Authorization')
+    return request.headers.get('Authorization').replace('Bearer ', '')
 
 
 def get_ok_id(func):
