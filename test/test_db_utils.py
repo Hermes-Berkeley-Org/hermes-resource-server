@@ -200,10 +200,6 @@ def test_add_transcript():
 
 #Tests Resource Methods
 
-#Tests Question Methods
-
-#Tests Answer Methods
-
 
 if __name__ == '__main__':
     test_register_user()
