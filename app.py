@@ -323,10 +323,10 @@ def create_client(app):
                 })
         return redirect(url_for('index'))
 
-    @app.route('/class/<cls>/lecture/<playlist_number>/', defaults={'playlist_index': None})
-    @app.route('/class/<cls>/lecture/<playlist_number>/<playlist_index>')
+    @app.route('/class/<cls>/lecture/<playlist_number>/', defaults={'index_of_playlist': 0})
+    @app.route('/class/<cls>/lecture/<playlist_number>/<index_of_playlist>')
     @login_required
-    def lecture(cls, playlist_number, playlist_index=None):
+    def lecture(cls, playlist_number, index_of_playlist=None):
         cls_obj = db['Classes'].find_one({'ok_id': int(cls)})
         playlist_obj = db['Playlists'].find_one(
             {'cls': cls, 'playlist_number': int(playlist_number)}
@@ -353,23 +353,24 @@ def create_client(app):
         # else:
         # if not playlist_number:
         #     return redirect(url_for('error', code=404))
-        play_index = int(playlist_index)
+        play_index = int(index_of_playlist)
+        lecture_obj = playlist_obj['lecture_obj_ids'][play_index]
         link = "https://www.youtube.com/watch?v={0}".format(
-            playlist_obj['youtube_video_ids'][play_index]
+            lecture_obj['youtube_video_id']
         )
-        preds = lecture_obj.get('preds')[play_index]
-        transcript = lecture_obj['transcripts'][play_num]
+        preds = lecture_obj.get('preds')
+        transcript = lecture_obj['transcript']
         if not preds:
             preds = [(None, [0, len(transcript) // 2 + 1])]
         video_info['video_id'] = transcribe_utils.get_youtube_id(link)
         video_info['partition_titles'] = list(
             app_utils.generate_partition_titles(
-                lecture_obj['durations'][play_num],
+                lecture_obj['duration'],
                 questions_interval
             )
         )
-        video_info['duration'] = lecture_obj['durations'][play_num]
-        video_info['num_videos'] = len(lecture_obj['youtube_video_ids'])
+        video_info['duration'] = lecture_obj['duration']
+        video_info['num_videos'] = len(playlist_obj['lecture_obj_ids'])
         vitamins = db['Vitamins'].find({'$and':[{'lecture_id': str(lecture_obj["_id"])}, {'playlist_number': str(playlist_number)}]})
         resources = db['Resources'].find({'$and':[{'lecture_id': str(lecture_obj["_id"])}, {'playlist_number': str(playlist_number)}]})
         if lecture_obj and cls_obj:
@@ -603,7 +604,7 @@ def create_client(app):
         return render_template(
             'class.html',
             info=cls,
-            lectures=db['Lectures'].find({'cls': class_ok_id}).sort([('date', 1)]),
+            lectures=db['Playlists'].find({'class_ok_id': class_ok_id}).sort([('date', 1)]),
             form=form,
             user=user,
             role=role,

@@ -294,7 +294,7 @@ class Playlist(DBObject):
                 '_id': playlist_id
             },
             {
-                $push: { lectures: lecture_id }
+                '$push': { lectures: lecture_id }
             }
         )
 
