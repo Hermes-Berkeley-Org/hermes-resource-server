@@ -143,13 +143,13 @@ class Course(DBObject):
         return offering.split('/')[-1].upper()
 
     @staticmethod
-    def create_class(display_name, data, db):
+    def create_course(display_name, data, db):
         data['display_name'] = display_name
         data['ok_id'] = data.pop('id', None)
         return insert(
-            Class(
+            Course(
                 lectures=[],
-                semester=Class.get_semester(data['offering']),
+                semester=Course.get_semester(data['offering']),
                 students=[],
                 **data
             ),
@@ -158,7 +158,7 @@ class Course(DBObject):
 
     @staticmethod
     def save_textbook(documents, links, db, class_ok_id):
-        db[Class.collection].update_one(
+        db[Course.collection].update_one(
             {
                 'ok_id': class_ok_id
             },
@@ -255,8 +255,8 @@ class Video(DBObject):
                     },
                     upsert=False
                 )
-        except ValueError as e:
-            flash('There was a problem retrieving the caption track for this video. {0}'.format(consts.NO_CAPTION_TRACK_MESSAGE))
+            except ValueError as e:
+                flash('There was a problem retrieving the caption track for this video. {0}'.format(consts.NO_CAPTION_TRACK_MESSAGE))
 
     @staticmethod
     def suggest_transcript(data, db):

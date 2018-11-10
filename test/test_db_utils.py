@@ -65,10 +65,10 @@ def test_google_credentials():
         item = dbu.find_one_by_id(returned_ids[i],"Users", db)
         assert len(item['google_credentials']) == 0
 
-#Tests the Class Methods
-def create_test_classes(returned_ids, collection, db):
+#Tests the Course Methods
+def create_test_courses(returned_ids, collection, db):
     for i in range(100):
-        info = dbu.Class.create_class('CS61'+str(i),
+        info = dbu.Course.create_course('CS61'+str(i),
             {"id" : i ,
              "offering" : "cal/cs61a/fa" + str(i),
              "active" : True,
@@ -83,19 +83,19 @@ def test_get_semester():
         for j in range(len(sems)):
             offering = sems[j] + str(i)
             if j == 0:
-                assert dbu.Class.get_semester(offering) == "FA" + str(i)
+                assert dbu.Course.get_semester(offering) == "FA" + str(i)
             if j == 1:
-                assert dbu.Class.get_semester(offering) == "SP" + str(i)
+                assert dbu.Course.get_semester(offering) == "SP" + str(i)
             if j == 2:
-                assert dbu.Class.get_semester(offering) == "SU" + str(i)
+                assert dbu.Course.get_semester(offering) == "SU" + str(i)
 
-def test_create_class():
+def test_create_course():
     db = mongomock.MongoClient().db
-    collection = db.create_collection("Classes")
+    collection = db.create_collection("Courses")
     returned_ids = []
-    create_test_classes(returned_ids,collection, db)
+    create_test_courses(returned_ids,collection, db)
     for i in range(100):
-        item = dbu.find_one_by_id(returned_ids[i], "Classes", db)
+        item = dbu.find_one_by_id(returned_ids[i], "Courses", db)
         assert item['lectures'] == []
         assert item['students'] ==[]
         assert item['display_name'] == "CS61"+str(i)
@@ -113,21 +113,21 @@ def create_test_lectures(cls,returned_ids, collection, db):
             link = "https://www.youtube.com/watch?v=5B5tJWrCtoI",
             lecture_number= i
         )
-        info = dbu.Class.add_lecture(cls, lec, db)
+        info = dbu.Course.add_lecture(cls, lec, db)
         returned_ids.append(info)
 
 def test_create_lecture():
     db = mongomock.MongoClient().db
-    collection = db.create_collection("Classes")
+    collection = db.create_collection("Courses")
     lecs = db.create_collection("Lectures")
     returned_ids = []
-    class_id = dbu.Class.create_class('CS61',
+    course_id = dbu.Course.create_course('CS61',
         {"id" : 1 ,
          "offering" : "cal/cs61a/fa",
          "active" : True,
          "ok_id" : 1},
           db)
-    cls = (dbu.find_one_by_id(class_id.inserted_id, "Classes", db))
+    cls = (dbu.find_one_by_id(course_id.inserted_id, "Courses", db))
     create_test_lectures(cls, returned_ids ,collection, db)
     for i in range(100):
         item = dbu.find_one_by_id(returned_ids[i], "Lectures", db)
@@ -205,6 +205,6 @@ if __name__ == '__main__':
     test_register_user()
     test_google_credentials()
     test_get_semester()
-    test_create_class()
+    test_create_course()
     test_create_lecture()
     test_add_transcript()

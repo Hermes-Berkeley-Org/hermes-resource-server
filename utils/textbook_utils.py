@@ -4,7 +4,7 @@ import os
 from bs4 import BeautifulSoup
 from gensim.models import Doc2Vec
 from gensim.models.doc2vec import TaggedDocument
-from utils.db_utils import Class
+from utils.db_utils import Course
 import requests
 import nltk
 from nltk.corpus import stopwords

@@ -16,7 +16,7 @@ set -e
 echo "Running tests"
 flag=0
 passed=0
-total=7
+total=6
 if python3 ./test/test_app.py; then
 	echo "test_app Passed"
 	passed=$((passed + 1))
@@ -37,13 +37,6 @@ if python3 ./test/test_db_utils.py; then
 else
 	flag=1
 	echo "test_db_utils Failed"
-fi
-if python3 ./test/test_question_utils.py; then
-	echo "test_question_utils Passed"
-	passed=$((passed + 1))
-else
-	flag=1
-	echo "test_question_utils Failed"
 fi
 if python3 ./test/test_textbook_utils.py; then
 	echo "test_textbook_utils Passed"

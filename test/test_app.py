@@ -9,8 +9,5 @@ sys.path.append("..")
 import app as app
 from datetime import datetime
 import pytest
-
-mock =
-rqst = requests.headers.set()
 if __name__ == '__main__':
     pass

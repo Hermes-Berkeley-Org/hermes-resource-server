@@ -17,7 +17,7 @@ import logging
 
 from utils.webpage_utils import CreateLectureForm, CreateClassForm
 from utils import db_utils, app_utils, transcribe_utils
-from utils.db_utils import User, Class, Lecture, Note, Question, Answer, Vitamin, Resource
+from utils.db_utils import User, Course, Lecture, Vitamin, Resource
 from utils.textbook_utils import CLASSIFIERS
 
 import consts
