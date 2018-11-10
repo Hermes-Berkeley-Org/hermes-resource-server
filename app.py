@@ -127,6 +127,7 @@ def course(course_ok_id, ok_id=None):
     """Gets all the lectures within a class
     """
     user = get_user_data(ok_id)
+    #TODO: Change to Courses
     course = db['Classes'].find_one(
         {'ok_id': int(course_ok_id)},
         {"_id": 0, "display_name": 1}
@@ -146,3 +147,67 @@ def course(course_ok_id, ok_id=None):
             }
         ).sort([('date', 1)])
     })
+
+@app.route('/course/<course_ok_id>/<lecture_number>/<video_number>', methods=["GET, POST"])
+@validate_and_pass_on_ok_id
+def lecture(course_ok_id, lecture_number, video_index, ok_id=None):
+    #TODO: Change to Courses
+    course_obj = db['Classes'].find_one({
+        'ok_id':int(course_ok_id)
+    })
+    lecture_obj = db['Lectures'].find_one({
+        'course':course_ok_id,
+        'lecture_number':int(lecture_number)
+    })
+    user = get_user_data(ok_id)
+    user['role'], data = get_role
+    questions_interval= 30
+    video_info={}
+    video_index = int(video_index)
+    video_obj= lecture_obj['video_lst'][video_index] #returns a video
+    preds = lecture_obj.get('preds')
+    transcript = lecture_obj.get('transcript')
+    if not preds:
+        preds= [(None, [0, len(transcript)//2 + 1])]
+    link = "https://www.youtube.com/watch?v={0}".format(
+            video_obj['youtube_video_id']
+        )
+    video_info['video_id'] = transcribe_utils.get_youtube_id(link)
+    video_info['partition_titles'] = list(
+            app_utils.generate_partition_titles(
+                lecture_obj['durations'][play_num],
+                questions_interval
+            )
+        )
+    video_info['duration'] = video_obj.get('durations')
+    video_info['num_videos'] = len(lecture_obj['video_lst'])
+    vitamins = db['Vitamins'].find({'$and':[{'lecture_id': str(lecture_obj["_id"])}, {'video_index': str(video_index)}]})
+    resources = db['Resources'].find({'$and':[{'lecture_id': str(lecture_obj["_id"])}, {'video_index': str(video_index)}]})
+
+@app.route('/course/<course_ok_id>/create_lecture', methods=["POST"])
+@validate_and_pass_on_ok_id
+def create_lecture(course_ok_id, ok_id=None):
+    url = None
+    params = None
+    parse_obj = None
+    link = request.form['link']
+    if not link.startswith('http'):
+        link = 'http://{0}'.format(link)
+    try:
+        url = ses.head(link, allow_redirects=True).url
+        parse_obj = urlparse(url)
+        logger.info(parse_obj)
+        params = parse_qs(parse_obj.query)
+        logger.info(params)
+    except RequestException as e:
+        return jsonify(success=False), 403
+    lecture = Lecture(
+            name=request.form['title'],
+            lecture_url=db_utils.encode_url(request.form['title']),
+            date=request.form['date'],
+            link=url,
+            lecture_number=len(course['lectures']),
+            course=course_ok_id,
+            video_lst=[]
+        )
+    lecture.add_videos(course_ok_id = course_ok_id, params = params, url = url, youtube = youtube)

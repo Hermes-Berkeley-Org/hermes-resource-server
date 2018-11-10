@@ -386,7 +386,6 @@ def add_transcript(cls, lecture, youtube, url):
         ts_classifier = CLASSIFIERS[cls['display_name']](db, cls['ok_id'])
     if not lecture.get('is_playlist'):
         try:
-            print(url)
             transcript, preds = transcribe_utils.transcribe(
                 mode=app.config['TRANSCRIPTION_MODE'],
                 youtube_link=url,
