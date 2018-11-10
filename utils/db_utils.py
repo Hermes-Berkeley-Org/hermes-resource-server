@@ -197,7 +197,7 @@ class Lecture(DBObject):
                 playlistId=youtube_id
             ).execute()
             playlist_items = youtube_vids.get('items')
-            if playlist items:
+            if playlist_items:
                 youtube_ids = [vid["contentDetails"]["videoId"] for vid in playlist_items]
                 durations = []
                 titles = []
