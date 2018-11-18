@@ -99,6 +99,44 @@ def get_updated_user_courses():
         if 'data' in ok_resp and 'participations' in ok_resp['data']:
             return ok_resp['data']['participations']
 
+@app.route('/hello')
+@validate_and_pass_on_ok_id
+def hello(ok_id=None):
+    """Validates if ok_id exists"""
+    return jsonify(success=True), 200
+
+@app.route('/ok_code')
+def ok_code():
+    code = request.args.get('code')
+    if not code:
+        return jsonify(success=False), 400
+    r = requests.post('https://okpy.org/oauth/token', data={
+        'code': code,
+        'client_secret': app.config['CLIENT_SECRET'],
+        'client_id': app.config['CLIENT_ID'],
+        'grant_type': 'authorization_code',
+        'redirect_uri': 'http://localhost:3000/authorized'
+    })
+    if r.ok:
+        return json_dump(r.json())
+    return jsonify(success=False, message=r.text), r.status_code
+
+@app.route('/ok_refresh')
+def ok_refresh():
+    refresh_token = request.args.get('refresh_token')
+    if not refresh_token:
+        return jsonify(success=False), 400
+    r = requests.post('https://okpy.org/oauth/token', data={
+        'refresh_token': refresh_token,
+        'client_secret': app.config['CLIENT_SECRET'],
+        'client_id': app.config['CLIENT_ID'],
+        'grant_type': 'refresh_token',
+        'redirect_uri': 'http://localhost:3000/authorized'
+    })
+    if r.ok:
+        return json_dump(r.json())
+    return jsonify(success=False, message=r.text), r.status_code
+
 @app.route('/home/')
 @validate_and_pass_on_ok_id
 def home(ok_id=None):
