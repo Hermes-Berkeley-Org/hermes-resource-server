@@ -20,6 +20,8 @@ from utils import db_utils, app_utils, transcribe_utils
 from utils.db_utils import User, Course, Lecture, Vitamin, Resource
 from utils.textbook_utils import CLASSIFIERS
 
+import utils.lecture_utils as LectureUtils
+
 import consts
 
 from urllib.parse import urlparse, parse_qs
@@ -56,8 +58,7 @@ logger.setLevel(logging.INFO)
 ok_server = app.config['OK_SERVER']
 
 def get_oauth_token():
-    """Retrieves OAuth token from the request header
-    """
+    """Retrieves OAuth token from the request header"""
     authorization = request.headers.get("Authorization")
     if authorization:
         return authorization.replace('Bearer ', '')
@@ -107,7 +108,7 @@ def home(ok_id=None):
     """
     def include_course(course):
         return course['role'] == consts.INSTRUCTOR or \
-            db[Class.collection].find({'ok_id': course['course_id']}).count() > 0
+            db[Course.collection].find({'ok_id': course['course_id']}).count() > 0
 
     courses = get_updated_user_courses()
     return json_dump(
@@ -127,8 +128,7 @@ def course(course_ok_id, ok_id=None):
     """Gets all the lectures within a class
     """
     user = get_user_data(ok_id)
-    #TODO: Change to Courses
-    course = db['Classes'].find_one(
+    course = db[Course.collection].find_one(
         {'ok_id': int(course_ok_id)},
         {"_id": 0, "display_name": 1}
     )
@@ -141,19 +141,17 @@ def course(course_ok_id, ok_id=None):
             {
                 "name": 1,
                 "date": 1,
-
                 "lecture_number": 1,
                 "_id": 0
             }
         ).sort([('date', 1)])
     })
 
-@app.route('/course/<course_ok_id>/<lecture_number>/<video_number>', methods=["GET, POST"])
+@app.route('/course/<course_ok_id>/lecture/<lecture_index>/video/<video_number>', methods=["GET, POST"])
 @validate_and_pass_on_ok_id
-def lecture(course_ok_id, lecture_number, video_index, ok_id=None):
-    #TODO: Change to Courses
-    course_obj = db['Classes'].find_one({
-        'ok_id':int(course_ok_id)
+def lecture(course_ok_id, lecture_index, video_index, ok_id=None):
+    course_obj = db[Course.collection].find_one({
+        'ok_id': int(course_ok_id)
     })
     lecture_obj = db['Lectures'].find_one({
         'course':course_ok_id,
@@ -187,27 +185,24 @@ def lecture(course_ok_id, lecture_number, video_index, ok_id=None):
 @app.route('/course/<course_ok_id>/create_lecture', methods=["POST"])
 @validate_and_pass_on_ok_id
 def create_lecture(course_ok_id, ok_id=None):
-    url = None
-    params = None
-    parse_obj = None
-    link = request.form['link']
-    if not link.startswith('http'):
-        link = 'http://{0}'.format(link)
+    """Validates that the person creating the Lecture is an instructor of the
+    course, and creates the course.
+    """
+    user = get_user_data(ok_id)
+    for course in user['classes']:
+        if course['ok_id'] == course_ok_id:
+            if course['role'] != consts.INSTRUCTOR:
+                return jsonify(success=False, message="Only instructors can post videos"), 403
+            break
     try:
-        url = ses.head(link, allow_redirects=True).url
-        parse_obj = urlparse(url)
-        logger.info(parse_obj)
-        params = parse_qs(parse_obj.query)
-        logger.info(params)
-    except RequestException as e:
-        return jsonify(success=False), 403
-    lecture = Lecture(
-            name=request.form['title'],
-            lecture_url=db_utils.encode_url(request.form['title']),
-            date=request.form['date'],
-            link=url,
-            lecture_number=len(course['lectures']),
-            course=course_ok_id,
-            video_lst=[]
+        LectureUtils.create_lecture(
+            course_ok_id,
+            db,
+            request.form['title'],
+            request.form['date'],
+            request.form['link'],
+            request.form['youtube_access_token']
         )
-    lecture.add_videos(course_ok_id = course_ok_id, params = params, url = url, youtube = youtube)
+        return jsonify(success=True), 200
+    except ValueError as e:
+        return jsonify(success=False, message=str(e)), 500

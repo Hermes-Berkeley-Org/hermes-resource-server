@@ -33,6 +33,13 @@ def find_by_id(id, collection, db):
 def find_one_by_id(id, collection, db):
     return db[collection].find_one({'_id': ObjectId(id)})
 
+def create_reference(ref_collection, id):
+    return {
+        '$ref': ref_collection,
+        '$id': id,
+        '$db': os.environ.get('DATABASE_NAME')
+    }
+
 ## Seconds to timestamp helper function
 def convert_seconds_to_timestamp(ts):
     return '%d:%02d' % (ts // 60, ts % 60)
@@ -112,7 +119,7 @@ class User(DBObject):
 
 class Course(DBObject):
 
-    collection = 'Courses'
+    collection = 'Classes'
 
     def __init__(self, **attr):
         DBObject.__init__(self, **attr)
@@ -356,6 +363,13 @@ class Resource(DBObject):
         db[Resource.collection].delete_one(
             {'_id': ObjectId(resource_id)}
         )
+
+class Transcript(DBObject):
+
+    collection = 'Transcripts'
+
+    def __init__(self, **attr):
+        DBObject.__init__(self, **attr)
 
 
 if __name__ == '__main__':
