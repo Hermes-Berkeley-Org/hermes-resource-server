@@ -17,7 +17,7 @@ import logging
 
 from utils.webpage_utils import CreateLectureForm, CreateClassForm
 from utils import db_utils, app_utils, transcribe_utils
-from utils.db_utils import User, Course, Lecture, Vitamin, Resource
+from utils.db_utils import User, Course, Lecture, Vitamin, Resource, Video, Transcript
 from utils.textbook_utils import CLASSIFIERS
 
 import utils.lecture_utils as LectureUtils
@@ -147,40 +147,35 @@ def course(course_ok_id, ok_id=None):
         ).sort([('date', 1)])
     })
 
-@app.route('/course/<course_ok_id>/lecture/<lecture_index>/video/<video_number>', methods=["GET, POST"])
+@app.route('/course/<course_ok_id>/lecture/<lecture_index>/video/<video_index>/video_info')
 @validate_and_pass_on_ok_id
-def lecture(course_ok_id, lecture_index, video_index, ok_id=None):
-    course_obj = db[Course.collection].find_one({
-        'ok_id': int(course_ok_id)
+def video_info(course_ok_id, lecture_index, video_index, ok_id=None):
+    video = db[Video.collection].find_one({
+        'course_ok_id': int(course_ok_id),
+        'lecture_index': int(lecture_index),
+        'video_index': int(video_index)
     })
-    lecture_obj = db['Lectures'].find_one({
-        'course':course_ok_id,
-        'lecture_number':int(lecture_number)
+    if video:
+        return json_dump({
+            'title': video['title'],
+            'duration': video['duration'],
+            'youtube_id': video['youtube_id']
+        })
+    return jsonify(success=False, message="No video found"), 404
+
+@app.route('/course/<course_ok_id>/lecture/<lecture_index>/video/<video_index>/transcript')
+@validate_and_pass_on_ok_id
+def transcript(course_ok_id, lecture_index, video_index, ok_id=None):
+    transcript = db[Transcript.collection].find_one({
+        'course_ok_id': int(course_ok_id),
+        'lecture_index': int(lecture_index),
+        'video_index': int(video_index)
     })
-    user = get_user_data(ok_id)
-    user['role'], data = get_role
-    questions_interval= 30
-    video_info={}
-    video_index = int(video_index)
-    video_obj= lecture_obj['video_lst'][video_index] #returns a video
-    preds = lecture_obj.get('preds')
-    transcript = lecture_obj.get('transcript')
-    if not preds:
-        preds= [(None, [0, len(transcript)//2 + 1])]
-    link = "https://www.youtube.com/watch?v={0}".format(
-            video_obj['youtube_video_id']
-        )
-    video_info['video_id'] = transcribe_utils.get_youtube_id(link)
-    video_info['partition_titles'] = list(
-            app_utils.generate_partition_titles(
-                lecture_obj['durations'][play_num],
-                questions_interval
-            )
-        )
-    video_info['duration'] = video_obj.get('durations')
-    video_info['num_videos'] = len(lecture_obj['video_lst'])
-    vitamins = db['Vitamins'].find({'$and':[{'lecture_id': str(lecture_obj["_id"])}, {'video_index': str(video_index)}]})
-    resources = db['Resources'].find({'$and':[{'lecture_id': str(lecture_obj["_id"])}, {'video_index': str(video_index)}]})
+    if transcript:
+        return json_dump({
+            'transcript': transcript['transcript']
+        })
+    return jsonify(success=False, message="No transcript found"), 404
 
 @app.route('/course/<course_ok_id>/create_lecture', methods=["POST"])
 @validate_and_pass_on_ok_id

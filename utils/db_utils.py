@@ -183,87 +183,11 @@ class Lecture(DBObject):
     def __init__(self, **attr):
         DBObject.__init__(self, **attr)
 
-    def add_videos(course_ok_id, params, youtube, link):
-        if not playlist_link:
-            youtube_id = params['v'][0]
-            title, duration = transcribe_utils.get_video_info(youtube_id, youtube)
-            if not (title and duration):
-                raise ValueError('Video does not have a title or duration')
-            video_obj = Video(
-                youtube_id = youtube_id,
-                title = title,
-                duration = duration
-            )
-            id = insert(video, db).inserted_id
-            self.video_lst.append(id)
-        else:
-            youtube_id = params['list'][0]
-            youtube_vids = youtube.playlistItems().list(
-                part='contentDetails',
-                maxResults=25,
-                playlistId=youtube_id
-            ).execute()
-            playlist_items = youtube_vids.get('items')
-            if playlist_items:
-                youtube_ids = [vid["contentDetails"]["videoId"] for vid in playlist_items]
-                durations = []
-                titles = []
-                p
-                for i, id in enumerate(youtube_ids):
-                    try:
-                        title, duration = transcribe_utils.get_video_info(id, youtube)
-                        if title and duration:
-                            durations.append(duration)
-                            titles.append(title)
-                        else:
-                            raise ValueError('Video does not have a title or duration')
-                    except (ValueError, OSError) as e:
-                        raise ('There was a problem with video {0} in the playlist. Please make sure this video is not deleted or unavailable.'.format(i))
-                for i in range(len(youtube_ids)):
-                    video_obj = Video(
-                        youtube_id = youtube_ids[i],
-                        title = titles[i],
-                        duration = durations[i]
-                    )
-                    Video.add_transcript(c, video_obj, youtube,url)
-                    id = insert(video, db).inserted_id
-                    self.video_lst.append(id)
-
 class Video(DBObject):
     collection = 'Videos'
 
     def __init__(self, **attr):
         DBObject.__init__(self, **attr)
-
-    @staticmethod
-    def add_transcript(course_ok_id, video, youtube, url):
-        ts_classifier = None
-        if cls['display_name'] in CLASSIFIERS:
-            ts_classifier = CLASSIFIERS[cls['display_name']](db, cls['ok_id'])
-        if not lecture.get('is_playlist'):
-            try:
-                print(url)
-                transcript, preds = transcribe_utils.transcribe(
-                    mode=app.config['TRANSCRIPTION_MODE'],
-                    youtube_link=url,
-                    youtube=youtube,
-                    transcription_classifier=ts_classifier,
-                )
-                id = Class.add_lecture(course_ok_id, lecture, db)
-                db[Video.collection].update_one(
-                    {
-                      '_id': lecture_id
-                    },
-                    {
-                      '$set': {
-                        'transcript': transcript,
-                        'preds': preds
-                      }
-                    },
-                    upsert=False
-                )
-            except ValueError as e:
-                flash('There was a problem retrieving the caption track for this video. {0}'.format(consts.NO_CAPTION_TRACK_MESSAGE))
 
     @staticmethod
     def suggest_transcript(data, db):
