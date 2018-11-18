@@ -9,3 +9,6 @@ class YoutubeError(ValueError):
 
 class NoCourseFoundError(ValueError):
     pass
+
+class NoVideoFoundError(ValueError):
+	pass

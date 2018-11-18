@@ -7,6 +7,8 @@ from operator import itemgetter
 from pymongo import MongoClient
 from bson.objectid import ObjectId
 
+from utils.errors import NoVideoFoundError
+
 from utils.app_utils import edit_distance
 from urllib.parse import urlparse, parse_qs
 
@@ -238,28 +240,35 @@ class Vitamin(DBObject):
         DBObject.__init__(self, **attr)
 
     @staticmethod
-    def add_vitamin(data, db):
-        timestamp = convert_seconds_to_timestamp(float(data['seconds']) // 1)
-        choices = [data['choice' + str(i)] for i in range(1, 5) if len(data['choice' + str(i)]) > 0]
-        return insert(
-            Vitamin(
-                question = data['question'],
-                answer = data['answer'],
-                choices = choices,
-                seconds = data['seconds'],
-                timestamp = timestamp,
-                lecture_id = data['lecture_id'],
-                playlist_number = data['playlist_number']
-            ),
-            db
-        )
+    def add_vitamin(course_ok_id, lecture_index, video_index, db, question, answer, choices, timestamp):
+        video = db[Video.collection].find_one({
+            'course_ok_id': course_ok_id, 
+            'lecture_index': lecture_index, 
+            'video_index': video_index
+        })
+        if not video:
+            raise NoVideoFoundError(
+                'Video {0} associated with OK ID {1}, lecture {2} does not exist in the database'
+                .format(video_index, course_ok_id, lecture_index)
+            )
 
-    @staticmethod
-    def delete_vitamin(vitamin, db):
-        vitamin_id = vitamin['vitamin_id']
-        db[Vitamin.collection].delete_one(
-            {'_id': ObjectId(vitamin_id)}
+        vitamin = Vitamin(
+            course_ok_id = course_ok_id,
+            lecture_index = lecture_index,
+            video_index = video_index,
+            question = question,
+            answer = answer,
+            choices = choices,
+            timestamp = timestamp
         )
+        return vitamin 
+
+    # @staticmethod
+    # def delete_vitamin(vitamin, db):
+    #     vitamin_id = vitamin['vitamin_id']
+    #     db[Vitamin.collection].delete_one(
+    #         {'_id': ObjectId(vitamin_id)}
+    #     )
 
 
 
@@ -271,22 +280,32 @@ class Resource(DBObject):
         DBObject.__init__(self, **attr)
 
     @staticmethod
-    def add_resource(data, db):
-        return insert(
-            Resource(
-                link = data['link'],
-                lecture_id = data['lecture_id'],
-                playlist_number = data['playlist_number']
-            ),
-            db
-        )
+    def add_resource(course_ok_id, lecture_index, video_index, db, link):
+        video = db[Video.collection].find_one({
+            'course_ok_id': course_ok_id, 
+            'lecture_index': lecture_index, 
+            'video_index': video_index
+        })
+        if not video:
+            raise NoVideoFoundError(
+                'Video {0} associated with OK ID {1}, lecture {2} does not exist in the database'
+                .format(video_index, course_ok_id, lecture_index)
+            )
 
-    @staticmethod
-    def delete_resource(resource, db):
-        resource_id = resource['resource_id']
-        db[Resource.collection].delete_one(
-            {'_id': ObjectId(resource_id)}
+        resource = Resource(
+            course_ok_id = course_ok_id,
+            lecture_index = lecture_index,
+            video_index = video_index,
+            link = link
         )
+        return resource 
+
+    # @staticmethod
+    # def delete_resource(resource, db):
+    #     resource_id = resource['resource_id']
+    #     db[Resource.collection].delete_one(
+    #         {'_id': ObjectId(resource_id)}
+    #     )
 
 class Transcript(DBObject):
 

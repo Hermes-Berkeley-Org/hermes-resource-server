@@ -17,7 +17,7 @@ import logging
 
 from utils.webpage_utils import CreateLectureForm, CreateClassForm
 from utils import db_utils, app_utils, transcribe_utils
-from utils.db_utils import User, Course, Lecture, Vitamin, Resource, Video, Transcript
+from utils.db_utils import insert, User, Course, Lecture, Vitamin, Resource, Video, Transcript
 from utils.textbook_utils import CLASSIFIERS
 
 import utils.lecture_utils as LectureUtils
@@ -180,7 +180,8 @@ def transcript(course_ok_id, lecture_index, video_index, ok_id=None):
 @app.route('/course/<course_ok_id>/create_lecture', methods=["POST"])
 @validate_and_pass_on_ok_id
 def create_lecture(course_ok_id, ok_id=None):
-    """Validates that the person creating the Lecture is an instructor of the
+    """
+    Validates that the person creating the Lecture is an instructor of the
     course, and creates the course.
     """
     user = get_user_data(ok_id)
@@ -201,3 +202,59 @@ def create_lecture(course_ok_id, ok_id=None):
         return jsonify(success=True), 200
     except ValueError as e:
         return jsonify(success=False, message=str(e)), 500
+
+@app.route('/course/<int:course_ok_id>/lecture/<int:lecture_index>/video/<int:video_index>/create_vitamin', 
+    methods=["POST"])
+@validate_and_pass_on_ok_id
+def create_vitamin(course_ok_id, lecture_index, video_index, ok_id=None):
+    """
+    Creates a vitamin for a specified video in a lecture.
+    """
+    user = get_user_data(ok_id)
+    for course in user['classes']:
+        if course['ok_id'] == course_ok_id:
+            if course['role'] != consts.INSTRUCTOR:
+                return jsonify(success=False, message="Only instructors can add vitamins"), 403
+            break
+    try:
+        vitamin = Vitamin.add_vitamin(
+            course_ok_id,
+            lecture_index,
+            video_index,
+            db,
+            request.form['question'],
+            request.form['answer'],
+            request.form['choices'],
+            request.form['timestamp']
+        )
+        insert(vitamin, db)
+        return jsonify(success=True), 200
+    except ValueError as e:
+        return jsonify(success=False, message=str(e)), 500
+
+@app.route('/course/<int:course_ok_id>/lecture/<int:lecture_index>/video/<int:video_index>/create_resource', 
+    methods=["POST"])
+@validate_and_pass_on_ok_id
+def create_resource(course_ok_id, lecture_index, video_index, ok_id=None):
+    """
+    Creates a vitamin for a specified video in a lecture.
+    """
+    user = get_user_data(ok_id)
+    for course in user['classes']:
+        if course['ok_id'] == course_ok_id:
+            if course['role'] != consts.INSTRUCTOR:
+                return jsonify(success=False, message="Only instructors can add resources"), 403
+            break
+    try:
+        resource = Resource.add_resource(
+            course_ok_id,
+            lecture_index,
+            video_index,
+            db,
+            request.form['link']
+        )
+        insert(resource, db)
+        return jsonify(success=True), 200
+    except ValueError as e:
+        return jsonify(success=False, message=str(e)), 500
+
