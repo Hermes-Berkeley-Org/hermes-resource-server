@@ -12,6 +12,8 @@ from utils.errors import NoVideoFoundError
 from utils.app_utils import edit_distance
 from urllib.parse import urlparse, parse_qs
 
+from utils.errors import TranscriptIndexOutOfBoundsError
+
 import logging
 
 logger = logging.getLogger('app_logger')
@@ -191,45 +193,6 @@ class Video(DBObject):
     def __init__(self, **attr):
         DBObject.__init__(self, **attr)
 
-    @staticmethod
-    def suggest_transcript(data, db):
-        lecture = find_one_by_id(data['lecture_id'], Lecture.collection, db)
-        def replace_transcript_elem(lecture, index, text, user_id):
-            def push_onto_transcript_if_elected(transcript_elem):
-                suggestions = defaultdict(int)
-                for user, suggestion in transcript_elem['suggestions'].items():
-                    suggestions[suggestion] += 1
-                best_suggestion, most_votes = max(suggestions.items(), key=itemgetter(1))
-                if most_votes > TRANSCRIPT_SUGGESTIONS_NECESSARY:
-                    transcript_elem['text'] = best_suggestion
-            is_playlist = lecture['is_playlist']
-            transcripts = lecture.get('transcripts') if is_playlist else [lecture.get('transcript')]
-            playlist_number = int(data['playlist_number']) if is_playlist else 0
-            transcript = transcripts[playlist_number]
-            transcript_elem = transcript[index]
-            if 'suggestions' not in transcript_elem:
-                transcript_elem['suggestions'] = dict()
-            num_words = len(transcript_elem['text'].split(' '))
-            if edit_distance(text, transcript_elem['text']) < (num_words * EDIT_DISTANCE_PER_WORD):
-                transcript_elem['suggestions'][user_id] = text
-            else:
-                print('Suggestion too far off, rejected.')
-            push_onto_transcript_if_elected(transcript_elem)
-            transcripts[playlist_number] = transcript[:index] + [transcript_elem] + transcript[index+1:]
-            return transcripts if is_playlist else transcripts[0]
-        if 'transcripts' in lecture or 'transcript' in lecture:
-            key = 'transcripts' if lecture.get('is_playlist') else 'transcript'
-            db[Lecture.collection].update_one(
-                {
-                    '_id': ObjectId(data['lecture_id'])
-                },
-                {
-                    '$set': {
-                        key: replace_transcript_elem(lecture, int(data['index']), data['text'], data['user_id'])
-                    }
-                }
-            )
-
 
 
 class Vitamin(DBObject):
@@ -314,7 +277,20 @@ class Transcript(DBObject):
     def __init__(self, **attr):
         DBObject.__init__(self, **attr)
 
+    @staticmethod
+    def suggest_transcript(transcript_obj, index, suggestion, user_id):
+        if index >= len(transcript_obj):
+            raise TranscriptIndexOutOfBoundsError('Index {0} is out of bounds'.format(index))
+        transcript_element = transcript_obj[index]
+        num_words = len(transcript_element['text'].split(' '))
+        if edit_distance(suggestion, transcript_element['text']) < (num_words * EDIT_DISTANCE_PER_WORD):
+            transcript_element['suggestions'][user_id] = suggestion
 
-if __name__ == '__main__':
-    client = MongoClient(os.environ.get('MONGODB_URI'))
-    db = client[os.environ.get('DATABASE_NAME')]
+        # Push onto transcript if elected
+        suggestions = defaultdict(int)
+        for user, suggestion in transcript_element['suggestions'].items():
+            suggestions[suggestion] += 1
+        best_suggestion, most_votes = max(suggestions.items(), key=itemgetter(1))
+        if most_votes > TRANSCRIPT_SUGGESTIONS_NECESSARY:
+            transcript_element['text'] = best_suggestion
+        return transcript_obj

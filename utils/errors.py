@@ -12,3 +12,6 @@ class NoCourseFoundError(ValueError):
 
 class NoVideoFoundError(ValueError):
 	pass
+
+class TranscriptIndexOutOfBoundsError(ValueError):
+    pass
