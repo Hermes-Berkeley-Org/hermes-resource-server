@@ -20,8 +20,6 @@ def create_lecture(course_ok_id, db, title, date, link, youtube_access_token):
     - Creates and stores Transcript objects for each video,
         with a lookup key to a Course, Lecture, and Video
     """
-    course_ok_id = int(course_ok_id)
-
     course = db[Course.collection].find_one({'ok_id': int(course_ok_id)})
     if not course:
         raise NoCourseFoundError(
