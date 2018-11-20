@@ -23,9 +23,9 @@ EXPECTED_IDS = [
 
 INVALID_LINKS = ['asdf']
 
-ACCESS_TOKEN = 'ya29.GltXBnP7LylJN_vC02qbcmyqSc0smpaaFT13bDmG1Gar8QcsxTJFE5jl1sEm0Stwc3XRwUDN3xuoTeDnRvYEu5SH62hU4TE9hMOTYDidSUrQaSFLiMJjATTRum-Q'
+ACCESS_TOKEN = None
 youtube_client = YoutubeClient(ACCESS_TOKEN)
-
+# TODO AY: Mock this for tests: see https://docs.python.org/3/library/unittest.mock.html
 
 def test_get_final_youtube_url():
     for valid_link in VALID_LINKS:

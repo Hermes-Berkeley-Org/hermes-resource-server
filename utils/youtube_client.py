@@ -10,6 +10,8 @@ from bs4 import BeautifulSoup
 
 class YoutubeClient:
 
+    # TODO AY: some way to test this functionality in test_youtube_client.py
+
     def __init__(self, access_token):
         credentials = google.oauth2.credentials.Credentials(
             token=access_token
@@ -23,12 +25,23 @@ class YoutubeClient:
 
     @staticmethod
     def get_youtube_id(link):
+        """Gets YouTube ID from a YouTube URL
+        >>> YoutubeClient.get_youtube_id('http://youtube.com/watch?v=asdf')
+        asdf
+        """
         url = urlparse(link)
         params = parse_qs(url.query)
         return params['v'][0] if 'v' in params and len(params['v']) > 0 else None
 
     @staticmethod
     def get_link_metadata(link):
+        """Gets relevant information from a YouTube URL:
+        Returns:
+        {
+            "playlist_id": <playlist_id>
+            "video_id": <video_id>
+        }
+        """
         url_components = urlparse(link)
         if url_components and 'youtube' in url_components.netloc:
             url_params = parse_qs(url_components.query)
@@ -46,6 +59,10 @@ class YoutubeClient:
 
     @staticmethod
     def create_video_link(video_id, playlist_id=None):
+        """Creates a YouTube link from a video_id and/or playlist_id
+        >>> YoutubeClient.create_video_link('asdf', 'ghjk')
+        https://www.youtube.com/watch?v=asdf&list=ghjk
+        """
         params = {
             'v': video_id
         }
@@ -54,6 +71,7 @@ class YoutubeClient:
         return 'https://www.youtube.com/watch?{0}'.format(urlencode(params))
 
     def get_playlist_video_ids(self, playlist_id):
+        """Gets all YouTube video IDs associated with a playlist ID"""
         response = self.youtube.playlistItems().list(
             part='contentDetails',
             maxResults=25,
@@ -64,6 +82,8 @@ class YoutubeClient:
             return [item['contentDetails']['videoId'] for item in items]
 
     def get_caption_id(self, video_id):
+        """Retrieves caption ID associated with a video_id, or returns None
+        if no caption track exists"""
         results = self.youtube.captions().list(
             part="id",
             videoId=video_id
@@ -73,6 +93,9 @@ class YoutubeClient:
                 return item["id"]
 
     def get_transcript(self, video_id):
+        """Retrieves transcript from a video_id by first getting the caption
+        track associated, then downloading the caption track and parsing it from
+        HTML into JSON"""
         try:
             caption_id = self.get_caption_id(video_id)
             if not caption_id:
@@ -96,7 +119,12 @@ class YoutubeClient:
             raise YoutubeError('Error retrieving the caption track')
 
     def get_video_metadata(self, youtube_id):
+        """Returns the title and duration of a video"""
         def convert_youtube_timestamp(duration):
+            """Converts a youtube duration into a readable duration:
+            >>> convert_youtube_timestamp('1H4M5S')
+            '01:04:05'
+            """
             if duration:
                 time_content = duration[2:]
                 hours, minutes, seconds = 0, 0, 0

@@ -1,44 +1,28 @@
-from flask import Flask
-from flask import render_template, request, redirect, url_for, flash, session, jsonify
-from pymongo import MongoClient
 import sys
 import os
 import re
-import pprint
+from datetime import datetime
+from functools import wraps
+
+from flask import Flask
+from flask import request, session, jsonify
+from flask_cors import CORS
+from pymongo import MongoClient
+
 from json import dumps as json_dump
 from bson.json_util import dumps as bson_dump
-from config import Config
-
-from datetime import datetime
-
 from bson.objectid import ObjectId
+
+from config import Config
 
 import logging
 
-from utils.webpage_utils import CreateLectureForm, CreateClassForm
-from utils import db_utils, app_utils, transcribe_utils
-from utils.db_utils import User, Course, Lecture, Vitamin, Resource, Video, Transcript
-from utils.textbook_utils import CLASSIFIERS
+import requests
 
+from utils.db_utils import User, Course, Lecture, Vitamin, Resource, Video, Transcript
 import utils.lecture_utils as LectureUtils
 
 import consts
-
-from urllib.parse import urlparse, parse_qs
-from werkzeug import security
-from flask_oauthlib.client import OAuth
-from flask_cors import CORS
-
-from functools import wraps
-
-import google.oauth2.credentials
-import google_auth_oauthlib.flow
-import googleapiclient.discovery
-
-from google.auth.exceptions import RefreshError
-from requests.exceptions import RequestException
-
-import requests
 
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": os.environ.get('HERMES_UI_URL')}})
@@ -174,12 +158,13 @@ def course(course_ok_id, ok_id=None):
         return jsonify(success=False), 403
     return bson_dump({
         "info": course,
-        "lectures": db['Lectures'].find(
-            {'cls': course_ok_id},
+        "lectures": db[Lecture.collection].find(
+            {'course_ok_id': course_ok_id},
             {
                 "name": 1,
                 "date": 1,
                 "lecture_number": 1,
+                "video_titles": 1,
                 "_id": 0
             }
         ).sort([('date', 1)])
@@ -270,3 +255,16 @@ def create_lecture(course_ok_id, ok_id=None):
         return jsonify(success=True), 200
     except ValueError as e:
         return jsonify(success=False, message=str(e)), 500
+
+@app.route('/course/<int:course_ok_id>/create', methods=["POST"])
+@validate_and_pass_on_ok_id
+def create_course(course_ok_id, ok_id=None):
+    """Registers a Course in the DB (see old_app.py)
+    TODO KK
+    """
+    user = get_user_data(ok_id)
+    for course in user['classes']:
+        if course['ok_id'] == course_ok_id:
+            if course['role'] != consts.INSTRUCTOR:
+                return jsonify(success=False, message="Only instructors can post videos"), 403
+            break
