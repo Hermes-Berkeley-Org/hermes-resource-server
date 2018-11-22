@@ -238,7 +238,8 @@ def create_lecture(course_ok_id, ok_id=None):
     course, and creates the course.
     """
     user = get_user_data(ok_id)
-    for course in user['classes']:
+    user_courses = get_updated_user_courses()
+    for course in user_courses:
         if course['ok_id'] == course_ok_id:
             if course['role'] != consts.INSTRUCTOR:
                 return jsonify(success=False, message="Only instructors can post videos"), 403
@@ -259,12 +260,28 @@ def create_lecture(course_ok_id, ok_id=None):
 @app.route('/course/<int:course_ok_id>/create', methods=["POST"])
 @validate_and_pass_on_ok_id
 def create_course(course_ok_id, ok_id=None):
-    """Registers a Course in the DB (see old_app.py)
-    TODO KK
+    """Registers a Course in the DB
     """
     user = get_user_data(ok_id)
-    for course in user['classes']:
-        if course['ok_id'] == course_ok_id:
+    user_courses = get_updated_user_courses()
+    user_in_class = False
+    for course in user_courses:
+        if course['course_id'] == course_ok_id:
+            user_in_class = True
             if course['role'] != consts.INSTRUCTOR:
-                return jsonify(success=False, message="Only instructors can post videos"), 403
+                return jsonify(success=False, message="Only instructors can create courses"), 403
+            print(db['Courses'].find_one({'course_ok_id': int(course_ok_id)}))
+            if db['Courses'].find_one({'course_ok_id': course_ok_id}):
+                return jsonify(success=False, message="Course has already been created"), 403
             break
+    if not user_in_class:
+        return jsonify(success=False, message="Can only create a class you are a part of"), 403
+    try:
+        Course.create_course(
+            request.form,
+            course_ok_id,
+            db
+        )
+        return jsonify(success=True), 200
+    except ValueError as e:
+        return jsonify(success=False, message=str(e)), 500
