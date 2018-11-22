@@ -152,15 +152,13 @@ class Course(DBObject):
         return offering.split('/')[-1].upper()
 
     @staticmethod
-    def create_course(data, course_ok_id, db):
-        dct = data.to_dict()
-        dct['course_ok_id'] = course_ok_id
+    def create_course(data, db):
         return insert(
             Course(
                 lectures=[],
                 semester=Course.get_semester(data['offering']),
                 students=[],
-                **dct
+                **data
             ),
             db
         )

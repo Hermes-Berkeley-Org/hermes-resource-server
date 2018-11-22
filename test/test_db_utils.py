@@ -5,6 +5,7 @@ sys.path.append("../utils")
 sys.path.append("./utils")
 import db_utils as dbu
 from datetime import datetime
+import json
 import pytest, mongomock
 from bson.objectid import ObjectId
 from pprint import pprint #helps print out pymongo curser items nicely
@@ -68,10 +69,11 @@ def test_google_credentials():
 #Tests the Course Methods
 def create_test_courses(returned_ids, collection, db):
     for i in range(100):
-        info = dbu.Course.create_course('CS61'+str(i),
-            {"id" : i ,
+        info = dbu.Course.create_course({
+             "id" : i,
              "offering" : "cal/cs61a/fa" + str(i),
              "active" : True,
+             'CS61'+str(i),
              "ok_id" : str(i)},
               db)
         returned_ids.append(info.inserted_id)
@@ -122,10 +124,10 @@ def test_create_lecture():
     lecs = db.create_collection("Lectures")
     returned_ids = []
     course_id = dbu.Course.create_course('CS61',
-        {"id" : 1 ,
+        json.dumps({"id" : 1 ,
          "offering" : "cal/cs61a/fa",
          "active" : True,
-         "ok_id" : 1},
+         "ok_id" : 1}),
           db)
     cls = (dbu.find_one_by_id(course_id.inserted_id, "Courses", db))
     create_test_lectures(cls, returned_ids ,collection, db)
