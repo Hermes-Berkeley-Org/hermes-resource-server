@@ -282,6 +282,7 @@ def create_course(course_ok_id, ok_id=None):
     try:
         dct = request.form.to_dict()
         dct['course_ok_id'] = course_ok_id
+        dct['piazza_course_id'] = ""
         Course.create_course(
             dct,
             db
