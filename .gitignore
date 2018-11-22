@@ -8,3 +8,4 @@ deploy/private_env
 deploy/heroku_env
 deploy/docker-env
 .ipynb_checkpoints/
+.cache/
