@@ -296,3 +296,21 @@ def create_course(course_ok_id, ok_id=None):
         return jsonify(success=True), 200
     except ValueError as e:
         return jsonify(success=False, message=str(e)), 500
+
+@app.route('/course/<int:course_ok_id>/create_piazza_bot', methods=["POST"])
+@validate_and_pass_on_ok_id
+def create_piazza_bot(course_ok_id, ok_id=None):
+    user = get_user_data(ok_id)
+    user_courses = user['courses']
+    for course in user_courses:
+        if course['course_id'] == course_ok_id:
+            if course['role'] != consts.INSTRUCTOR or course['role'] != consts.STAFF:
+                return jsonify(success=False, message="Only staff can create a Piazza Bot"), 403
+            db['Courses'].update(
+                {'course_ok_id': course_ok_id},
+                {"$set" :
+                    {"piazza_course_id" : request.form["piazza_course_id"]}
+                }
+                )
+            return jsonify(success=True), 200
+    return jsonify(success=False, message="Can only create a PiazzaBot on behalf of Hermes for an OK course you are a part of"), 403
