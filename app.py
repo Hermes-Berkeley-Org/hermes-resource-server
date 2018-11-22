@@ -131,8 +131,14 @@ def home(ok_id=None):
     def include_course(course):
         return course['role'] == consts.INSTRUCTOR or \
             db[Course.collection].find({'ok_id': course['course_id']}).count() > 0
-
     courses = get_updated_user_courses()
+    updated_courses = [{"role" : course['role'], "course_ok_id" : course["course_id"]} for course in courses]
+    db['Users'].update(
+            {'ok_id': ok_id},
+            {"$set" :
+                {"courses" : updated_courses}
+            }
+        )
     return json_dump(
         {
             "courses":list(filter(include_course, courses))
@@ -238,7 +244,7 @@ def create_lecture(course_ok_id, ok_id=None):
     course, and creates the course.
     """
     user = get_user_data(ok_id)
-    user_courses = get_updated_user_courses()
+    user_courses = user['courses']
     user_in_class = False
     for course in user_courses:
         if course['ok_id'] == course_ok_id:
@@ -267,10 +273,10 @@ def create_course(course_ok_id, ok_id=None):
     """Registers a Course in the DB
     """
     user = get_user_data(ok_id)
-    user_courses = get_updated_user_courses()
+    user_courses = user['courses']
     user_in_class = False
     for course in user_courses:
-        if course['course_id'] == course_ok_id:
+        if course['course_ok_id'] == course_ok_id:
             user_in_class = True
             if course['role'] != consts.INSTRUCTOR:
                 return jsonify(success=False, message="Only instructors can create courses"), 403
