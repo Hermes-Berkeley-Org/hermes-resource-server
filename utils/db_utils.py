@@ -160,6 +160,7 @@ class Course(DBObject):
                 piazza_course_id= "",
                 lectures= [],
                 semester= Course.get_semester(offering),
+                offering= offering,
                 students=[]
             ),
             db
