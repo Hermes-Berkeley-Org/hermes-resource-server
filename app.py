@@ -21,6 +21,7 @@ import requests
 
 from utils.db_utils import User, Course, Lecture, Vitamin, Resource, Video, Transcript
 import utils.lecture_utils as LectureUtils
+import utils.piazza as Piazza
 
 import consts
 
@@ -297,15 +298,27 @@ def create_course(course_ok_id, ok_id=None):
 def create_piazza_bot(course_ok_id, ok_id=None):
     user = get_user_data(ok_id)
     user_courses = user['courses']
-    for course in user_courses:
-        if course['course_id'] == course_ok_id:
-            if course['role'] != consts.INSTRUCTOR or course['role'] != consts.STAFF:
-                return jsonify(success=False, message="Only staff can create a Piazza Bot"), 403
+    course_ok_id_key = str(course_ok_id)
+    seperate_folders = request.form["piazza_folders"].split(" ")
+    if course_ok_id_key in user_courses:
+        if user_courses[course_ok_id_key] != consts.INSTRUCTOR and user_courses[course_ok_id_key] != consts.STAFF:
+            return jsonify(success=False, message="Only staff can create a Piazza Bot"), 403
+        if not request.form["piazza_course_id"].isalnum():
+            return jsonify(success=False, message="Please Enter a Valid Pizza API"), 403
+        if not seperate_folders:
+            return jsonify(success=False, message="Must include at one least folder for posts to go in"), 403
+        try:
+            Piazza.create_master_post(folders = seperate_folders, \
+            piazza_course_id  = request.form["piazza_course_id"], content = request.form["content"])
             db['Courses'].update(
                 {'course_ok_id': course_ok_id},
                 {"$set" :
-                    {"piazza_course_id" : request.form["piazza_course_id"]}
+                    {"piazza_course_id" : request.form["piazza_course_id"],
+                    "piazza_folders" : seperate_folders,
+                    "piazza_active" : True}
                 }
-                )
+            )
             return jsonify(success=True), 200
+        except:
+            return jsonify(success=False, message= consts.PIAZZA_ERROR_MESSAGE), 403
     return jsonify(success=False, message="Can only create a PiazzaBot on behalf of Hermes for an OK course you are a part of"), 403
