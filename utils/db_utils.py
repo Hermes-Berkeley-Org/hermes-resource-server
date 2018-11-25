@@ -121,7 +121,7 @@ class User(DBObject):
 
 class Course(DBObject):
 
-    collection = 'Classes'
+    collection = 'Courses'
 
     def __init__(self, **attr):
         DBObject.__init__(self, **attr)
@@ -152,15 +152,16 @@ class Course(DBObject):
         return offering.split('/')[-1].upper()
 
     @staticmethod
-    def create_course(display_name, data, db):
-        data['display_name'] = display_name
-        data['ok_id'] = data.pop('id', None)
+    def create_course(offering, course_ok_id, display_name, db):
         return insert(
             Course(
-                lectures=[],
-                semester=Course.get_semester(data['offering']),
-                students=[],
-                **data
+                course_ok_id= course_ok_id,
+                display_name= display_name,
+                piazza_course_id= "",
+                lectures= [],
+                semester= Course.get_semester(offering),
+                offering= offering,
+                students=[]
             ),
             db
         )

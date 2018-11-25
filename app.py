@@ -125,14 +125,21 @@ def ok_refresh():
 @validate_and_pass_on_ok_id
 def home(ok_id=None):
     """
-    Route for homepage (with all the classes)
+    Route for homepage (with all the courses)
     @return all courses a user can access in a JSON object
     """
     def include_course(course):
         return course['role'] == consts.INSTRUCTOR or \
             db[Course.collection].find({'ok_id': course['course_id']}).count() > 0
-
     courses = get_updated_user_courses()
+    updated_courses = {str(course["course_id"]) : course['role'] for course in courses}
+    print(updated_courses)
+    db['Users'].update(
+            {'ok_id': ok_id},
+            {"$set" :
+                {"courses" : updated_courses}
+            }
+        )
     return json_dump(
         {
             "courses":list(filter(include_course, courses))
@@ -147,7 +154,7 @@ def get_user_data(ok_id):
 @app.route('/course/<int:course_ok_id>', methods=['GET'])
 @validate_and_pass_on_ok_id
 def course(course_ok_id, ok_id=None):
-    """Gets all the lectures within a class
+    """Gets all the lectures within a course
     """
     user = get_user_data(ok_id)
     course = db[Course.collection].find_one(
@@ -238,11 +245,12 @@ def create_lecture(course_ok_id, ok_id=None):
     course, and creates the course.
     """
     user = get_user_data(ok_id)
-    for course in user['classes']:
-        if course['ok_id'] == course_ok_id:
-            if course['role'] != consts.INSTRUCTOR:
-                return jsonify(success=False, message="Only instructors can post videos"), 403
-            break
+    user_courses = user['courses']
+    course_ok_id_key = str(course_ok_id)
+    if not course_ok_id_key in user_courses:
+        return jsonify(success=False, message="Can only create a lecture on Hermes for an OK course you are a part of"), 403
+    if user_courses[course_ok_id_key] != consts.INSTRUCTOR:
+        return jsonify(success=False, message="Only instructors can post videos"), 403
     try:
         LectureUtils.create_lecture(
             course_ok_id,
@@ -256,15 +264,30 @@ def create_lecture(course_ok_id, ok_id=None):
     except ValueError as e:
         return jsonify(success=False, message=str(e)), 500
 
-@app.route('/course/<int:course_ok_id>/create', methods=["POST"])
+@app.route('/course/<int:course_ok_id>/create_course', methods=["POST"])
 @validate_and_pass_on_ok_id
 def create_course(course_ok_id, ok_id=None):
-    """Registers a Course in the DB (see old_app.py)
-    TODO KK
+    """Registers a Course in the DB
     """
     user = get_user_data(ok_id)
-    for course in user['classes']:
-        if course['ok_id'] == course_ok_id:
-            if course['role'] != consts.INSTRUCTOR:
-                return jsonify(success=False, message="Only instructors can post videos"), 403
-            break
+    user_courses = user['courses']
+    course_ok_id_key = str(course_ok_id)
+    print(course_ok_id_key in user_courses)
+    if not course_ok_id_key in user_courses:
+        print(user_courses[course_ok_id_key])
+        return jsonify(success=False, message="Can only create a course on Hermes for an OK course you are a part of"), 403
+    if user_courses[course_ok_id_key] != consts.INSTRUCTOR:
+        return jsonify(success=False, message="Only instructors can create courses"), 403
+    if db['Courses'].find_one({'course_ok_id': course_ok_id_key}):
+        return jsonify(success=False, message="Course has already been created"), 403
+    try:
+        form_data = request.form.to_dict()
+        Course.create_course(
+            offering= form_data["offering"],
+            course_ok_id= course_ok_id_key,
+            display_name= form_data["display_name"],
+            db=db
+        )
+        return jsonify(success=True), 200
+    except ValueError as e:
+        return jsonify(success=False, message=str(e)), 500

@@ -5,6 +5,7 @@ sys.path.append("../utils")
 sys.path.append("./utils")
 import db_utils as dbu
 from datetime import datetime
+import json
 import pytest, mongomock
 from bson.objectid import ObjectId
 from pprint import pprint #helps print out pymongo curser items nicely
@@ -68,12 +69,11 @@ def test_google_credentials():
 #Tests the Course Methods
 def create_test_courses(returned_ids, collection, db):
     for i in range(100):
-        info = dbu.Course.create_course('CS61'+str(i),
-            {"id" : i ,
-             "offering" : "cal/cs61a/fa" + str(i),
-             "active" : True,
-             "ok_id" : str(i)},
-              db)
+        info = dbu.Course.create_course(
+             offering =  "cal/cs61a/fa" + str(i),
+             display_name = 'CS61'+str(i),
+             course_ok_id = str(i) ,
+             db = db)
         returned_ids.append(info.inserted_id)
     return returned_ids
 
@@ -100,7 +100,7 @@ def test_create_course():
         assert item['students'] ==[]
         assert item['display_name'] == "CS61"+str(i)
         assert item['semester'] == "FA" + str(i)
-        assert item['ok_id'] == i
+        assert item['course_ok_id'] == str(i)
 
 #Tests the Lecture Methods
 
@@ -121,12 +121,11 @@ def test_create_lecture():
     collection = db.create_collection("Courses")
     lecs = db.create_collection("Lectures")
     returned_ids = []
-    course_id = dbu.Course.create_course('CS61',
-        {"id" : 1 ,
-         "offering" : "cal/cs61a/fa",
-         "active" : True,
-         "ok_id" : 1},
-          db)
+    course_id = dbu.Course.create_course(
+        display_name = 'CS61',
+        offering = "cal/cs61a/fa",
+        course_ok_id =  "1",
+          db = db)
     cls = (dbu.find_one_by_id(course_id.inserted_id, "Courses", db))
     create_test_lectures(cls, returned_ids ,collection, db)
     for i in range(100):
