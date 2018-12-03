@@ -151,14 +151,14 @@ def get_user_data(ok_id):
         db_result = db[User.collection].find_one({'ok_id': ok_id}) or {}
         return db_result
 
-@app.route('/course/<int:course_ok_id>', methods=['GET'])
+@app.route('/course/<course_ok_id>', methods=['GET'])
 @validate_and_pass_on_ok_id
 def course(course_ok_id, ok_id=None):
     """Gets all the lectures within a course
     """
     user = get_user_data(ok_id)
     course = db[Course.collection].find_one(
-        {'ok_id': course_ok_id},
+        {'course_ok_id': course_ok_id},
         {"_id": 0, "display_name": 1}
     )
     if not course:
@@ -177,7 +177,7 @@ def course(course_ok_id, ok_id=None):
         ).sort([('date', 1)])
     })
 
-@app.route('/course/<int:course_ok_id>/lecture/<int:lecture_index>/video/<int:video_index>/video_info')
+@app.route('/course/<course_ok_id>/lecture/<int:lecture_index>/video/<int:video_index>/video_info')
 @validate_and_pass_on_ok_id
 def video_info(course_ok_id, lecture_index, video_index, ok_id=None):
     video = db[Video.collection].find_one({
@@ -193,7 +193,7 @@ def video_info(course_ok_id, lecture_index, video_index, ok_id=None):
         })
     return jsonify(success=False, message="No video found"), 404
 
-@app.route('/course/<int:course_ok_id>/lecture/<int:lecture_index>/video/<int:video_index>/transcript')
+@app.route('/course/<course_ok_id>/lecture/<int:lecture_index>/video/<int:video_index>/transcript')
 @validate_and_pass_on_ok_id
 def transcript(course_ok_id, lecture_index, video_index, ok_id=None):
     transcript = db[Transcript.collection].find_one({
@@ -207,7 +207,7 @@ def transcript(course_ok_id, lecture_index, video_index, ok_id=None):
         })
     return jsonify(success=False, message="No transcript found"), 404
 
-@app.route('/course/<int:course_ok_id>/lecture/<int:lecture_index>/video/<int:video_index>/edit_transcript', methods=['POST'])
+@app.route('/course/<course_ok_id>/lecture/<int:lecture_index>/video/<int:video_index>/edit_transcript', methods=['POST'])
 @validate_and_pass_on_ok_id
 def edit_transcript(course_ok_id, lecture_index, video_index, ok_id=None):
     transcript = db[Transcript.collection].find_one({
@@ -238,7 +238,7 @@ def edit_transcript(course_ok_id, lecture_index, video_index, ok_id=None):
         return jsonify(success=True), 200
     return jsonify(success=False, message="No transcript found"), 404
 
-@app.route('/course/<int:course_ok_id>/create_lecture', methods=["POST"])
+@app.route('/course/<course_ok_id>/create_lecture', methods=["POST"])
 @validate_and_pass_on_ok_id
 def create_lecture(course_ok_id, ok_id=None):
     """Validates that the person creating the Lecture is an instructor of the
@@ -264,17 +264,14 @@ def create_lecture(course_ok_id, ok_id=None):
     except ValueError as e:
         return jsonify(success=False, message=str(e)), 500
 
-@app.route('/course/<int:course_ok_id>/create_course', methods=["POST"])
+@app.route('/course/<course_ok_id>/create_course', methods=["POST"])
 @validate_and_pass_on_ok_id
 def create_course(course_ok_id, ok_id=None):
     """Registers a Course in the DB
     """
     user = get_user_data(ok_id)
     user_courses = user['courses']
-    course_ok_id_key = str(course_ok_id)
-    print(course_ok_id_key in user_courses)
     if not course_ok_id_key in user_courses:
-        print(user_courses[course_ok_id_key])
         return jsonify(success=False, message="Can only create a course on Hermes for an OK course you are a part of"), 403
     if user_courses[course_ok_id_key] != consts.INSTRUCTOR:
         return jsonify(success=False, message="Only instructors can create courses"), 403
