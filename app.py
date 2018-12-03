@@ -23,6 +23,7 @@ from utils.db_utils import User, Course, Lecture, Vitamin, Resource, Video, Tran
 import utils.lecture_utils as LectureUtils
 import utils.piazza as Piazza
 
+from pprint import pprint
 import consts
 
 app = Flask(__name__)
@@ -71,18 +72,25 @@ def validate_and_pass_on_ok_id(func):
         return jsonify(success=False), 403
     return get_id
 
-def get_updated_user_courses():
-    """Gets course info for a specific user
-    """
+def get_user_data():
     r = requests.get('{0}/api/v3/user/?access_token={1}'.format(
             app.config['OK_SERVER'],
             get_oauth_token()
         )
     )
     if r.ok:
-        ok_resp = r.json()
-        if 'data' in ok_resp and 'participations' in ok_resp['data']:
-            return ok_resp['data']['participations']
+        user = r.json()
+        if user and 'data' in user:
+            return user['data']
+    return False
+
+def get_updated_user_courses():
+    """Gets course info for a specific user
+    """
+    user = get_user_data()
+    if user and 'participations' in user:
+        return user['participations']
+    return False
 
 @app.route('/hello')
 @validate_and_pass_on_ok_id
@@ -129,34 +137,25 @@ def home(ok_id=None):
     Route for homepage (with all the courses)
     @return all courses a user can access in a JSON object
     """
-    def include_course(course):
-        return course['role'] == consts.INSTRUCTOR or \
-            db[Course.collection].find({'ok_id': course['course_id']}).count() > 0
-    courses = get_updated_user_courses()
-    updated_courses = {int(course["course_id"]): course['role'] for course in courses}
-    db['Users'].update(
-            {'ok_id': ok_id},
-            {"$set" :
-                {"courses" : updated_courses}
-            }
-        )
+    ok_courses = get_updated_user_courses()
+    courses = []
+    for ok_course in ok_courses:
+        db_course = db[Course.collection].find_one({'course_ok_id': str(ok_course['course_id'])})
+        if ok_course['role'] == consts.INSTRUCTOR or db_course:
+            if db_course:
+                ok_course['course']['display_name']  = db_course['display_name']
+            courses.append(ok_course)
     return json_dump(
         {
-            "courses":list(filter(include_course, courses))
+            "courses": courses
         }
     )
 
-def get_user_data(ok_id):
-    if ok_id:
-        db_result = db[User.collection].find_one({'ok_id': ok_id}) or {}
-        return db_result
-
-@app.route('/course/<int:course_ok_id>', methods=['GET'])
+@app.route('/course/<course_ok_id>', methods=['GET'])
 @validate_and_pass_on_ok_id
 def course(course_ok_id, ok_id=None):
     """Gets all the lectures within a course
     """
-    user = get_user_data(ok_id)
     course = db[Course.collection].find_one(
         {'course_ok_id': course_ok_id},
         {"_id": 0, "display_name": 1}
@@ -178,7 +177,7 @@ def course(course_ok_id, ok_id=None):
         ).sort([('date', 1)])
     })
 
-@app.route('/course/<int:course_ok_id>/lecture/<int:lecture_index>/video/<int:video_index>/video_info')
+@app.route('/course/<course_ok_id>/lecture/<int:lecture_index>/video/<int:video_index>/video_info')
 @validate_and_pass_on_ok_id
 def video_info(course_ok_id, lecture_index, video_index, ok_id=None):
     video = db[Video.collection].find_one({
@@ -194,7 +193,7 @@ def video_info(course_ok_id, lecture_index, video_index, ok_id=None):
         })
     return jsonify(success=False, message="No video found"), 404
 
-@app.route('/course/<int:course_ok_id>/lecture/<int:lecture_index>/video/<int:video_index>/transcript')
+@app.route('/course/<course_ok_id>/lecture/<int:lecture_index>/video/<int:video_index>/transcript')
 @validate_and_pass_on_ok_id
 def transcript(course_ok_id, lecture_index, video_index, ok_id=None):
     transcript = db[Transcript.collection].find_one({
@@ -208,7 +207,7 @@ def transcript(course_ok_id, lecture_index, video_index, ok_id=None):
         })
     return jsonify(success=False, message="No transcript found"), 404
 
-@app.route('/course/<int:course_ok_id>/lecture/<int:lecture_index>/video/<int:video_index>/edit_transcript', methods=['POST'])
+@app.route('/course/<course_ok_id>/lecture/<int:lecture_index>/video/<int:video_index>/edit_transcript', methods=['POST'])
 @validate_and_pass_on_ok_id
 def edit_transcript(course_ok_id, lecture_index, video_index, ok_id=None):
     transcript = db[Transcript.collection].find_one({
@@ -239,14 +238,13 @@ def edit_transcript(course_ok_id, lecture_index, video_index, ok_id=None):
         return jsonify(success=True), 200
     return jsonify(success=False, message="No transcript found"), 404
 
-@app.route('/course/<int:course_ok_id>/create_lecture', methods=["POST"])
+@app.route('/course/<course_ok_id>/create_lecture', methods=["POST"])
 @validate_and_pass_on_ok_id
 def create_lecture(course_ok_id, ok_id=None):
     """Validates that the person creating the Lecture is an instructor of the
     course, and creates the course.
     """
-    user = get_user_data(ok_id)
-    user_courses = user['courses']
+    user_courses = get_updated_user_courses()
     if not course_ok_id in user_courses:
         return jsonify(success=False, message="Can only create a lecture on Hermes for an OK course you are a part of"), 403
     if user_courses[course_ok_id] != consts.INSTRUCTOR:
@@ -264,57 +262,60 @@ def create_lecture(course_ok_id, ok_id=None):
     except ValueError as e:
         return jsonify(success=False, message=str(e)), 500
 
-@app.route('/course/<int:course_ok_id>/create_course', methods=["POST"])
+@app.route('/course/<course_ok_id>/create_course', methods=["POST"])
 @validate_and_pass_on_ok_id
 def create_course(course_ok_id, ok_id=None):
     """Registers a Course in the DB
     """
-    user = get_user_data(ok_id)
-    user_courses = user['courses']
-    if not course_ok_id in user_courses:
-        return jsonify(success=False, message="Can only create a course on Hermes for an OK course you are a part of"), 403
-    if user_courses[course_ok_id] != consts.INSTRUCTOR:
-        return jsonify(success=False, message="Only instructors can create courses"), 403
-    if db['Courses'].find_one({'course_ok_id': course_ok_id}):
-        return jsonify(success=False, message="Course has already been created"), 403
-    try:
-        form_data = request.form.to_dict()
-        Course.create_course(
-            offering= form_data["offering"],
-            course_ok_id=course_ok_id,
-            display_name=form_data["display_name"],
-            db=db
-        )
-        return jsonify(success=True), 200
-    except ValueError as e:
-        return jsonify(success=False, message=str(e)), 500
+    user_courses = get_updated_user_courses()
+    int_course_ok_id = int(course_ok_id)
+    for course in user_courses:
+        if course['course_id'] == int_course_ok_id:
+            if course['role'] == consts.INSTRUCTOR:
+                if db['Courses'].find_one({'course_ok_id': course_ok_id}):
+                    return jsonify(success=False, message="Course has already been created"), 403
+                try:
+                    form_data = request.form.to_dict()
+                    Course.create_course(
+                        offering= form_data["offering"],
+                        course_ok_id= course_ok_id,
+                        display_name= form_data["display_name"],
+                        db=db
+                    )
+                    return jsonify(success=True), 200
+                except ValueError as e:
+                    return jsonify(success=False, message=str(e)), 500
+            return jsonify(success=False, message="Only instructors can create courses"), 403
+        pprint(course)
+    return jsonify(success=False, message="Can only create a course on Hermes for an OK course you are a part of"), 403
 
-@app.route('/course/<int:course_ok_id>/create_piazza_bot', methods=["POST"])
+@app.route('/course/<course_ok_id>/create_piazza_bot', methods=["POST"])
 @validate_and_pass_on_ok_id
 def create_piazza_bot(course_ok_id, ok_id=None):
-    user = get_user_data(ok_id)
-    user_courses = user['courses']
-    course_ok_id_key = str(course_ok_id)
+    user_courses = get_updated_user_courses()
+    int_course_ok_id = int(course_ok_id)
     seperate_folders = request.form["piazza_folders"].split(" ")
-    if course_ok_id_key in user_courses:
-        if user_courses[course_ok_id_key] != consts.INSTRUCTOR and user_courses[course_ok_id_key] != consts.STAFF:
+    for course in user_courses:
+        if course['course_id'] == int_course_ok_id:
+            print(int_course_ok_id)
+            if course['role'] == consts.INSTRUCTOR or user_courses[course_ok_id_key] == consts.STAFF:
+                if not request.form["piazza_course_id"].isalnum():
+                    return jsonify(success=False, message="Please Enter a Valid Pizza API"), 403
+                if not seperate_folders:
+                    return jsonify(success=False, message="Must include at one least folder for posts to go in"), 403
+                try:
+                    Piazza.create_master_post(folders = seperate_folders, \
+                    piazza_course_id  = request.form["piazza_course_id"], content = request.form["content"])
+                    db['Courses'].update(
+                        {'course_ok_id': course_ok_id},
+                        {"$set" :
+                            {"piazza_course_id" : request.form["piazza_course_id"],
+                            "piazza_folders" : seperate_folders,
+                            "piazza_active" : True}
+                        }
+                    )
+                    return jsonify(success=True), 200
+                except ValueError as e:
+                    return jsonify(success=False, message= consts.PIAZZA_ERROR_MESSAGE), 403
             return jsonify(success=False, message="Only staff can create a Piazza Bot"), 403
-        if not request.form["piazza_course_id"].isalnum():
-            return jsonify(success=False, message="Please Enter a Valid Pizza API"), 403
-        if not seperate_folders:
-            return jsonify(success=False, message="Must include at one least folder for posts to go in"), 403
-        try:
-            Piazza.create_master_post(folders = seperate_folders, \
-            piazza_course_id  = request.form["piazza_course_id"], content = request.form["content"])
-            db['Courses'].update(
-                {'course_ok_id': course_ok_id},
-                {"$set" :
-                    {"piazza_course_id" : request.form["piazza_course_id"],
-                    "piazza_folders" : seperate_folders,
-                    "piazza_active" : True}
-                }
-            )
-            return jsonify(success=True), 200
-        except:
-            return jsonify(success=False, message= consts.PIAZZA_ERROR_MESSAGE), 403
     return jsonify(success=False, message="Can only create a PiazzaBot on behalf of Hermes for an OK course you are a part of"), 403
