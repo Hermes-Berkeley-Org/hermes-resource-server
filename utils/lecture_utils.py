@@ -1,6 +1,8 @@
 import requests
 from requests.exceptions import RequestException, ConnectionError
 from urllib.parse import urlparse, parse_qs
+from urllib import request
+from urllib.error import URLError
 
 from utils.errors import (
     InvalidLectureLinkError, VideoParseError, NoCourseFoundError, YoutubeError
@@ -85,13 +87,14 @@ def get_final_youtube_url(link):
     """Checks if YouTube link is a valid URL and gets the final redirected
     link (e.g. youtu.be --> youtube.com)
     """
-    ses = requests.Session()
+
     if not link.startswith('http'):
         link = 'http://{0}'.format(link)
     try:
-        return ses.head(link, allow_redirects=True).url
-    except (RequestException, ConnectionError) as e:
-        raise InvalidLectureLinkError('Lecture YouTube link invalid')
+        r = request.urlopen(link)
+        return r.geturl()
+    except URLError as e:
+        raise e
 
 def get_youtube_ids(youtube_url, youtube_client):
     """Retrieves YouTube IDs (youtube.com/watch?v=<youtube_id>) associated

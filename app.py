@@ -132,7 +132,7 @@ def home(ok_id=None):
         return course['role'] == consts.INSTRUCTOR or \
             db[Course.collection].find({'ok_id': course['course_id']}).count() > 0
     courses = get_updated_user_courses()
-    updated_courses = {int(course["course_id"]): course['role'] for course in courses}
+    updated_courses = {str(course["course_id"]): course['role'] for course in courses}
     db['Users'].update(
             {'ok_id': ok_id},
             {"$set" :
