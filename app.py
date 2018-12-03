@@ -90,6 +90,12 @@ def get_updated_user_courses():
         return user['participations']
     return False
 
+def get_ok_course(course_ok_id):
+    user_courses = get_updated_user_courses()
+    for user_course in user_courses:
+        if str(user_course['course_id']) == course_ok_id:
+            return user_course
+
 @app.route('/hello')
 @validate_and_pass_on_ok_id
 def hello(ok_id=None):
@@ -242,10 +248,11 @@ def create_lecture(course_ok_id, ok_id=None):
     """Validates that the person creating the Lecture is an instructor of the
     course, and creates the course.
     """
-    user_courses = get_updated_user_courses()
-    if not course_ok_id in user_courses:
+    user_course = get_ok_course(course_ok_id)
+    print(user_course)
+    if not user_course:
         return jsonify(success=False, message="Can only create a lecture on Hermes for an OK course you are a part of"), 403
-    if user_courses[course_ok_id] != consts.INSTRUCTOR:
+    if user_course['role'] != consts.INSTRUCTOR:
         return jsonify(success=False, message="Only instructors can post videos"), 403
     try:
         LectureUtils.create_lecture(
