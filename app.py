@@ -96,6 +96,10 @@ def get_ok_course(course_ok_id):
         if str(user_course['course_id']) == course_ok_id:
             return user_course
 
+@app.route('/user_data')
+def user_data(ok_id=None):
+    return json_dump(get_user_data())
+
 @app.route('/hello')
 @validate_and_pass_on_ok_id
 def hello(ok_id=None):
@@ -292,7 +296,7 @@ def video(course_ok_id, lecture_index, video_index,ok_id=None):
             )
             return bson_dump(db_obj)
     return jsonify(success=False, message="Can only view a video on Hermes for an OK course you are a part of"), 403
-    
+
 @app.route('/course/<course_ok_id>/create_course', methods=["POST"])
 @validate_and_pass_on_ok_id
 def create_course(course_ok_id, ok_id=None):
