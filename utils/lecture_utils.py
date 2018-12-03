@@ -73,7 +73,7 @@ def create_lecture(course_ok_id, db, lecture_title,
     )
     insert(lecture, db)
     db[Course.collection].update_one(
-        {'ok_id': course_ok_id},
+        {'course_ok_id': course_ok_id},
         {
             '$set': {
                 'num_lectures': course['num_lectures'] + 1

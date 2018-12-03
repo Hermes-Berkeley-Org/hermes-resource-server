@@ -182,7 +182,7 @@ def course(course_ok_id, ok_id=None):
                 "video_titles": 1,
                 "_id": 0
             }
-        ).sort([('date', 1)])
+        ).sort([('lecture_index', 1)])
     })
 
 @app.route('/course/<course_ok_id>/lecture/<int:lecture_index>/video/<int:video_index>/video_info')
@@ -254,7 +254,7 @@ def create_lecture(course_ok_id, ok_id=None):
     """
     user_courses = get_updated_user_courses()
     for course in user_courses:
-        if course['course_id'] == int_course_ok_id:
+        if course['course_id'] == course_ok_id:
             if course['role'] != consts.INSTRUCTOR:
                 return jsonify(success=False, message="Only instructors can post videos"), 403
         try:
