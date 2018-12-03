@@ -246,10 +246,9 @@ def create_lecture(course_ok_id, ok_id=None):
     """
     user = get_user_data(ok_id)
     user_courses = user['courses']
-    course_ok_id_key = str(course_ok_id)
-    if not course_ok_id_key in user_courses:
+    if not course_ok_id in user_courses:
         return jsonify(success=False, message="Can only create a lecture on Hermes for an OK course you are a part of"), 403
-    if user_courses[course_ok_id_key] != consts.INSTRUCTOR:
+    if user_courses[course_ok_id] != consts.INSTRUCTOR:
         return jsonify(success=False, message="Only instructors can post videos"), 403
     try:
         LectureUtils.create_lecture(
@@ -271,17 +270,17 @@ def create_course(course_ok_id, ok_id=None):
     """
     user = get_user_data(ok_id)
     user_courses = user['courses']
-    if not course_ok_id_key in user_courses:
+    if not course_ok_id in user_courses:
         return jsonify(success=False, message="Can only create a course on Hermes for an OK course you are a part of"), 403
-    if user_courses[course_ok_id_key] != consts.INSTRUCTOR:
+    if user_courses[course_ok_id] != consts.INSTRUCTOR:
         return jsonify(success=False, message="Only instructors can create courses"), 403
-    if db['Courses'].find_one({'course_ok_id': course_ok_id_key}):
+    if db['Courses'].find_one({'course_ok_id': course_ok_id}):
         return jsonify(success=False, message="Course has already been created"), 403
     try:
         form_data = request.form.to_dict()
         Course.create_course(
             offering= form_data["offering"],
-            course_ok_id= course_ok_id_key,
+            course_ok_id= course_ok_id,
             display_name= form_data["display_name"],
             db=db
         )
