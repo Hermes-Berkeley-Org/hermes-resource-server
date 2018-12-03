@@ -356,15 +356,3 @@ def create_piazza_bot(course_ok_id, ok_id=None):
                     return jsonify(success=False, message= consts.PIAZZA_ERROR_MESSAGE), 403
             return jsonify(success=False, message="Only staff can create a Piazza Bot"), 403
     return jsonify(success=False, message="Can only create a PiazzaBot on behalf of Hermes for an OK course you are a part of"), 403
-
-@app.route('/course/<course_ok_id>/lecture/<int:lecture_index>/video/<int:video_index>', methods=["GET"])
-@validate_and_pass_on_ok_id
-def create_piazza_question(course_ok_id, lecture_index, video_index, ok_id=None):
-    user_courses = get_updated_user_courses()
-    int_course_ok_id = int(course_ok_id)
-    for course in user_courses:
-        if course['course_id'] == int_course_ok_id:
-            piazza_thread = db_obj = db[Lecture.collection].find_one(
-                {'course_ok_id':course_ok_id, 'lecture_index':lecture_index},{"piazza_course_id"}
-            )
-            print(thread)
