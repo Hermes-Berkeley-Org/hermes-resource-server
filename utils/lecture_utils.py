@@ -90,7 +90,7 @@ def get_final_youtube_url(link):
         link = 'http://{0}'.format(link)
     try:
         return ses.head(link, allow_redirects=True).url
-    except RequestException or ConnectionError as e:
+    except (RequestException, ConnectionError) as e:
         raise InvalidLectureLinkError('Lecture YouTube link invalid')
 
 def get_youtube_ids(youtube_url, youtube_client):

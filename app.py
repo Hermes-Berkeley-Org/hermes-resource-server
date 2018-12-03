@@ -29,7 +29,7 @@ CORS(app, resources={r"/*": {"origins": os.environ.get('HERMES_UI_URL')}})
 app.config.from_object(Config)
 
 client = MongoClient(os.environ.get('MONGODB_URI'))
-db = client[os.environ.get('DATABASE_NAME')]
+db = client[str(os.environ.get('DATABASE_NAME'))]
 
 logger = logging.getLogger('app_logger')
 sh = logging.StreamHandler(stream=sys.stdout)
