@@ -260,14 +260,15 @@ def create_lecture(course_ok_id, ok_id=None):
     except ValueError as e:
         return jsonify(success=False, message=str(e)), 500
 
-@app.route('/course/<int:course_ok_id>/create_course', methods=["POST"])
+@app.route('/course/<course_ok_id>/create_course', methods=["POST"])
 @validate_and_pass_on_ok_id
 def create_course(course_ok_id, ok_id=None):
     """Registers a Course in the DB
     """
     user_courses = get_updated_user_courses()
+    int_course_ok_id = int(course_ok_id)
     for course in user_courses:
-        if course['course_id'] == course_ok_id:
+        if course['course_id'] == int_course_ok_id:
             if course['role'] == consts.INSTRUCTOR:
                 if db['Courses'].find_one({'course_ok_id': course_ok_id}):
                     return jsonify(success=False, message="Course has already been created"), 403
