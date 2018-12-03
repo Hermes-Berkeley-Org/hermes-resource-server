@@ -161,7 +161,8 @@ class Course(DBObject):
                 lectures= [],
                 semester= Course.get_semester(offering),
                 offering= offering,
-                students=[]
+                students=[],
+                num_lectures=0
             ),
             db
         )
