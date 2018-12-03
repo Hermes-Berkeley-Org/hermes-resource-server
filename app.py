@@ -92,6 +92,16 @@ def get_updated_user_courses():
         return user['participations']
     return False
 
+def get_ok_course(course_ok_id):
+    user_courses = get_updated_user_courses()
+    for user_course in user_courses:
+        if str(user_course['course_id']) == course_ok_id:
+            return user_course
+
+@app.route('/user_data')
+def user_data(ok_id=None):
+    return json_dump(get_user_data())
+
 @app.route('/hello')
 @validate_and_pass_on_ok_id
 def hello(ok_id=None):
@@ -245,22 +255,49 @@ def create_lecture(course_ok_id, ok_id=None):
     course, and creates the course.
     """
     user_courses = get_updated_user_courses()
-    if not course_ok_id in user_courses:
-        return jsonify(success=False, message="Can only create a lecture on Hermes for an OK course you are a part of"), 403
-    if user_courses[course_ok_id] != consts.INSTRUCTOR:
-        return jsonify(success=False, message="Only instructors can post videos"), 403
-    try:
-        LectureUtils.create_lecture(
-            course_ok_id,
-            db,
-            request.form['title'],
-            request.form['date'],
-            request.form['link'],
-            request.form['youtube_access_token']
-        )
-        return jsonify(success=True), 200
-    except ValueError as e:
-        return jsonify(success=False, message=str(e)), 500
+    for course in user_courses:
+        if course['course_id'] == int_course_ok_id:
+            if course['role'] != consts.INSTRUCTOR:
+                return jsonify(success=False, message="Only instructors can post videos"), 403
+        try:
+            LectureUtils.create_lecture(
+                course_ok_id,
+                db,
+                request.form['title'],
+                request.form['date'],
+                request.form['link'],
+                request.form['youtube_access_token']
+            )
+            return jsonify(success=True), 200
+        except ValueError as e:
+            return jsonify(success=False, message=str(e)), 500
+    return jsonify(success=False, message="Can only create a lecture on Hermes for an OK course you are a part of"), 403
+
+@app.route('/course/<course_ok_id>/lecture/<int:lecture_index>', methods=["GET"])
+@validate_and_pass_on_ok_id
+def lecture(course_ok_id, lecture_index, ok_id=None):
+    user_courses = get_updated_user_courses()
+    int_course_ok_id = int(course_ok_id)
+    for course in user_courses:
+        if course['course_id'] == int_course_ok_id:
+            db_obj = db[Lecture.collection].find_one(
+                {'course_ok_id':course_ok_id, 'lecture_index':lecture_index}
+            )
+            return bson_dump(db_obj)
+    return jsonify(success=False, message="Can only view a lecture on Hermes for an OK course you are a part of"), 403
+
+@app.route('/course/<course_ok_id>/lecture/<int:lecture_index>/video/<int:video_index>', methods=["GET"])
+@validate_and_pass_on_ok_id
+def video(course_ok_id, lecture_index, video_index,ok_id=None):
+    user_courses = get_updated_user_courses()
+    int_course_ok_id = int(course_ok_id)
+    for course in user_courses:
+        if course['course_id'] == int_course_ok_id:
+            db_obj = db[Video.collection].find_one(
+                {'course_ok_id':course_ok_id, 'lecture_index':lecture_index, "video_index":video_index}
+            )
+            return bson_dump(db_obj)
+    return jsonify(success=False, message="Can only view a video on Hermes for an OK course you are a part of"), 403
 
 @app.route('/course/<course_ok_id>/create_course', methods=["POST"])
 @validate_and_pass_on_ok_id
@@ -319,3 +356,15 @@ def create_piazza_bot(course_ok_id, ok_id=None):
                     return jsonify(success=False, message= consts.PIAZZA_ERROR_MESSAGE), 403
             return jsonify(success=False, message="Only staff can create a Piazza Bot"), 403
     return jsonify(success=False, message="Can only create a PiazzaBot on behalf of Hermes for an OK course you are a part of"), 403
+
+@app.route('/course/<course_ok_id>/lecture/<int:lecture_index>/video/<int:video_index>', methods=["GET"])
+@validate_and_pass_on_ok_id
+def create_piazza_question(course_ok_id, lecture_index, video_index, ok_id=None):
+    user_courses = get_updated_user_courses()
+    int_course_ok_id = int(course_ok_id)
+    for course in user_courses:
+        if course['course_id'] == int_course_ok_id:
+            piazza_thread = db_obj = db[Lecture.collection].find_one(
+                {'course_ok_id':course_ok_id, 'lecture_index':lecture_index},{"piazza_course_id"}
+            )
+            print(thread)

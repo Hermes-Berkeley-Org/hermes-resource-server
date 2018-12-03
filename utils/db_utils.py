@@ -162,7 +162,8 @@ class Course(DBObject):
                 semester= Course.get_semester(offering),
                 offering= offering,
                 piazza_verified = False,
-                students=[]
+                students=[],
+                num_lectures=0
             ),
             db
         )
