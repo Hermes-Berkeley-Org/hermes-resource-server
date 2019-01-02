@@ -1,4 +1,5 @@
 import os
+import re
 from datetime import datetime
 
 from collections import defaultdict
@@ -27,7 +28,7 @@ def get_keys(d, keys):
     return {key: d.get(key) for key in keys}
 
 def encode_url(s):
-    return s.lower().replace(' ', '-')
+    return re.sub('\s+', '-', re.sub(r'[^a-zA-Z0-9\s]+', '', s.lower()))
 
 def find_by_id(id, collection, db):
     return db[collection].find({'_id': ObjectId(id)})

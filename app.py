@@ -22,6 +22,7 @@ import requests
 from utils.db_utils import User, Course, Lecture, Vitamin, Resource, Video, Transcript
 import utils.lecture_utils as LectureUtils
 import utils.piazza as Piazza
+from utils.errors import CreateLectureFormValidationError
 
 from pprint import pprint
 import consts
@@ -69,10 +70,16 @@ def validate_and_pass_on_ok_id(func):
                 if 'id' in ok_data:
                     return func(ok_id=ok_data['id'], *args,**kwargs)
         logger.info("OK validation failed")
-        return jsonify(success=False), 403
+        return jsonify(success=False, message="OK validation failed"), 403
     return get_id
 
 def get_user_data():
+    """Queries OK to retrieve most up-to-date information on a user
+
+    NOTE: OK IDs for courses are INTS here, but are converted to STRINGS in
+    this application so they can be used as keys in MongoDB objects
+
+    """
     r = requests.get('{0}/api/v3/user/?access_token={1}'.format(
             app.config['OK_SERVER'],
             get_oauth_token()
@@ -100,6 +107,7 @@ def get_ok_course(course_ok_id):
 
 @app.route('/user_data')
 def user_data(ok_id=None):
+    """Route for get_user_data()"""
     return json_dump(get_user_data())
 
 @app.route('/hello')
@@ -110,6 +118,8 @@ def hello(ok_id=None):
 
 @app.route('/ok_code')
 def ok_code():
+    """Proxy for the front-end to authorize users: takes an OAuth code
+    (generated on a login) and returns an OAuth token"""
     code = request.args.get('code')
     if not code:
         return jsonify(success=False), 400
@@ -126,6 +136,7 @@ def ok_code():
 
 @app.route('/ok_refresh')
 def ok_refresh():
+    """Proxy for front-end to perform refreshes on OAuth tokens"""
     refresh_token = request.args.get('refresh_token')
     if not refresh_token:
         return jsonify(success=False), 400
@@ -171,8 +182,10 @@ def course(course_ok_id, ok_id=None):
         {"_id": 0, "display_name": 1}
     )
     if not course:
-        print('no course')
-        return jsonify(success=False), 403
+        return jsonify(
+            success=False,
+            message="Course with OK ID {0} does not exist".format(course_ok_id)
+        ), 400
     return bson_dump({
         "info": course,
         "lectures": db[Lecture.collection].find(
@@ -180,35 +193,41 @@ def course(course_ok_id, ok_id=None):
             {
                 "name": 1,
                 "date": 1,
-                "lecture_number": 1,
+                "lecture_url_name": 1,
                 "video_titles": 1,
                 "_id": 0
             }
         ).sort([('lecture_index', 1)])
     })
 
-@app.route('/course/<course_ok_id>/lecture/<int:lecture_index>/video/<int:video_index>/video_info')
+@app.route('/course/<course_ok_id>/lecture/<lecture_url_name>/video/<int:video_index>', methods=["GET"])
 @validate_and_pass_on_ok_id
-def video_info(course_ok_id, lecture_index, video_index, ok_id=None):
-    video = db[Video.collection].find_one({
-        'course_ok_id': course_ok_id,
-        'lecture_index': lecture_index,
-        'video_index': video_index
-    })
-    if video:
-        return json_dump({
-            'title': video['title'],
-            'duration': video['duration'],
-            'youtube_id': video['youtube_id']
-        })
-    return jsonify(success=False, message="No video found"), 404
+def video(course_ok_id, lecture_url_name, video_index, ok_id=None):
+    user_courses = get_updated_user_courses()
+    int_course_ok_id = int(course_ok_id)
+    for course in user_courses:
+        if course['course_id'] == int_course_ok_id:
+            video = db[Video.collection].find_one({
+                'course_ok_id': course_ok_id,
+                'lecture_url_name': lecture_url_name,
+                'video_index': video_index
+            })
+            if video:
+                return json_dump({
+                    'title': video['title'],
+                    'duration': video['duration'],
+                    'youtube_id': video['youtube_id']
+                })
+            return jsonify(success=False, message="No video found"), 404
+    return jsonify(success=False, message="Can only view a video on Hermes for an OK course you are a part of"), 403
 
-@app.route('/course/<course_ok_id>/lecture/<int:lecture_index>/video/<int:video_index>/transcript')
+@app.route('/course/<course_ok_id>/lecture/<lecture_url_name>/video/<int:video_index>/transcript')
 @validate_and_pass_on_ok_id
-def transcript(course_ok_id, lecture_index, video_index, ok_id=None):
+def transcript(course_ok_id, lecture_url_name, video_index, ok_id=None):
+    """Gets the transcript associated with a video in a lecture"""
     transcript = db[Transcript.collection].find_one({
         'course_ok_id': course_ok_id,
-        'lecture_index': lecture_index,
+        'lecture_url_name': lecture_url_name,
         'video_index': video_index
     })
     if transcript:
@@ -217,12 +236,12 @@ def transcript(course_ok_id, lecture_index, video_index, ok_id=None):
         })
     return jsonify(success=False, message="No transcript found"), 404
 
-@app.route('/course/<course_ok_id>/lecture/<int:lecture_index>/video/<int:video_index>/edit_transcript', methods=['POST'])
+@app.route('/course/<course_ok_id>/lecture/<lecture_url_name>/video/<int:video_index>/edit_transcript', methods=['POST'])
 @validate_and_pass_on_ok_id
-def edit_transcript(course_ok_id, lecture_index, video_index, ok_id=None):
+def edit_transcript(course_ok_id, lecture_url_name, video_index, ok_id=None):
     transcript = db[Transcript.collection].find_one({
         'course_ok_id': course_ok_id,
-        'lecture_index': lecture_index,
+        'lecture_url_name': lecture_url_name,
         'video_index': video_index
     })
     if transcript:
@@ -235,7 +254,7 @@ def edit_transcript(course_ok_id, lecture_index, video_index, ok_id=None):
         db[Transcript.collection].update_one(
             {
               'course_ok_id': course_ok_id,
-              'lecture_index': lecture_index,
+              'lecture_url_name': lecture_url_name,
               'video_index': video_index
             },
             {
@@ -255,49 +274,124 @@ def create_lecture(course_ok_id, ok_id=None):
     course, and creates the course.
     """
     user_courses = get_updated_user_courses()
+    int_course_ok_id = int(course_ok_id)
     for course in user_courses:
-        if course['course_id'] == course_ok_id:
+        if course['course_id'] == int_course_ok_id:
             if course['role'] != consts.INSTRUCTOR:
-                return jsonify(success=False, message="Only instructors can post videos"), 403
-        try:
-            LectureUtils.create_lecture(
-                course_ok_id,
-                db,
-                request.form['title'],
-                request.form['date'],
-                request.form['link'],
-                request.form['youtube_access_token']
-            )
-            return jsonify(success=True), 200
-        except ValueError as e:
-            return jsonify(success=False, message=str(e)), 500
+                return jsonify(success=False, message="Only instructors can post lectures"), 403
+            try:
+                create_lecture_response = LectureUtils.create_lecture(
+                    course_ok_id,
+                    db,
+                    request.form['title'],
+                    request.form['date'],
+                    request.form['link'],
+                    request.form['youtube_access_token']
+                )
+                return jsonify(success=True, **create_lecture_response), 200
+            except CreateLectureFormValidationError as e:
+                return jsonify(success=False, message=str(e)), 400
+            except ValueError as e:
+                return jsonify(success=False, message=str(e)), 500
     return jsonify(success=False, message="Can only create a lecture on Hermes for an OK course you are a part of"), 403
 
-@app.route('/course/<course_ok_id>/lecture/<int:lecture_index>', methods=["GET"])
+@app.route('/course/<course_ok_id>/lecture/<lecture_url_name>', methods=["DELETE"])
 @validate_and_pass_on_ok_id
-def lecture(course_ok_id, lecture_index, ok_id=None):
+def delete_lecture(course_ok_id, lecture_url_name, ok_id=None):
+    """Deletes the associated Lecture, Video, and Transcript objects associated
+    with a lecture_url_name in a course"""
     user_courses = get_updated_user_courses()
     int_course_ok_id = int(course_ok_id)
     for course in user_courses:
         if course['course_id'] == int_course_ok_id:
+            if course['role'] != consts.INSTRUCTOR:
+                return jsonify(success=False, message="Only instructors can delete lectures"), 403
+            db[Lecture.collection].remove(
+                {
+                    'course_ok_id': course_ok_id,
+                    'lecture_url_name': lecture_url_name
+                }
+            )
+            db[Video.collection].remove(
+                {
+                    'course_ok_id': course_ok_id,
+                    'lecture_url_name': lecture_url_name
+                }
+            )
+            db[Transcript.collection].remove(
+                {
+                    'course_ok_id': course_ok_id,
+                    'lecture_url_name': lecture_url_name
+                }
+            )
+            return jsonify(success=True), 200
+    return jsonify(success=False, message="Can only delete a lecture on Hermes for an OK course you are a part of"), 403
+
+@app.route('/course/<course_ok_id>/reorder_lectures', methods=["POST"])
+@validate_and_pass_on_ok_id
+def reorder_lectures(course_ok_id, ok_id=None):
+    """Changes all lecture_index fields in lectures in a course at once to match
+    a professor's preferred order
+
+    POST payload format:
+    {
+        "ordering": {
+            <lecture_url_name>: index
+            ...
+        }
+    }
+    """
+    user_courses = get_updated_user_courses()
+    int_course_ok_id = int(course_ok_id)
+    for course in user_courses:
+        if course['course_id'] == int_course_ok_id:
+            if course['role'] != consts.INSTRUCTOR:
+                return jsonify(success=False, message="Only instructors can reorder lectures"), 403
+            ordering = request.get_json().get('ordering')
+            if ordering:
+                lectures = db[Lecture.collection].find(
+                    {
+                        'course_ok_id': course_ok_id
+                    }
+                )
+                lecture_url_names = set(lecture['lecture_url_name'] for lecture in lectures)
+                if len(lecture_url_names.difference(set(ordering.keys()))) > 0:
+                    return jsonify(
+                        success=False,
+                        message="Payload does not match lectures in the DB"
+                    ), 400
+                for lecture_url_name in lecture_url_names:
+                    db[Lecture.collection].update_one(
+                        {
+                            'course_ok_id': course_ok_id,
+                            'lecture_url_name': lecture_url_name
+                        },
+                        {
+                            '$set': {
+                                'lecture_index': ordering[lecture_url_name]
+                            }
+                        }
+                    )
+                return jsonify(success=True), 200
+            return jsonify(success=False, message='No post payload'), 400
+    return jsonify(success=False, message="Can only reorder lectures on Hermes for an OK course you are a part of"), 403
+
+@app.route('/course/<course_ok_id>/lecture/<lecture_url_name>', methods=["GET"])
+@validate_and_pass_on_ok_id
+def lecture(course_ok_id, lecture_url_name, ok_id=None):
+    """Retrieves the metadata on a lecture"""
+    user_courses = get_updated_user_courses()
+    for course in user_courses:
+        # OK has course IDs as ints
+        if course['course_id'] == int(course_ok_id):
             db_obj = db[Lecture.collection].find_one(
-                {'course_ok_id':course_ok_id, 'lecture_index':lecture_index}
+                {
+                    'course_ok_id': course_ok_id,
+                    'lecture_url_name': lecture_url_name
+                }
             )
             return bson_dump(db_obj)
     return jsonify(success=False, message="Can only view a lecture on Hermes for an OK course you are a part of"), 403
-
-@app.route('/course/<course_ok_id>/lecture/<int:lecture_index>/video/<int:video_index>', methods=["GET"])
-@validate_and_pass_on_ok_id
-def video(course_ok_id, lecture_index, video_index,ok_id=None):
-    user_courses = get_updated_user_courses()
-    int_course_ok_id = int(course_ok_id)
-    for course in user_courses:
-        if course['course_id'] == int_course_ok_id:
-            db_obj = db[Video.collection].find_one(
-                {'course_ok_id':course_ok_id, 'lecture_index':lecture_index, "video_index":video_index}
-            )
-            return bson_dump(db_obj)
-    return jsonify(success=False, message="Can only view a video on Hermes for an OK course you are a part of"), 403
 
 @app.route('/course/<course_ok_id>/create_course', methods=["POST"])
 @validate_and_pass_on_ok_id

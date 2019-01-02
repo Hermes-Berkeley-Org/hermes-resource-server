@@ -1,7 +1,13 @@
-class InvalidLectureLinkError(ValueError):
+class CreateLectureFormValidationError(ValueError):
     pass
 
-class VideoParseError(ValueError):
+class InvalidLectureLinkError(CreateLectureFormValidationError):
+    pass
+
+class VideoParseError(CreateLectureFormValidationError):
+    pass
+
+class LectureAlreadyExists(CreateLectureFormValidationError):
     pass
 
 class YoutubeError(ValueError):
