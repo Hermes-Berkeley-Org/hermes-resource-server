@@ -29,46 +29,36 @@ def create_master_post(folders, content = "", network = None, piazza_course_id =
         "folders": folders
         }
     rpc = network._rpc
-    print(rpc.content_create(dct))
+    master_post = rpc.content_create(dct)
+    return master_post
 
-def edit_master(post, network= None,piazza_course_id= None):
+def edit_master(post, network= None,piazza_course_id= None, master_id = None, lecture_title = None):
     """
     Adds a tag of the most recently added lecture to the body of the master post
     Returns the updated master post.
+    Note the &#64 is the @ symbol
     """
     if not network:
         network = piazza.network(piazza_course_id)
-    master_post = get_master_thread(network = network)
-    full_content_master = network.get_post(master_post['id'])
+    full_content_master = network.get_post(master_id)
     old_vers = full_content_master['history'][0]['content']
     split_by_pin = old_vers.split("<p>#pin")
     if len(split_by_pin) > 1:
-        new_vers = split_by_pin[0]+"<p>&#64;" + str(post['nr']) + "</p> \n #pin"
+        new_vers = split_by_pin[0]+"<p>&#64;" + lecture_title + str(post['nr']) + "</p> \n #pin"
     else:
-        new_vers = old_vers+"<p>&#64;"+str(post['nr'])+ "</p>"
-    return edit_post(network = network, cid=master_post['nr'], \
+        new_vers = old_vers+"<p>" + lecture_title + " &#64;"+ str(post['nr'])+ "</p>"
+    return edit_post(network = network, cid=master_id, \
         post_data = full_content_master,content = new_vers)
 
-def get_master_thread(network = None, piazza_course_id = None, master_id = None):
-    """
-    Returns the the master thread post with the following contents:
-        nr: The id of the lecture post
-        created: time created
-        children: Followup questions
-    """
-    if not network:
-        network = piazza.network(piazza_course_id)
-    rpc = network._rpc
-    posts = rpc.content_get(master_id)
-    for post in posts:
-        if 'instructor-note' in post['tags'] and post['subject'] == "Hermes Master Thread":
-            return post
-
-def create_lecture_post(folders, lecture_title, date, network = None, piazza_course_id=None, master_id = None, content = None):
+def create_lecture_post(folders, lecture_title, date, network = None, piazza_course_id = None, master_id = None, content = None):
     """
     Creates a lecture post on piazza for a given lecture number. Takes in
     an array of folders that it will put the course in as well as the piazza_course_id
+    (the id in the url)- piazza.com/<piazza_course_id>
     for a course on piazza.
+    master_id is the id of the master thread on piazza.
+    content is just the question
+
     Returns the lecture dictionary with the following contents:
         nr: The id of the lecture post
         created: time created
@@ -88,12 +78,13 @@ def create_lecture_post(folders, lecture_title, date, network = None, piazza_cou
         "folders": folders}
     rpc = network._rpc
     post = rpc.content_create(dct)
-    edit_master(post = post, network = network, master_id = master_id)
+    edit_master(post = post, network = network, master_id = master_id, lecture_title=lecture_title)
     return post
 
 def create_followup_question(lecture_post_id, url,tag, question, network = None, piazza_course_id = None):
     """Adds a followup question to a given lecture post. Takes in a lecture number,
     course id, and contents of a question.
+    piazza_course_id: (the id in the url)- piazza.com/<piazza_course_id>
     Returns the question dictionary with the following contents:
         id: the lecture post id
         uid: the id of the specific followup question that was created

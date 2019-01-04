@@ -287,7 +287,8 @@ def create_lecture(course_ok_id, ok_id=None):
                 if course_obj["piazza_active"]:
                     lecture_post = Piazza.create_lecture_post(course_obj["piazza_folders"],
                     request.form['title'], request.form["date"],
-                    piazza_course_id = course_obj["piazza_course_id"])
+                    piazza_course_id = course_obj["piazza_course_id"],
+                    master_id = course_obj["piazza_post_id"])
                     lecture_piazza_id = lecture_post["nr"]
                 create_lecture_response = LectureUtils.create_lecture(
                     course_ok_id,
@@ -427,12 +428,16 @@ def create_course(course_ok_id, ok_id=None):
                 except ValueError as e:
                     return jsonify(success=False, message=str(e)), 500
             return jsonify(success=False, message="Only instructors can create courses"), 403
-        pprint(course)
     return jsonify(success=False, message="Can only create a course on Hermes for an OK course you are a part of"), 403
 
 @app.route('/course/<course_ok_id>/create_piazza_bot', methods=["POST"])
 @validate_and_pass_on_ok_id
 def create_piazza_bot(course_ok_id, ok_id=None):
+    """
+    Creates a piazza bot. Steps needed to make a piazza bot work:
+    1. Register the hermes email as an instructor
+    2. Input the Piazza course id (the id in the url) piazza.com/<piazza_course_id>
+    """
     user_courses = get_updated_user_courses()
     int_course_ok_id = int(course_ok_id)
     seperate_folders = request.form["piazza_folders"].split(" ")
@@ -466,14 +471,20 @@ def create_piazza_bot(course_ok_id, ok_id=None):
 @app.route('/course/<course_ok_id>/question', methods=["POST"])
 @validate_and_pass_on_ok_id
 def ask_piazza_question(course_ok_id, ok_id=None):
+    """
+    For a question need the following items in a form:
+    question, video title, timestamp, piazza_lecture_post_id (the id on Piazza
+    for a lecture thread), and a piazza_course_id (the ID in the URL)
+    """
     user_courses = get_updated_user_courses()
     int_course_ok_id = int(course_ok_id)
     for course in user_courses:
         if course['course_id'] == int_course_ok_id:
             if request.form["question"]:
-                tag = request.form["video title"] + " " + request.form["timestamp"]
+                tag = request.form["video title"] + " " + request.form["timestamp"] +":"
                 piazza_lecture_post_id = request.form["piazza_lecture_post_id"]
                 Piazza.create_followup_question(piazza_lecture_post_id, request.form["url"], tag,
                     request.form["question"], piazza_course_id = request.form["piazza_course_id"])
                 return jsonify(success=True), 200
+            return jsonify(success=False, message= "Please enter a question"), 403
     return jsonify(success=False, message="Can only create ask a question for an OK course you are a part of"), 403
