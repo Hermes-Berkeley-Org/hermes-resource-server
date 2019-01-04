@@ -3,15 +3,15 @@ from requests.exceptions import RequestException, ConnectionError
 from urllib.parse import urlparse, parse_qs
 
 from utils.errors import (
-    InvalidLectureLinkError, VideoParseError, NoCourseFoundError, YoutubeError
+    InvalidLectureLinkError, VideoParseError, NoCourseFoundError, YoutubeError,
+    LectureAlreadyExists
 )
 from utils.youtube_client import YoutubeClient
-from utils.db_utils import insert, create_reference
+from utils.db_utils import insert, create_reference, encode_url
 from utils.db_utils import Course, Lecture, Video, Transcript
-from utils import transcribe_utils as TranscribeUtils
 
 def create_lecture(course_ok_id, db, lecture_title,
-                   date, link, youtube_access_token):
+                   date, link, youtube_access_token, lecture_piazza_id):
     """Executes full lecture creation process, which includes:
     - Handling playlists and single videos
     - Creates and stores a Lecture object in the DB, with a lookup key to a Course
@@ -26,14 +26,25 @@ def create_lecture(course_ok_id, db, lecture_title,
             'Course associated with OK ID {0} does not exist in the database'
             .format(course_ok_id)
         )
+    # check for duplicate title
+    lecture_url_name = encode_url(lecture_title)
+    if db[Lecture.collection].find_one(
+        {'lecture_url_name': lecture_url_name}
+    ):
+        raise LectureAlreadyExists(
+            'A lecture with title {0} in course OK ID {1} has already been created'
+            .format(lecture_title, course_ok_id)
+        )
+    lecture_index = course['num_lectures']
+
     youtube_url = get_final_youtube_url(link)
     youtube_client = YoutubeClient(youtube_access_token)
-    lecture_index = course['num_lectures']
     youtube_ids = get_youtube_ids(youtube_url, youtube_client)
     # populate data first, so that on error objects aren't created
     video_titles = []
     videos = []
     transcripts = []
+    no_transcript_videos = []
     for video_index, youtube_id in enumerate(youtube_ids):
         title, duration = youtube_client.get_video_metadata(youtube_id)
         videos.append(
@@ -42,7 +53,7 @@ def create_lecture(course_ok_id, db, lecture_title,
                 duration=duration,
                 youtube_id=youtube_id,
                 course_ok_id=course_ok_id,
-                lecture_index=lecture_index,
+                lecture_url_name=lecture_url_name,
                 video_index=video_index
             )
         )
@@ -53,13 +64,13 @@ def create_lecture(course_ok_id, db, lecture_title,
                 Transcript(
                     transcript=transcript,
                     course_ok_id=course_ok_id,
-                    lecture_index=lecture_index,
+                    lecture_url_name=lecture_url_name,
                     video_index=video_index
                 )
             )
         except YoutubeError as e:
             # support for videos without a transcript
-            pass
+            no_transcript_videos.append(video_index)
     for video in videos:
         insert(video, db)
     for transcript in transcripts:
@@ -67,19 +78,24 @@ def create_lecture(course_ok_id, db, lecture_title,
     lecture = Lecture(
         name=lecture_title,
         date=date,
+        lecture_url_name=lecture_url_name,
         lecture_index=lecture_index,
         course_ok_id=course_ok_id,
-        video_titles=video_titles
+        video_titles=video_titles,
+        lecture_piazza_id=lecture_piazza_id
     )
     insert(lecture, db)
     db[Course.collection].update_one(
-        {'ok_id': course_ok_id},
+        {'course_ok_id': course_ok_id},
         {
             '$set': {
                 'num_lectures': course['num_lectures'] + 1
             }
         }
     )
+    return {
+        'no_transcript_videos': no_transcript_videos
+    }
 
 def get_final_youtube_url(link):
     """Checks if YouTube link is a valid URL and gets the final redirected

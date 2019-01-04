@@ -49,7 +49,7 @@ def edit_master(post, network= None,piazza_course_id= None):
     return edit_post(network = network, cid=master_post['nr'], \
         post_data = full_content_master,content = new_vers)
 
-def get_master_thread(network = None, piazza_course_id = None):
+def get_master_thread(network = None, piazza_course_id = None, master_id = None):
     """
     Returns the the master thread post with the following contents:
         nr: The id of the lecture post
@@ -59,12 +59,12 @@ def get_master_thread(network = None, piazza_course_id = None):
     if not network:
         network = piazza.network(piazza_course_id)
     rpc = network._rpc
-    posts = rpc.search("Hermes Master Thread")
+    posts = rpc.content_get(master_id)
     for post in posts:
         if 'instructor-note' in post['tags'] and post['subject'] == "Hermes Master Thread":
             return post
 
-def create_lecture_post(folders, lecture_number, network = None, piazza_course_id=None, content = None):
+def create_lecture_post(folders, lecture_title, date, network = None, piazza_course_id=None, master_id = None, content = None):
     """
     Creates a lecture post on piazza for a given lecture number. Takes in
     an array of folders that it will put the course in as well as the piazza_course_id
@@ -77,23 +77,21 @@ def create_lecture_post(folders, lecture_number, network = None, piazza_course_i
     if not network:
         network = piazza.network(piazza_course_id)
     if not content:
-        content = "Lecture thread for Lecture number "+str(lecture_number) + \
+        content = "Lecture thread for "+lecture_title + \
         ". Ask questions regarding this lecture below and fellow students/staff \
         will respond."
     dct = {
         "type": "note",
-        "title":"Hermes- Lecture number"+str(lecture_number) ,
-        "subject": "Hermes- Lecture number "+str(lecture_number) ,
-        "content":"Lecture thread for Lecture number "+str(lecture_number) + \
-        ". Ask questions regarding this lecture below and fellow students/staff \
-        will respond.",
+        "title":"Lecture Thread for "+ lecture_title + "("+ date+")" ,
+        "subject": "Lecture Thread for "+ lecture_title + "("+ date+")" ,
+        "content":content,
         "folders": folders}
     rpc = network._rpc
     post = rpc.content_create(dct)
-    edit_master(post = post, network = network)
+    edit_master(post = post, network = network, master_id = master_id)
     return post
 
-def create_followup_question(lecture_post_id, question, network = None, piazza_course_id = None):
+def create_followup_question(lecture_post_id, url,tag, question, network = None, piazza_course_id = None):
     """Adds a followup question to a given lecture post. Takes in a lecture number,
     course id, and contents of a question.
     Returns the question dictionary with the following contents:
@@ -105,6 +103,7 @@ def create_followup_question(lecture_post_id, question, network = None, piazza_c
         network = piazza.network(piazza_course_id)
     rpc = network._rpc
     post = rpc.content_get(lecture_post_id)
+    question = "<b><a href = " + url +">" + tag + "</a></b> " + question
     followup = network.create_followup(post=post, content=question)
     return followup
 
