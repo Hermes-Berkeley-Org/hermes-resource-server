@@ -11,7 +11,7 @@ from utils.db_utils import insert, create_reference, encode_url
 from utils.db_utils import Course, Lecture, Video, Transcript
 
 def create_lecture(course_ok_id, db, lecture_title,
-                   date, link, youtube_access_token, lecture_piazza_id):
+                   date, link, youtube_access_token):
     """Executes full lecture creation process, which includes:
     - Handling playlists and single videos
     - Creates and stores a Lecture object in the DB, with a lookup key to a Course
@@ -81,8 +81,7 @@ def create_lecture(course_ok_id, db, lecture_title,
         lecture_url_name=lecture_url_name,
         lecture_index=lecture_index,
         course_ok_id=course_ok_id,
-        video_titles=video_titles,
-        lecture_piazza_id=lecture_piazza_id
+        video_titles=video_titles
     )
     insert(lecture, db)
     db[Course.collection].update_one(
@@ -95,7 +94,7 @@ def create_lecture(course_ok_id, db, lecture_title,
     )
     return {
         'no_transcript_videos': no_transcript_videos
-    }
+    }, lecture_url_name
 
 def get_final_youtube_url(link):
     """Checks if YouTube link is a valid URL and gets the final redirected

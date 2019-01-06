@@ -275,30 +275,42 @@ def create_lecture(course_ok_id, ok_id=None):
     """
     user_courses = get_updated_user_courses()
     int_course_ok_id = int(course_ok_id)
-    lecture_piazza_id = ""
     for course in user_courses:
         if course['course_id'] == int_course_ok_id:
             if course['role'] != consts.INSTRUCTOR:
                 return jsonify(success=False, message="Only instructors can post lectures"), 403
             try:
                 course_obj = db[Course.collection].find_one({
-                        "course_ok_id": course_ok_id
-                    })
-                if course_obj["piazza_active"]:
-                    lecture_post = Piazza.create_lecture_post(course_obj["piazza_folders"],
-                    request.form['title'], request.form["date"],
-                    piazza_course_id = course_obj["piazza_course_id"],
-                    master_id = course_obj["piazza_post_id"])
-                    lecture_piazza_id = lecture_post["nr"]
-                create_lecture_response = LectureUtils.create_lecture(
+                    "course_ok_id": course_ok_id
+                })
+                create_lecture_response, lecture_url_name = LectureUtils.create_lecture(
                     course_ok_id,
                     db,
                     request.form['title'],
                     request.form['date'],
                     request.form['link'],
-                    request.form['youtube_access_token'],
-                    lecture_piazza_id
+                    request.form['youtube_access_token']
                 )
+                # create the lecture first, then create the Piazza post in case of error
+                if course_obj["piazza_active"]:
+                    lecture_post = Piazza.create_lecture_post(
+                        course_obj["piazza_folders"],
+                        request.form['title'], request.form["date"],
+                        piazza_course_id=course_obj["piazza_course_id"],
+                        master_id=course_obj["piazza_post_id"]
+                    )
+                    lecture_piazza_id = lecture_post["nr"]
+                    db[Lecture.collection].update_one(
+                        {
+                            'course_ok_id': course_ok_id,
+                            'lecture_url_name': lecture_url_name
+                        },
+                        {
+                            '$set': {
+                                'lecture_piazza_id': lecture_piazza_id
+                            }
+                        }
+                    )
                 return jsonify(success=True, **create_lecture_response), 200
             except CreateLectureFormValidationError as e:
                 return jsonify(success=False, message=str(e)), 400
@@ -434,38 +446,57 @@ def create_course(course_ok_id, ok_id=None):
 @validate_and_pass_on_ok_id
 def create_piazza_bot(course_ok_id, ok_id=None):
     """
-    Creates a piazza bot. Steps needed to make a piazza bot work:
-    1. Register the hermes email as an instructor
-    2. Input the Piazza course id (the id in the url) piazza.com/<piazza_course_id>
+    Creates a piazza bot. Extra steps needed to make a piazza bot work on Piazza:
+    1. Register the Hermes email as an instructor on course Piazza
+    2. Create a folder called "hermes"
+
+    POST payload format:
+
+    {
+        "piazza_course_id": the Piazza course id (the id in the url) piazza.com/<piazza_course_id>
+        "content": the body of the "Lecture Master Post": if not specified, will default to:
+
+            "All lectures with their dates, names, and threads will be posted here. \n \n #pin"
+    }
     """
     user_courses = get_updated_user_courses()
     int_course_ok_id = int(course_ok_id)
-    seperate_folders = request.form["piazza_folders"].split(" ")
     for course in user_courses:
         if course['course_id'] == int_course_ok_id:
-            print(int_course_ok_id)
-            if course['role'] == consts.INSTRUCTOR or user_courses[course_ok_id_key] == consts.STAFF:
+            if course['role'] in [consts.STAFF, consts.INSTRUCTOR]:
                 if not request.form["piazza_course_id"].isalnum():
-                    return jsonify(success=False, message="Please Enter a Valid Pizza API"), 403
-                if not seperate_folders:
-                    return jsonify(success=False, message="Must include at one least folder for posts to go in"), 403
+                    return jsonify(
+                        success=False,
+                        message="Please Enter a valid Piazza Course ID"
+                    ), 403
                 try:
-                    post = Piazza.create_master_post(folders = seperate_folders, \
-                    piazza_course_id  = request.form["piazza_course_id"], content = request.form["content"])
+                    post = Piazza.create_master_post(
+                        folders=['hermes'],
+                        piazza_course_id=request.form["piazza_course_id"],
+                        content=request.form.get("content") or ""
+                    )
                     post_id = post["nr"]
                     db['Courses'].update(
                         {'course_ok_id': course_ok_id},
-                        {"$set" :
-                            {"piazza_course_id" : request.form["piazza_course_id"],
-                            "piazza_folders" : seperate_folders,
-                            "piazza_active" : True,
-                            "piazza_post_id":post_id}
+                        {
+                            "$set": {
+                                "piazza_course_id": request.form["piazza_course_id"],
+                                "piazza_folders": ['hermes'],
+                                "piazza_active": True,
+                                "piazza_post_id": post_id
+                            }
                         }
                     )
                     return jsonify(success=True), 200
                 except ValueError as e:
-                    return jsonify(success=False, message= consts.PIAZZA_ERROR_MESSAGE), 403
-            return jsonify(success=False, message="Only staff can create a Piazza Bot"), 403
+                    return jsonify(
+                        success=False,
+                        message=consts.PIAZZA_ERROR_MESSAGE
+                    ), 403
+            return jsonify(
+                success=False,
+                message="Only staff can create a Piazza Bot"
+            ), 403
     return jsonify(success=False, message="Can only create a PiazzaBot on behalf of Hermes for an OK course you are a part of"), 403
 
 @app.route('/course/<course_ok_id>/question', methods=["POST"])
@@ -481,10 +512,14 @@ def ask_piazza_question(course_ok_id, ok_id=None):
     for course in user_courses:
         if course['course_id'] == int_course_ok_id:
             if request.form["question"]:
-                tag = request.form["video title"] + " " + request.form["timestamp"] +":"
+                tag = "{0} {1}:".format(
+                    request.form["video_title"], request.form["timestamp"])
                 piazza_lecture_post_id = request.form["piazza_lecture_post_id"]
-                Piazza.create_followup_question(piazza_lecture_post_id, request.form["url"], tag,
-                    request.form["question"], piazza_course_id = request.form["piazza_course_id"])
+                Piazza.create_followup_question(
+                    piazza_lecture_post_id, request.form["url"], tag,
+                    request.form["question"],
+                    piazza_course_id=request.form["piazza_course_id"]
+                )
                 return jsonify(success=True), 200
             return jsonify(success=False, message= "Please enter a question"), 403
     return jsonify(success=False, message="Can only create ask a question for an OK course you are a part of"), 403
