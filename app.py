@@ -21,7 +21,7 @@ import requests
 
 from utils.db_utils import User, Course, Lecture, Vitamin, Resource, Video, Transcript
 import utils.lecture_utils as LectureUtils
-import utils.piazza as Piazza
+# import utils.piazza_client as Piazza
 from utils.errors import CreateLectureFormValidationError
 
 from pprint import pprint
@@ -420,33 +420,57 @@ def create_course(course_ok_id, ok_id=None):
         pprint(course)
     return jsonify(success=False, message="Can only create a course on Hermes for an OK course you are a part of"), 403
 
-@app.route('/course/<course_ok_id>/create_piazza_bot', methods=["POST"])
+@app.route('/course/<course_ok_id>/lecture/<lecture_url_name>/video/<int:video_index>/create_vitamin', methods=["POST"])
 @validate_and_pass_on_ok_id
-def create_piazza_bot(course_ok_id, ok_id=None):
+def create_vitamin(course_ok_id, lecture_url_name, video_index, ok_id=None):
+    """Creates a vitamin in the specified video within a lecture of a course."""
+
     user_courses = get_updated_user_courses()
     int_course_ok_id = int(course_ok_id)
-    seperate_folders = request.form["piazza_folders"].split(" ")
     for course in user_courses:
         if course['course_id'] == int_course_ok_id:
-            print(int_course_ok_id)
-            if course['role'] == consts.INSTRUCTOR or user_courses[course_ok_id_key] == consts.STAFF:
-                if not request.form["piazza_course_id"].isalnum():
-                    return jsonify(success=False, message="Please Enter a Valid Pizza API"), 403
-                if not seperate_folders:
-                    return jsonify(success=False, message="Must include at one least folder for posts to go in"), 403
-                try:
-                    Piazza.create_master_post(folders = seperate_folders, \
-                    piazza_course_id  = request.form["piazza_course_id"], content = request.form["content"])
-                    db['Courses'].update(
-                        {'course_ok_id': course_ok_id},
-                        {"$set" :
-                            {"piazza_course_id" : request.form["piazza_course_id"],
-                            "piazza_folders" : seperate_folders,
-                            "piazza_active" : True}
-                        }
-                    )
-                    return jsonify(success=True), 200
-                except ValueError as e:
-                    return jsonify(success=False, message= consts.PIAZZA_ERROR_MESSAGE), 403
-            return jsonify(success=False, message="Only staff can create a Piazza Bot"), 403
-    return jsonify(success=False, message="Can only create a PiazzaBot on behalf of Hermes for an OK course you are a part of"), 403
+            if course['role'] == consts.INSTRUCTOR:
+                if db[Course.collection].find_one({
+                    'course_ok_id': course_ok_id, 
+                    'lecture_url_name': lecture_url_name,
+                    'video_index': video_index
+                }):
+                    try:
+                        form_data = request.form.to_dict()
+                        Vitamin.add_vitamin(form_data, db)
+                        return jsonify(success=True), 200
+                    except ValueError as e:
+                        return jsonify(success=False, message=str(e)), 500
+            return jsonify(success=False, message="Only instructors can create vitamins"), 403
+    return jsonify(success=False, message="Can only create a vitamin on Hermes for an OK course you are a part of"), 403
+
+# @app.route('/course/<course_ok_id>/create_piazza_bot', methods=["POST"])
+# @validate_and_pass_on_ok_id
+# def create_piazza_bot(course_ok_id, ok_id=None):
+#     user_courses = get_updated_user_courses()
+#     int_course_ok_id = int(course_ok_id)
+#     seperate_folders = request.form["piazza_folders"].split(" ")
+#     for course in user_courses:
+#         if course['course_id'] == int_course_ok_id:
+#             print(int_course_ok_id)
+#             if course['role'] == consts.INSTRUCTOR or user_courses[course_ok_id_key] == consts.STAFF:
+#                 if not request.form["piazza_course_id"].isalnum():
+#                     return jsonify(success=False, message="Please Enter a Valid Pizza API"), 403
+#                 if not seperate_folders:
+#                     return jsonify(success=False, message="Must include at one least folder for posts to go in"), 403
+#                 try:
+#                     Piazza.create_master_post(folders = seperate_folders, \
+#                     piazza_course_id  = request.form["piazza_course_id"], content = request.form["content"])
+#                     db['Courses'].update(
+#                         {'course_ok_id': course_ok_id},
+#                         {"$set" :
+#                             {"piazza_course_id" : request.form["piazza_course_id"],
+#                             "piazza_folders" : seperate_folders,
+#                             "piazza_active" : True}
+#                         }
+#                     )
+#                     return jsonify(success=True), 200
+#                 except ValueError as e:
+#                     return jsonify(success=False, message= consts.PIAZZA_ERROR_MESSAGE), 403
+#             return jsonify(success=False, message="Only staff can create a Piazza Bot"), 403
+#     return jsonify(success=False, message="Can only create a PiazzaBot on behalf of Hermes for an OK course you are a part of"), 403
