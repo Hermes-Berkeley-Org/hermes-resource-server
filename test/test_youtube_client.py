@@ -16,7 +16,7 @@ EXPECTED_ID = 'M4hXAZiiIZw'
 EXPECTED_LIST = 'PLbh6KXqwIdGAsHxGlkb6sEVv1kXtBHuc2'
 EXPECTED_LIST_IDS = ['M4hXAZiiIZw', 'HIgDFXeGOIg']
 
-ACCESS_TOKEN = "ya29.GluJBq5pEbUHh28g16bNDEXyCBoX0XwcmkaTvJSUffAMqVvaac4EOpRzksJ5VxY0IJGx0m_4zMC2bruVl1ztOK_e3QeXH5_nzzJwPlihdsejrjz1A6ev3m-WMG8j"
+ACCESS_TOKEN = "ya29.GltnBl_0TZT5AH_ZTFQt9XNRW3Qthq1KeMAbEqX4PrkAywM_bHleU1CObe7E0LcsBM_O5cOwG7e154aJk5ZqUDrE4Bbvqk5Fib-LaDLpxcMeSh6BxMmG1UKgLLVY"
 youtube_client = YoutubeClient(ACCESS_TOKEN)
 
 def test_get_youtube_id():
