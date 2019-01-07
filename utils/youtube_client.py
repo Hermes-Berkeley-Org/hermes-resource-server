@@ -72,7 +72,6 @@ class YoutubeClient:
 
     def get_playlist_video_ids(self, playlist_id):
         """Gets all YouTube video IDs associated with a playlist ID"""
-        print(playlist_id)
         response = self.youtube.playlistItems().list(
             part='contentDetails',
             maxResults=25,

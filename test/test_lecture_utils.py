@@ -5,20 +5,17 @@ sys.path.append("../utils")
 sys.path.append("./utils")
 import lecture_utils as LectureUtils
 from errors import InvalidLectureLinkError
+from urllib.error import URLError
 from youtube_client import YoutubeClient
 
 VALID_LINKS = [
-    'https://www.youtube.com/watch?v=M4hXAZiiIZw&list=PLbh6KXqwIdGAsHxGlkb6sEVv1kXtBHuc2',
     'https://www.youtube.com/watch?v=M4hXAZiiIZw',
-    'youtu.be/M4hXAZiiIZw',
-    'http://tinyurl.com/ya2u2yqk'
+    'youtu.be/M4hXAZiiIZw'
 ]
 
 EXPECTED_IDS = [
-    ['M4hXAZiiIZw', 'HIgDFXeGOIg'],
     ['M4hXAZiiIZw'],
-    ['M4hXAZiiIZw'],
-    ['M4hXAZiiIZw', 'HIgDFXeGOIg']
+    ['M4hXAZiiIZw']
 ]
 
 INVALID_LINKS = ['asdf']
@@ -30,12 +27,12 @@ youtube_client = YoutubeClient(ACCESS_TOKEN)
 def test_get_final_youtube_url():
     for valid_link in VALID_LINKS:
         url = LectureUtils.get_final_youtube_url(valid_link)
-        assert url is not None
+        assert 'https://www.youtube.com/watch?v=M4hXAZiiIZw' in url
     for invalid_link in INVALID_LINKS:
         try:
             url = LectureUtils.get_final_youtube_url(invalid_link)
             assert False
-        except InvalidLectureLinkError as e:
+        except Exception as e:
             assert e is not None
 
 def test_get_youtube_ids():
@@ -45,5 +42,5 @@ def test_get_youtube_ids():
         assert video_ids == expected_ids
 
 if __name__ == '__main__':
-    # test_get_final_youtube_url()
+    test_get_final_youtube_url()
     test_get_youtube_ids()
