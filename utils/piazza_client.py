@@ -154,3 +154,28 @@ def get_followup(post_id, followup_id,network = None, piazza_course_id = None):
     for child in lecture_post['children']:
         if child['uid'] == followup_id:
             return child
+
+def recreate_master_post(lectures, master_id, network=None, piazza_course_id=None):
+    """
+    Takes in:
+    folders: array of which folders hermes posts should be in),
+    content: the content of the post,
+    piazza_course_id: the Piazza course id (the id in the url) piazza.com/<piazza_course_id>
+
+    Creates a master post that links to all Hermes lecture posts
+
+    Returns: the created master post dictionary
+
+    Note: There cannot be duplicate titles in Piazza
+    """
+    if not network:
+        network = piazza.network(piazza_course_id)
+    rpc = network._rpc
+    content = ""
+    for lecture in lectures:
+        content += "<p>{0}: &#64;{1}</p>".format(
+                                        lecture["name"],
+                                        lecture["lecture_piazza_id"])
+    content += "#pin"
+    edit_post(network = network, piazza_course_id = piazza_course_id ,
+                cid = master_id, content = content)

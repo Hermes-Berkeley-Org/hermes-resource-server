@@ -8,6 +8,7 @@ from flask import Flask
 from flask import request, session, jsonify
 from flask_cors import CORS
 from pymongo import MongoClient
+import psycopg2
 
 from json import dumps as json_dump
 from bson.json_util import dumps as bson_dump
@@ -23,6 +24,7 @@ from utils.db_utils import User, Course, Lecture, Vitamin, Resource, Video, Tran
 import utils.lecture_utils as LectureUtils
 import utils.piazza_client as Piazza
 from utils.errors import CreateLectureFormValidationError
+from utils.sql_client import SQLClient
 
 from pprint import pprint
 import consts
@@ -33,6 +35,9 @@ app.config.from_object(Config)
 
 client = MongoClient(os.environ.get('MONGODB_URI'))
 db = client[os.environ.get('DATABASE_NAME')]
+
+conn = psycopg2.connect(os.environ.get('SQL_DATABASE_URL'))
+sql_client = SQLClient(conn)
 
 logger = logging.getLogger('app_logger')
 sh = logging.StreamHandler(stream=sys.stdout)
@@ -535,9 +540,14 @@ def ask_piazza_question(course_ok_id, ok_id=None):
 def remake_master(course_ok_id, ok_id=None):
     user_courses = get_updated_user_courses()
     int_course_ok_id = int(course_ok_id)
-    a = db[Lecture.collection].find({"course_ok_id":course_ok_id})
-    piazza_ids = {}
-    for lecture in a:
-        piazza_ids[lecture["lecture_url_name"]] = [lecture["date"], lecture["lecture_piazza_id"]]
-    pprint(piazza_ids)
+    db_obj = db[Lecture.collection].find({"course_ok_id":course_ok_id}).sort("date", 1)
+    piazza_ids = []
+    for lecture in db_obj:
+        piazza_ids.append({
+            "date":lecture["date"],
+            "name":lecture["name"],
+            "lecture_piazza_id":lecture["lecture_piazza_id"]
+        })
+    Piazza.recreate_master_post(piazza_ids, request.form["master_id"],
+                        piazza_course_id = request.form["piazza_course_id"])
     return jsonify(success=True), 200
