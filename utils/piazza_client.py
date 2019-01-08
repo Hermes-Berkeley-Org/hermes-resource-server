@@ -59,7 +59,7 @@ def add_lecture_post_to_master(post, network=None, piazza_course_id=None,
         content=new_version
     )
 
-def create_lecture_post(folders, lecture_title, date,
+def create_lecture_post(lecture_title, date,
                         network=None, piazza_course_id=None,
                         master_id=None, content=None):
     """
@@ -87,7 +87,7 @@ will (hopefully) respond.".format(lecture_title)
         "title": "Lecture Thread for {0} ({1})".format(lecture_title, date),
         "subject": "Lecture Thread for {0} ({1})".format(lecture_title, date),
         "content": content,
-        "folders": folders
+        "folders": ["hermes"]
     })
     add_lecture_post_to_master(
         post=post, network=network,
@@ -96,7 +96,7 @@ will (hopefully) respond.".format(lecture_title)
     return post
 
 def create_followup_question(lecture_post_id, url, tag, question, network=None,
-                             piazza_course_id=None):
+                             piazza_course_id=None, name = "Anonymous"):
     """Adds a followup question to a given lecture post. Takes in a lecture number,
     course id, and contents of a question.
     piazza_course_id: (the id in the url)- piazza.com/<piazza_course_id>
@@ -111,7 +111,7 @@ def create_followup_question(lecture_post_id, url, tag, question, network=None,
     post = rpc.content_get(lecture_post_id)
     followup = network.create_followup(
         post=post,
-        content="<b><a href={0}>{1}</a></b> {2}".format(url, tag, question)
+        content="<b><a href={0}>{1}</a></b> {2}<p>{3}</p>".format(url, tag, question,name)
     )
     return followup
 
