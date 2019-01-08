@@ -8,6 +8,7 @@ from flask import Flask
 from flask import request, session, jsonify
 from flask_cors import CORS
 from pymongo import MongoClient
+import psycopg2
 
 from json import dumps as json_dump
 from bson.json_util import dumps as bson_dump
@@ -23,6 +24,7 @@ from utils.db_utils import User, Course, Lecture, Vitamin, Resource, Video, Tran
 import utils.lecture_utils as LectureUtils
 import utils.piazza as Piazza
 from utils.errors import CreateLectureFormValidationError
+from utils.sql_client import SQLClient
 
 from pprint import pprint
 import consts
@@ -33,6 +35,9 @@ app.config.from_object(Config)
 
 client = MongoClient(os.environ.get('MONGODB_URI'))
 db = client[os.environ.get('DATABASE_NAME')]
+
+conn = psycopg2.connect(os.environ.get('SQL_DATABASE_URL'))
+sql_client = SQLClient(conn)
 
 logger = logging.getLogger('app_logger')
 sh = logging.StreamHandler(stream=sys.stdout)
