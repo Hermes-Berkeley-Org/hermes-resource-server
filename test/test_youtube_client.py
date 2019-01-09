@@ -5,6 +5,7 @@ sys.path.append("../utils")
 sys.path.append("./utils")
 import lecture_utils as LectureUtils
 from errors import InvalidLectureLinkError
+from urllib.error import URLError
 from youtube_client import YoutubeClient
 
 LINKS = [
@@ -16,8 +17,9 @@ EXPECTED_ID = 'M4hXAZiiIZw'
 EXPECTED_LIST = 'PLbh6KXqwIdGAsHxGlkb6sEVv1kXtBHuc2'
 EXPECTED_LIST_IDS = ['M4hXAZiiIZw', 'HIgDFXeGOIg']
 
-ACCESS_TOKEN = "ya29.GltnBl_0TZT5AH_ZTFQt9XNRW3Qthq1KeMAbEqX4PrkAywM_bHleU1CObe7E0LcsBM_O5cOwG7e154aJk5ZqUDrE4Bbvqk5Fib-LaDLpxcMeSh6BxMmG1UKgLLVY"
+ACCESS_TOKEN = 'ya29.GltnBl_0TZT5AH_ZTFQt9XNRW3Qthq1KeMAbEqX4PrkAywM_bHleU1CObe7E0LcsBM_O5cOwG7e154aJk5ZqUDrE4Bbvqk5Fib-LaDLpxcMeSh6BxMmG1UKgLLVY'
 youtube_client = YoutubeClient(ACCESS_TOKEN)
+# TODO AY: Mock this for tests: see https://docs.python.org/3/library/unittest.mock.html
 
 def test_get_youtube_id():
 	for link in LINKS:
@@ -49,4 +51,5 @@ if __name__ == '__main__':
 	test_get_youtube_id()
 	test_get_link_metadata()
 	test_create_video_link()
-	test_get_playlist_video_ids()
+	# test_get_playlist_video_ids()
+	# youtube_client.get_transcript(EXPECTED_ID)
