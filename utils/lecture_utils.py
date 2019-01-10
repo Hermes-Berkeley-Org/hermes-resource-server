@@ -75,6 +75,9 @@ def create_lecture(course_ok_id, db, lecture_title,
         insert(video, db)
     for transcript in transcripts:
         insert(transcript, db)
+        # Here we want to create a document for each transcript in the lecture
+        # and upload it to our elasticsearch instance so that the transcripts
+        # can be searched (with timestamps)
     lecture = Lecture(
         name=lecture_title,
         date=date,

@@ -21,8 +21,9 @@ import requests
 
 from utils.db_utils import User, Course, Lecture, Vitamin, Resource, Video, Transcript
 import utils.lecture_utils as LectureUtils
-import utils.piazza as Piazza
+import utils.piazza_client as Piazza
 from utils.errors import CreateLectureFormValidationError
+from utils.es_client import ESClient
 
 from pprint import pprint
 import consts
@@ -43,6 +44,18 @@ logger.addHandler(sh)
 logger.setLevel(logging.INFO)
 
 ok_server = app.config['OK_SERVER']
+
+# THIS creates the Elasticsearch client from utils, the link is a test instance
+# i have running right now, we'll replace it with a hermes one and keep the link
+# in our deploy folder
+eslink = "https://search-hermestest-75oaeb7bmqusoddwau6ql2ev4q.us-east-2.es.amazonaws.com"
+es_client = ESClient(eslink)
+
+# IGNORE THIS
+# testing uploading transcripts
+lec = len(db["Lectures"].find({'_id': ObjectId("5bae508a55f38c00ea8e8567")})[0]["transcripts"])
+print(lec)
+#ESClient.upload_document()
 
 def get_oauth_token():
     """Retrieves OAuth token from the request header"""
@@ -450,3 +463,8 @@ def create_piazza_bot(course_ok_id, ok_id=None):
                     return jsonify(success=False, message= consts.PIAZZA_ERROR_MESSAGE), 403
             return jsonify(success=False, message="Only staff can create a Piazza Bot"), 403
     return jsonify(success=False, message="Can only create a PiazzaBot on behalf of Hermes for an OK course you are a part of"), 403
+
+# this endpoint will return a search through all transcripts and return the timestamp/part of
+# video that matches the search as best as possible
+def search_transcripts():
+    return
