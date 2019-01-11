@@ -83,7 +83,8 @@ def create_lecture(course_ok_id, db, lecture_title,
         lecture_url_name=lecture_url_name,
         lecture_index=lecture_index,
         course_ok_id=course_ok_id,
-        video_titles=video_titles
+        video_titles=video_titles,
+        lecture_piazza_id=""
     )
     insert(lecture, db)
     db[Course.collection].update_one(

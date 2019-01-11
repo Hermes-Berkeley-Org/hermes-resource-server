@@ -323,7 +323,7 @@ def create_lecture(course_ok_id, ok_id=None):
                     request.form['youtube_access_token']
                 )
                 # create the lecture first, then create the Piazza post in case of error
-                if request.form["piazza_active"]=="False":
+                if request.form["piazza_active"] == "active":
                     lecture_post = Piazza.create_lecture_post(
                         request.form['title'], request.form["date"],
                         piazza_course_id=course_obj["piazza_course_id"],
@@ -536,40 +536,35 @@ def create_piazza_bot(course_ok_id, ok_id=None):
                         success=False,
                         message="Please Enter a valid Piazza Course ID"
                     ), 403
-                course_db_obj = db[Course.collection].find_one(
-                    {"piazza_active": {"$exists": True},
-                     "piazza_master_post_id": {"$exists": True},
-                     "course_ok_id": course_ok_id})
 
-                if course_db_obj and course_db_obj['piazza_active']=="True":
+                piazza_active = request.form["piazza_active"]
+                piazza_course_id = request.form["piazza_course_id"]
+                piazza_master_post_id = request.form['piazza_master_post_id']
+
+                if request.form['piazza_active'] == "active":
                     return jsonify(
                         success=False,
                         message="Piazza Bot is already Active"
                     ), 403
 
-                piazza_course_id=request.form["piazza_course_id"]
-                piazza_active = request.form["piazza_active"]
-                if course_db_obj and piazza_active=="False" and course_db_obj['piazza_master_post_id']:
-                    db['Courses'].update(
-                        {'course_ok_id': course_ok_id},
-                        {
-                            "$set": {
-                                "piazza_active": True,
-                            }
-                        }
-                    )
+                course_db_obj = db[Course.collection].find_one(
+                    {"piazza_active": "active",
+                     "course_ok_id": course_ok_id}
+                )
 
-                    piazza_master_post_id=course_db_obj['piazza_master_post_id']
+                if piazza_master_post_id:  # A Master post has already been created
+                    Course.update_course(course_ok_id, db,
+                                         piazza_active="active")
 
                     Piazza.pin_post(post_id=piazza_master_post_id,
                                     piazza_course_id=piazza_course_id)
 
                     not_on_piazza_db_obj = db[Lecture.collection].find({
-                        "lecture_piazza_id": {"$exists": False},
+                        "lecture_piazza_id": "",
                         "course_ok_id": course_ok_id
                     })
+
                     for lecture in not_on_piazza_db_obj:
-                        pprint(lecture)
                         lecture_post = Piazza.create_lecture_post(
                             lecture_title=lecture["name"],
                             date=lecture["date"],
@@ -577,7 +572,6 @@ def create_piazza_bot(course_ok_id, ok_id=None):
                             master_id=piazza_master_post_id
                         )
                         lecture_piazza_id = lecture_post["nr"]
-
                         db[Lecture.collection].update_one(
                             {
                                 'course_ok_id': course_ok_id,
@@ -589,63 +583,55 @@ def create_piazza_bot(course_ok_id, ok_id=None):
                                 }
                             }
                         )
-
                     all_lectures = db[Lecture.collection].find(
                         {
                             "course_ok_id": course_ok_id
                         }
                     ).sort("date", 1)
-
                     Piazza.recreate_master_post(db_obj=all_lectures,
-                            master_id=piazza_master_post_id,
-                            piazza_course_id=piazza_course_id)
+                                                master_id=piazza_master_post_id,
+                                                piazza_course_id=piazza_course_id)
                     return jsonify(success=True), 200
+
                 try:
                     master_post = Piazza.create_master_post(
                         piazza_course_id=piazza_course_id,
                         content=request.form.get("content") or ""
                     )
                     master_id = master_post["nr"]
-                    db['Courses'].update(
-                        {'course_ok_id': course_ok_id},
-                        {
-                            "$set": {
-                                "piazza_course_id": request.form[
-                                    "piazza_course_id"],
-                                "piazza_active": True,
-                                "piazza_master_post_id": master_id
-                            }
-                        }
-                    )
+
                     not_on_piazza_lectures = db[Lecture.collection].find({
-                        "lecture_piazza_id": {"$exists": False},
+                        "lecture_piazza_id": "",
                         "course_ok_id": course_ok_id
                     })
+
                     for lecture in not_on_piazza_lectures:
                         Piazza.create_lecture_post(
                             lecture_title=lecture["name"],
                             date=lecture["date"],
                             piazza_course_id=piazza_course_id,
-                            master_id=master_id)
+                            master_id=master_id
+                        )
 
                     all_lectures = db[Lecture.collection].find(
                         {
                             "course_ok_id": course_ok_id
                         }
                     ).sort("date", 1)
-                    Piazza.recreate_master_post(all_lectures, master_id=master_id,
-                                            piazza_course_id=piazza_course_id)
+                    Piazza.recreate_master_post(all_lectures,
+                                                master_id=master_id,
+                                                piazza_course_id=piazza_course_id)
 
+                    Course.update_course(course_ok_id, db,
+                                         piazza_course_id=piazza_course_id,
+                                         piazza_active="active"
+                                         , piazza_master_post_id=master_id)
                     return jsonify(success=True), 200
                 except ValueError as e:
-                    return jsonify(
-                        success=False,
-                        message=consts.PIAZZA_ERROR_MESSAGE
-                    ), 403
-            return jsonify(
-                success=False,
-                message="Only staff can create a Piazza Bot"
-            ), 403
+                    return jsonify(success=False,
+                                   message=consts.PIAZZA_ERROR_MESSAGE), 403
+            return jsonify(success=False,
+                           message="Only staff can create a Piazza Bot"), 403
     return jsonify(success=False,
                    message="Can only create a PiazzaBot on behalf of Hermes for an OK course you are a part of"), 403
 
@@ -662,7 +648,7 @@ def ask_piazza_question(course_ok_id, ok_id=None):
     int_course_ok_id = int(course_ok_id)
     for course in user_courses:
         if course['course_id'] == int_course_ok_id:
-            if request.form["piazza_active"] == "False":
+            if request.form["piazza_active"] == "inactive":
                 return jsonify(success=False,
                                message="Piazza Bot must be active to ask a question"), 403
             if request.form["question"]:
@@ -670,12 +656,11 @@ def ask_piazza_question(course_ok_id, ok_id=None):
                     request.form["video_title"], request.form["timestamp"])
                 piazza_lecture_post_id = request.form["piazza_lecture_post_id"]
                 name = "posted Anonymously"
-                if request.form["anonymous"] == "False":
+                if request.form["anonymous"] == "nonanon":
                     name = get_user_data()["name"].split(",")
                     name = "posted on behalf of " + name[1] + " " + name[0]
-                    print(name)
                 Piazza.create_followup_question(
-                    piazza_lecture_post_id, request.form["url"], tag,
+                    piazza_lecture_post_id, request.form["video_url"], tag,
                     request.form["question"],
                     piazza_course_id=request.form["piazza_course_id"],
                     name=name
@@ -692,10 +677,9 @@ def ask_piazza_question(course_ok_id, ok_id=None):
 def disable_piazza(course_ok_id, ok_id=None):
     user_courses = get_updated_user_courses()
     int_course_ok_id = int(course_ok_id)
-    print(request.form["piazza_active"])
-    if not request.form["piazza_active"]:
+    if request.form["piazza_active"] == "inactive":
         return jsonify(success=False,
-                       message="Class must be active"), 403
+                       message="Class must be inactive"), 403
 
     for course in user_courses:
         if course['course_id'] == int_course_ok_id:
@@ -704,11 +688,11 @@ def disable_piazza(course_ok_id, ok_id=None):
                 "course_ok_id": course_ok_id},
                 {
                     "$set": {
-                        "piazza_active": False
+                        "piazza_active": "inactive"
                     }
                 }
             )
-            Piazza.unpin_post(post_id=request.form["master_id"],
+            Piazza.unpin_post(post_id=request.form["piazza_master_id"],
                               piazza_course_id=request.form["piazza_course_id"])
             return jsonify(success=True), 200
     return jsonify(success=False,
