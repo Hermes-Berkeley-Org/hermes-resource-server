@@ -535,17 +535,11 @@ def create_piazza_bot(course_ok_id, ok_id=None):
                     return jsonify(
                         success=False,
                         message="Please Enter a valid Piazza Course ID"
-                    ), 403
+                    ), 400
 
-                piazza_active = request.form["piazza_active"]
                 piazza_course_id = request.form["piazza_course_id"]
                 piazza_master_post_id = request.form['piazza_master_post_id']
 
-                if request.form['piazza_active'] == "active":
-                    return jsonify(
-                        success=False,
-                        message="Piazza Bot is already Active"
-                    ), 403
 
                 course_db_obj = db[Course.collection].find_one(
                     {"piazza_active": "active",
@@ -588,7 +582,7 @@ def create_piazza_bot(course_ok_id, ok_id=None):
                             "course_ok_id": course_ok_id
                         }
                     ).sort("date", 1)
-                    Piazza.recreate_master_post(db_obj=all_lectures,
+                    Piazza.recreate_master_post(lectures=all_lectures,
                                                 master_id=piazza_master_post_id,
                                                 piazza_course_id=piazza_course_id)
                     return jsonify(success=True), 200
@@ -629,7 +623,7 @@ def create_piazza_bot(course_ok_id, ok_id=None):
                     return jsonify(success=True), 200
                 except ValueError as e:
                     return jsonify(success=False,
-                                   message=consts.PIAZZA_ERROR_MESSAGE), 403
+                                   message=consts.PIAZZA_ERROR_MESSAGE), 400
             return jsonify(success=False,
                            message="Only staff can create a Piazza Bot"), 403
     return jsonify(success=False,
@@ -655,15 +649,15 @@ def ask_piazza_question(course_ok_id, ok_id=None):
                 tag = "{0} {1}:".format(
                     request.form["video_title"], request.form["timestamp"])
                 piazza_lecture_post_id = request.form["piazza_lecture_post_id"]
-                name = "posted Anonymously"
+                identity_msg = "posted Anonymously"
                 if request.form["anonymous"] == "nonanon":
-                    name = get_user_data()["name"].split(",")
-                    name = "posted on behalf of " + name[1] + " " + name[0]
+                    name = get_user_data()["name"]
+                    identity_msg = "posted on behalf of " + name
                 Piazza.create_followup_question(
                     piazza_lecture_post_id, request.form["video_url"], tag,
                     request.form["question"],
                     piazza_course_id=request.form["piazza_course_id"],
-                    name=name
+                    identity_msg=identity_msg
                 )
                 return jsonify(success=True), 200
             return jsonify(success=False,
@@ -677,9 +671,6 @@ def ask_piazza_question(course_ok_id, ok_id=None):
 def disable_piazza(course_ok_id, ok_id=None):
     user_courses = get_updated_user_courses()
     int_course_ok_id = int(course_ok_id)
-    if request.form["piazza_active"] == "inactive":
-        return jsonify(success=False,
-                       message="Class must be inactive"), 403
 
     for course in user_courses:
         if course['course_id'] == int_course_ok_id:

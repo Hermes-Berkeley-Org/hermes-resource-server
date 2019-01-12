@@ -185,23 +185,13 @@ class Course(DBObject):
         )
 
     @staticmethod
-    def update_course(course_ok_id, db, piazza_active=None, piazza_course_id=None,piazza_master_post_id=None):
-        dct = {}
-        if piazza_active:
-            dct["piazza_active"] = piazza_active
-        if piazza_course_id:
-            dct["piazza_course_id"] = piazza_course_id
-        if piazza_master_post_id:
-            dct["piazza_master_post_id"] = piazza_master_post_id
-        for key in dct:
-            db[Course.collection].update_one({
-                "course_ok_id": course_ok_id},
-                {
-                    "$set": {
-                        key:dct[key]
-                    }
-                }
-            )
+    def update_course(course_ok_id, db, **update):
+        db[Course.collection].update_one(
+            {"course_ok_id": course_ok_id},
+            {
+                "$set": update
+            }
+        )
 
 
 class Lecture(DBObject):
