@@ -216,27 +216,41 @@ class Vitamin(DBObject):
         DBObject.__init__(self, **attr)
 
     @staticmethod
-    def add_vitamin(data, db):
+    def add_vitamin(course_ok_id, lecture_url_name, video_index, data, db):
         timestamp = convert_seconds_to_timestamp(float(data['seconds']) // 1)
-        choices = [data['choice' + str(i)] for i in range(1, 5) if len(data['choice' + str(i)]) > 0]
-        return insert(
+        video = db[Video.collection].find_one(
+            {
+                "course_ok_id": course_ok_id,
+                "lecture_url_name": lecture_url_name,
+                "video_index": video_index
+            }
+        )
+        vitamin_index = video['num_vitamins']
+        insert(
             Vitamin(
                 question = data['question'],
                 answer = data['answer'],
-                choices = choices,
+                choices = data['choices'],
                 seconds = data['seconds'],
                 timestamp = timestamp,
-                lecture_id = data['lecture_id'],
-                playlist_number = data['playlist_number']
+                vitamin_index = vitamin_index,
+                course_ok_id = course_ok_id,
+                lecture_url_name = lecture_url_name,
+                video_index = video_index
             ),
             db
         )
-
-    @staticmethod
-    def delete_vitamin(vitamin, db):
-        vitamin_id = vitamin['vitamin_id']
-        db[Vitamin.collection].delete_one(
-            {'_id': ObjectId(vitamin_id)}
+        db[Video.collection].update_one(
+            {
+                "course_ok_id": course_ok_id,
+                "lecture_url_name": lecture_url_name,
+                "video_index": video_index
+            },
+            {
+                '$set': {
+                    'num_vitamins': video['num_vitamins'] + 1
+                }
+            }
         )
 
 
@@ -249,21 +263,36 @@ class Resource(DBObject):
         DBObject.__init__(self, **attr)
 
     @staticmethod
-    def add_resource(data, db):
-        return insert(
+    def add_resource(course_ok_id, lecture_url_name, video_index, link, db):
+        video = db[Video.collection].find_one(
+            {
+                "course_ok_id": course_ok_id,
+                "lecture_url_name": lecture_url_name,
+                "video_index": video_index
+            }
+        )
+        resource_index = video['num_resources']
+        insert(
             Resource(
-                link = data['link'],
-                lecture_id = data['lecture_id'],
-                playlist_number = data['playlist_number']
+                link = link,
+                resource_index = resource_index,
+                course_ok_id = course_ok_id,
+                lecture_url_name = lecture_url_name,
+                video_index = video_index
             ),
             db
         )
-
-    @staticmethod
-    def delete_resource(resource, db):
-        resource_id = resource['resource_id']
-        db[Resource.collection].delete_one(
-            {'_id': ObjectId(resource_id)}
+        db[Video.collection].update_one(
+            {
+                "course_ok_id": course_ok_id,
+                "lecture_url_name": lecture_url_name,
+                "video_index": video_index
+            },
+            {
+                '$set': {
+                    'num_resources': video['num_resources'] + 1
+                }
+            }
         )
 
 class Transcript(DBObject):

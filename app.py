@@ -509,7 +509,7 @@ def create_course(course_ok_id, ok_id=None):
                    message="Can only create a course on Hermes for an OK course you are a part of"), 403
 
 
-@app.route('/course/<course_ok_id>/create_piazza_bot', methods=["POST"])
+@app.route('/course/<course_ok_id>/lecture/<lecture_url_name>/video/<int:video_index>/create_vitamin', methods=["POST"])
 @validate_and_pass_on_ok_id
 def create_piazza_bot(course_ok_id, ok_id=None):
     """
@@ -688,3 +688,102 @@ def disable_piazza(course_ok_id, ok_id=None):
             return jsonify(success=True), 200
     return jsonify(success=False,
                    message="Can only disable piazza for an OK course you are a part of"), 403
+
+def create_vitamin(course_ok_id, lecture_url_name, video_index, ok_id=None):
+    """Creates a vitamin in the specified video within a lecture of a course."""
+    user_courses = get_updated_user_courses()
+    int_course_ok_id = int(course_ok_id)
+    for course in user_courses:
+        if course['course_id'] == int_course_ok_id:
+            if course['role'] == consts.INSTRUCTOR:
+                if db[Video.collection].find_one({
+                        'course_ok_id': course_ok_id,
+                        'lecture_url_name': lecture_url_name,
+                        'video_index': video_index
+                    }):
+                    try:
+                        vitamin = request.get_json().get('vitamin')
+                        Vitamin.add_vitamin(
+                            course_ok_id = course_ok_id,
+                            lecture_url_name = lecture_url_name,
+                            video_index = video_index,
+                            data = vitamin,
+                            db = db
+                        )
+                        return jsonify(success=True), 200
+                    except ValueError as e:
+                        return jsonify(success=False, message=str(e)), 500
+            return jsonify(success=False, message="Only instructors can create vitamins"), 403
+    return jsonify(success=False, message="Can only create a vitamin on Hermes for an OK course you are a part of"), 403
+
+@app.route('/course/<course_ok_id>/lecture/<lecture_url_name>/video/<int:video_index>/create_resource', methods=["POST"])
+@validate_and_pass_on_ok_id
+def create_resource(course_ok_id, lecture_url_name, video_index, ok_id=None):
+    """Creates a resource in the specified video within a lecture of a course."""
+
+    user_courses = get_updated_user_courses()
+    int_course_ok_id = int(course_ok_id)
+    for course in user_courses:
+        if course['course_id'] == int_course_ok_id:
+            if course['role'] == consts.INSTRUCTOR:
+                if db[Video.collection].find_one({
+                        'course_ok_id': course_ok_id,
+                        'lecture_url_name': lecture_url_name,
+                        'video_index': video_index
+                }):
+                    try:
+                        link = request.form.to_dict()['link']
+                        Resource.add_resource(
+                            course_ok_id = course_ok_id,
+                            lecture_url_name = lecture_url_name,
+                            video_index = video_index,
+                            link = link,
+                            db = db
+                        )
+                        return jsonify(success=True), 200
+                    except ValueError as e:
+                        return jsonify(success=False, message=str(e)), 500
+            return jsonify(success=False, message="Only instructors can create resources"), 403
+    return jsonify(success=False, message="Can only create a resource on Hermes for an OK course you are a part of"), 403
+
+@app.route('/course/<course_ok_id>/lecture/<lecture_url_name>/video/<int:video_index>/delete_vitamin/<int:vitamin_index>', methods=["DELETE"])
+@validate_and_pass_on_ok_id
+def delete_vitamin(course_ok_id, lecture_url_name, video_index, vitamin_index, ok_id=None):
+    """Deletes a specified vitamin within a specific video of a lecture in a given course."""
+    user_courses = get_updated_user_courses()
+    int_course_ok_id = int(course_ok_id)
+    for course in user_courses:
+        if course['course_id'] == int_course_ok_id:
+            if course['role'] != consts.INSTRUCTOR:
+                return jsonify(success=False, message="Only instructors can delete vitamins"), 403
+            db[Vitamin.collection].delete_one(
+                {
+                    'course_ok_id': course_ok_id,
+                    'lecture_url_name': lecture_url_name,
+                    'video_index': video_index,
+                    'vitamin_index': vitamin_index
+                }
+            )
+            return jsonify(success=True), 200
+    return jsonify(success=False, message="Can only delete a vitamin on Hermes for an OK course you are a part of"), 403
+
+@app.route('/course/<course_ok_id>/lecture/<lecture_url_name>/video/<int:video_index>/delete_resource/<int:resource_index>', methods=["DELETE"])
+@validate_and_pass_on_ok_id
+def delete_resource(course_ok_id, lecture_url_name, video_index, resource_index, ok_id=None):
+    """Deletes a specified resource within a specific video of a lecture in a given course."""
+    user_courses = get_updated_user_courses()
+    int_course_ok_id = int(course_ok_id)
+    for course in user_courses:
+        if course['course_id'] == int_course_ok_id:
+            if course['role'] != consts.INSTRUCTOR:
+                return jsonify(success=False, message="Only instructors can delete resources"), 403
+            db[Resource.collection].delete_one(
+                {
+                    'course_ok_id': course_ok_id,
+                    'lecture_url_name': lecture_url_name,
+                    'video_index': video_index,
+                    'resource_index': resource_index
+                }
+            )
+            return jsonify(success=True), 200
+    return jsonify(success=False, message="Can only delete a resource on Hermes for an OK course you are a part of"), 403

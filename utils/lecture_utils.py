@@ -57,6 +57,8 @@ def create_lecture(course_ok_id, db, lecture_title,
                 course_ok_id=course_ok_id,
                 lecture_url_name=lecture_url_name,
                 video_index=video_index,
+                num_vitamins=0,
+                num_resources=0
             )
         )
         video_titles.append(title)
