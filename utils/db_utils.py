@@ -205,18 +205,19 @@ class Vitamin(DBObject):
         DBObject.__init__(self, **attr)
 
     @staticmethod
-    def add_vitamin(data, db):
+    def add_vitamin(course_ok_id, lecture_url_name, video_index, data, db):
+        print(data)
         timestamp = convert_seconds_to_timestamp(float(data['seconds']) // 1)
-        choices = [data['choice' + str(i)] for i in range(1, 5) if len(data['choice' + str(i)]) > 0]
         return insert(
             Vitamin(
                 question = data['question'],
                 answer = data['answer'],
-                choices = choices,
+                choices = data['choices'],
                 seconds = data['seconds'],
                 timestamp = timestamp,
-                lecture_id = data['lecture_id'],
-                playlist_number = data['playlist_number']
+                course_ok_id = course_ok_id,
+                lecture_url_name = lecture_url_name,
+                video_index = video_index
             ),
             db
         )
@@ -238,12 +239,13 @@ class Resource(DBObject):
         DBObject.__init__(self, **attr)
 
     @staticmethod
-    def add_resource(data, db):
+    def add_resource(course_ok_id, lecture_url_name, video_index, link, db):
         return insert(
             Resource(
-                link = data['link'],
-                lecture_id = data['lecture_id'],
-                playlist_number = data['playlist_number']
+                link = link,
+                course_ok_id = course_ok_id,
+                lecture_url_name = lecture_url_name,
+                video_index = video_index
             ),
             db
         )

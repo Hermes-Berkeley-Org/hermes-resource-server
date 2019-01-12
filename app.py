@@ -430,19 +430,55 @@ def create_vitamin(course_ok_id, lecture_url_name, video_index, ok_id=None):
     for course in user_courses:
         if course['course_id'] == int_course_ok_id:
             if course['role'] == consts.INSTRUCTOR:
-                if db[Course.collection].find_one({
-                    'course_ok_id': course_ok_id, 
-                    'lecture_url_name': lecture_url_name,
-                    'video_index': video_index
-                }):
+                if db[Video.collection].find_one({
+                        'course_ok_id': course_ok_id, 
+                        'lecture_url_name': lecture_url_name, 
+                        'video_index': video_index
+                    }):
                     try:
-                        form_data = request.form.to_dict()
-                        Vitamin.add_vitamin(form_data, db)
+                        vitamin = request.get_json().get('vitamin')
+                        Vitamin.add_vitamin(
+                            course_ok_id = int_course_ok_id,
+                            lecture_url_name = lecture_url_name,
+                            video_index = video_index,
+                            data = vitamin, 
+                            db = db
+                        )
                         return jsonify(success=True), 200
                     except ValueError as e:
                         return jsonify(success=False, message=str(e)), 500
             return jsonify(success=False, message="Only instructors can create vitamins"), 403
     return jsonify(success=False, message="Can only create a vitamin on Hermes for an OK course you are a part of"), 403
+
+@app.route('/course/<course_ok_id>/lecture/<lecture_url_name>/video/<int:video_index>/create_resource', methods=["POST"])
+@validate_and_pass_on_ok_id
+def create_resource(course_ok_id, lecture_url_name, video_index, ok_id=None):
+    """Creates a resource in the specified video within a lecture of a course."""
+
+    user_courses = get_updated_user_courses()
+    int_course_ok_id = int(course_ok_id)
+    for course in user_courses:
+        if course['course_id'] == int_course_ok_id:
+            if course['role'] == consts.INSTRUCTOR:
+                if db[Video.collection].find_one({
+                        'course_ok_id': course_ok_id, 
+                        'lecture_url_name': lecture_url_name, 
+                        'video_index': video_index
+                }):
+                    try:
+                        link = request.form.to_dict()['link']
+                        Resource.add_resource(
+                            course_ok_id = int_course_ok_id,
+                            lecture_url_name = lecture_url_name,
+                            video_index = video_index,
+                            link = link, 
+                            db = db
+                        )
+                        return jsonify(success=True), 200
+                    except ValueError as e:
+                        return jsonify(success=False, message=str(e)), 500
+            return jsonify(success=False, message="Only instructors can create resources"), 403
+    return jsonify(success=False, message="Can only create a resource on Hermes for an OK course you are a part of"), 403
 
 # @app.route('/course/<course_ok_id>/create_piazza_bot', methods=["POST"])
 # @validate_and_pass_on_ok_id
