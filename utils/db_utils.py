@@ -242,13 +242,6 @@ class Vitamin(DBObject):
             }
         )
 
-    @staticmethod
-    def delete_vitamin(vitamin, db):
-        vitamin_id = vitamin['vitamin_id']
-        db[Vitamin.collection].delete_one(
-            {'_id': ObjectId(vitamin_id)}
-        )
-
 
 
 class Resource(DBObject):
@@ -289,13 +282,6 @@ class Resource(DBObject):
                     'num_resources': video['num_resources'] + 1
                 }
             }
-        )
-
-    @staticmethod
-    def delete_resource(resource, db):
-        resource_id = resource['resource_id']
-        db[Resource.collection].delete_one(
-            {'_id': ObjectId(resource_id)}
         )
 
 class Transcript(DBObject):
