@@ -9,6 +9,7 @@ from utils.errors import (
 from utils.youtube_client import YoutubeClient
 from utils.db_utils import insert, create_reference, encode_url
 from utils.db_utils import Course, Lecture, Video, Transcript
+from pprint import pprint
 
 def create_lecture(course_ok_id, db, lecture_title,
                    date, link, youtube_access_token):
@@ -35,6 +36,7 @@ def create_lecture(course_ok_id, db, lecture_title,
             'A lecture with title {0} in course OK ID {1} has already been created'
             .format(lecture_title, course_ok_id)
         )
+    pprint(course)
     lecture_index = course['num_lectures']
 
     youtube_url = get_final_youtube_url(link)
@@ -54,7 +56,7 @@ def create_lecture(course_ok_id, db, lecture_title,
                 youtube_id=youtube_id,
                 course_ok_id=course_ok_id,
                 lecture_url_name=lecture_url_name,
-                video_index=video_index
+                video_index=video_index,
             )
         )
         video_titles.append(title)
@@ -81,7 +83,8 @@ def create_lecture(course_ok_id, db, lecture_title,
         lecture_url_name=lecture_url_name,
         lecture_index=lecture_index,
         course_ok_id=course_ok_id,
-        video_titles=video_titles
+        video_titles=video_titles,
+        lecture_piazza_id=""
     )
     insert(lecture, db)
     db[Course.collection].update_one(
@@ -94,7 +97,7 @@ def create_lecture(course_ok_id, db, lecture_title,
     )
     return {
         'no_transcript_videos': no_transcript_videos
-    }
+    }, lecture_url_name
 
 def get_final_youtube_url(link):
     """Checks if YouTube link is a valid URL and gets the final redirected

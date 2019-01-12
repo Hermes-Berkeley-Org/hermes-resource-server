@@ -158,13 +158,14 @@ class Course(DBObject):
             Course(
                 course_ok_id= course_ok_id,
                 display_name= display_name,
-                piazza_course_id= "",
                 lectures= [],
                 semester= Course.get_semester(offering),
                 offering= offering,
-                piazza_verified = False,
                 students=[],
-                num_lectures=0
+                num_lectures=0,
+                piazza_active="inactive",
+                piazza_course_id="",
+                piazza_master_post_id=""
             ),
             db
         )
@@ -182,6 +183,16 @@ class Course(DBObject):
                 }
             }
         )
+
+    @staticmethod
+    def update_course(course_ok_id, db, **update):
+        db[Course.collection].update_one(
+            {"course_ok_id": course_ok_id},
+            {
+                "$set": update
+            }
+        )
+
 
 class Lecture(DBObject):
     collection = 'Lectures'
