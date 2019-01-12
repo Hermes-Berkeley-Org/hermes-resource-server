@@ -206,20 +206,40 @@ class Vitamin(DBObject):
 
     @staticmethod
     def add_vitamin(course_ok_id, lecture_url_name, video_index, data, db):
-        print(data)
         timestamp = convert_seconds_to_timestamp(float(data['seconds']) // 1)
-        return insert(
+        video = db[Video.collection].find_one(
+            {
+                "course_ok_id": course_ok_id,
+                "lecture_url_name": lecture_url_name,
+                "video_index": video_index
+            }
+        )
+        vitamin_index = video['num_vitamins']
+        insert(
             Vitamin(
                 question = data['question'],
                 answer = data['answer'],
                 choices = data['choices'],
                 seconds = data['seconds'],
                 timestamp = timestamp,
+                vitamin_index = vitamin_index,
                 course_ok_id = course_ok_id,
                 lecture_url_name = lecture_url_name,
                 video_index = video_index
             ),
             db
+        )
+        db[Video.collection].update_one(
+            {
+                "course_ok_id": course_ok_id,
+                "lecture_url_name": lecture_url_name,
+                "video_index": video_index
+            },
+            {
+                '$set': {
+                    'num_vitamins': video['num_vitamins'] + 1
+                }
+            }
         )
 
     @staticmethod
@@ -240,14 +260,35 @@ class Resource(DBObject):
 
     @staticmethod
     def add_resource(course_ok_id, lecture_url_name, video_index, link, db):
-        return insert(
+        video = db[Video.collection].find_one(
+            {
+                "course_ok_id": course_ok_id,
+                "lecture_url_name": lecture_url_name,
+                "video_index": video_index
+            }
+        )
+        resource_index = video['num_resources']
+        insert(
             Resource(
                 link = link,
+                resource_index = resource_index,
                 course_ok_id = course_ok_id,
                 lecture_url_name = lecture_url_name,
                 video_index = video_index
             ),
             db
+        )
+        db[Video.collection].update_one(
+            {
+                "course_ok_id": course_ok_id,
+                "lecture_url_name": lecture_url_name,
+                "video_index": video_index
+            },
+            {
+                '$set': {
+                    'num_resources': video['num_resources'] + 1
+                }
+            }
         )
 
     @staticmethod

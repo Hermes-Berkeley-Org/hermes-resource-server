@@ -438,7 +438,7 @@ def create_vitamin(course_ok_id, lecture_url_name, video_index, ok_id=None):
                     try:
                         vitamin = request.get_json().get('vitamin')
                         Vitamin.add_vitamin(
-                            course_ok_id = int_course_ok_id,
+                            course_ok_id = course_ok_id,
                             lecture_url_name = lecture_url_name,
                             video_index = video_index,
                             data = vitamin, 
@@ -468,7 +468,7 @@ def create_resource(course_ok_id, lecture_url_name, video_index, ok_id=None):
                     try:
                         link = request.form.to_dict()['link']
                         Resource.add_resource(
-                            course_ok_id = int_course_ok_id,
+                            course_ok_id = course_ok_id,
                             lecture_url_name = lecture_url_name,
                             video_index = video_index,
                             link = link, 
