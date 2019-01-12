@@ -1,6 +1,5 @@
 import os
 import piazza_api as p
-from pprint import pprint
 
 piazza = p.Piazza()
 piazza.user_login(

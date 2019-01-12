@@ -10,7 +10,7 @@ from flask_cors import CORS
 from pymongo import MongoClient
 import psycopg2
 
-from json import dumps as json_dump
+import json
 from bson.json_util import dumps as bson_dump
 from bson.objectid import ObjectId
 
@@ -27,7 +27,6 @@ import utils.piazza_client as Piazza
 from utils.errors import CreateLectureFormValidationError
 from utils.sql_client import SQLClient
 
-from pprint import pprint
 import consts
 
 app = Flask(__name__)
@@ -50,6 +49,7 @@ logger.setLevel(logging.INFO)
 
 ok_server = app.config['OK_SERVER']
 
+json_dump = lambda j: json.dumps(j, indent=4)
 
 def get_oauth_token():
     """Retrieves OAuth token from the request header"""
@@ -218,7 +218,7 @@ def course(course_ok_id, ok_id=None):
                 "_id": 0
             }
         ).sort([('lecture_index', 1)])
-    })
+    }, indent=4)
 
 
 @app.route(
@@ -395,12 +395,13 @@ def delete_lecture(course_ok_id, lecture_url_name, ok_id=None):
                     "course_ok_id": course_ok_id
                 }
             ).sort("date", 1)
-            Piazza.delete_post(
-                piazza_course_id=request.form["piazza_course_id"],
-                cid=request.form["post_id"])
-            Piazza.recreate_master_post(db_obj, request.form["master_id"],
-                                        piazza_course_id=request.form[
-                                            "piazza_course_id"])
+            if request.args["piazza_active"] == "active":
+                Piazza.delete_post(
+                    piazza_course_id=request.form["piazza_course_id"],
+                    cid=request.form["post_id"])
+                Piazza.recreate_master_post(db_obj, request.form["master_id"],
+                                            piazza_course_id=request.form[
+                                                "piazza_course_id"])
 
             return jsonify(success=True), 200
     return jsonify(success=False,
@@ -474,7 +475,7 @@ def lecture(course_ok_id, lecture_url_name, ok_id=None):
                     'lecture_url_name': lecture_url_name
                 }
             )
-            return bson_dump(db_obj)
+            return bson_dump(db_obj, indent=4)
     return jsonify(success=False,
                    message="Can only view a lecture on Hermes for an OK course you are a part of"), 403
 
@@ -642,9 +643,6 @@ def ask_piazza_question(course_ok_id, ok_id=None):
     int_course_ok_id = int(course_ok_id)
     for course in user_courses:
         if course['course_id'] == int_course_ok_id:
-            if request.form["piazza_active"] == "inactive":
-                return jsonify(success=False,
-                               message="Piazza Bot must be active to ask a question"), 403
             if request.form["question"]:
                 tag = "{0} {1}:".format(
                     request.form["video_title"], request.form["timestamp"])

@@ -9,7 +9,6 @@ from utils.errors import (
 from utils.youtube_client import YoutubeClient
 from utils.db_utils import insert, create_reference, encode_url
 from utils.db_utils import Course, Lecture, Video, Transcript
-from pprint import pprint
 
 def create_lecture(course_ok_id, db, lecture_title,
                    date, link, youtube_access_token):
@@ -36,7 +35,6 @@ def create_lecture(course_ok_id, db, lecture_title,
             'A lecture with title {0} in course OK ID {1} has already been created'
             .format(lecture_title, course_ok_id)
         )
-    pprint(course)
     lecture_index = course['num_lectures']
 
     youtube_url = get_final_youtube_url(link)
