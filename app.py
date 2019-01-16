@@ -184,6 +184,7 @@ def home(ok_id=None):
         if ok_course['role'] == consts.INSTRUCTOR or db_course:
             if db_course:
                 ok_course['course']['display_name'] = db_course['display_name']
+            ok_course['hermes_active'] = bool(db_course)
             courses.append(ok_course)
     return json_dump(
         {
@@ -510,7 +511,7 @@ def create_course(course_ok_id, ok_id=None):
                    message="Can only create a course on Hermes for an OK course you are a part of"), 403
 
 
-@app.route('/course/<course_ok_id>/lecture/<lecture_url_name>/video/<int:video_index>/create_vitamin', methods=["POST"])
+@app.route('/course/<course_ok_id>/create_piazza_bot', methods=["POST"])
 @validate_and_pass_on_ok_id
 def create_piazza_bot(course_ok_id, ok_id=None):
     """
@@ -522,6 +523,7 @@ def create_piazza_bot(course_ok_id, ok_id=None):
 
     {
         "piazza_course_id": the Piazza course id (the id in the url) piazza.com/<piazza_course_id>
+        "piazza_master_id": the ID of the master post on the current course Piazza (blank if does not exist yet)
         "content": the body of the "Lecture Master Post": if not specified, will default to:
 
             "All lectures with their dates, names, and threads will be posted here. \n \n #pin"
@@ -541,11 +543,6 @@ def create_piazza_bot(course_ok_id, ok_id=None):
                 piazza_course_id = request.form["piazza_course_id"]
                 piazza_master_post_id = request.form['piazza_master_post_id']
 
-
-                course_db_obj = db[Course.collection].find_one(
-                    {"piazza_active": "active",
-                     "course_ok_id": course_ok_id}
-                )
 
                 if piazza_master_post_id:  # A Master post has already been created
                     Course.update_course(course_ok_id, db,

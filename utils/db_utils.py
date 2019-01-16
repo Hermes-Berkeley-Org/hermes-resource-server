@@ -158,10 +158,7 @@ class Course(DBObject):
             Course(
                 course_ok_id= course_ok_id,
                 display_name= display_name,
-                lectures= [],
-                semester= Course.get_semester(offering),
                 offering= offering,
-                students=[],
                 num_lectures=0,
                 piazza_active="inactive",
                 piazza_course_id="",
