@@ -9,5 +9,9 @@ sys.path.append("..")
 import app as app
 from datetime import datetime
 import pytest
+
+class TestApp(unittest.TestCase):
+	pass
+
 if __name__ == '__main__':
-    pass
+    unittest.main()

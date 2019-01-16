@@ -17,44 +17,49 @@ echo "Running tests"
 flag=0
 passed=0
 total=0
+echo "Running test_app"
 if python3 ./test/test_app.py; then
-	echo "test_app Passed"
+	# echo "test_app Passed"
 	passed=$((passed + 1))
 else
 	flag=1
-	echo "test_app_utils Failed"
+	# echo "test_app_utils Failed"
 fi
 total=$((total + 1))
+echo "Running test_db_utils"
 if python3 ./test/test_db_utils.py; then
-	echo "test_db_utils Passed"
+	# echo "test_db_utils Passed"
 	passed=$((passed + 1))
 else
 	flag=1
-	echo "test_db_utils Failed"
+	# echo "test_db_utils Failed"
 fi
 total=$((total + 1))
+echo "Running test_textbook_utils"
 if python3 ./test/test_textbook_utils.py; then
-	echo "test_textbook_utils Passed"
+	# echo "test_textbook_utils Passed"
 	passed=$((passed + 1))
 else
 	flag=1
-	echo "test_textbook_utils Failed"
+	# echo "test_textbook_utils Failed"
 fi
 total=$((total + 1))
+echo "Running test_lecture_utils"
 if python3 ./test/test_lecture_utils.py; then
-	echo "test_lecture_utils Passed"
+	# echo "test_lecture_utils Passed"
 	passed=$((passed + 1))
 else
 	flag=1
-	echo "test_lecture_utils Failed"
+	# echo "test_lecture_utils Failed"
 fi
 total=$((total + 1))
+echo "Running test_youtube_client"
 if python3 ./test/test_youtube_client.py; then
-	echo "test_youtube_client Passed"
+	# echo "test_youtube_client Passed"
 	passed=$((passed + 1))
 else
 	flag=1
-	echo "test_youtube_client Failed"
+	# echo "test_youtube_client Failed"
 fi
 total=$((total + 1))
 if [ "$flag" == 1 ]; then
