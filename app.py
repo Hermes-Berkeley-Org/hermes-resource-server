@@ -51,11 +51,6 @@ ok_server = app.config['OK_SERVER']
 eslink = "https://search-hermestest-75oaeb7bmqusoddwau6ql2ev4q.us-east-2.es.amazonaws.com"
 es_client = ESClient(eslink)
 
-# IGNORE THIS
-# testing uploading transcripts
-lec = len(db["Lectures"].find({'_id': ObjectId("5bae508a55f38c00ea8e8567")})[0]["transcripts"])
-print(lec)
-#ESClient.upload_document()
 
 def get_oauth_token():
     """Retrieves OAuth token from the request header"""
@@ -299,7 +294,8 @@ def create_lecture(course_ok_id, ok_id=None):
                     request.form['title'],
                     request.form['date'],
                     request.form['link'],
-                    request.form['youtube_access_token']
+                    request.form['youtube_access_token'],
+                    es_client
                 )
                 return jsonify(success=True, **create_lecture_response), 200
             except CreateLectureFormValidationError as e:
@@ -466,5 +462,16 @@ def create_piazza_bot(course_ok_id, ok_id=None):
 
 # this endpoint will return a search through all transcripts and return the timestamp/part of
 # video that matches the search as best as possible
-def search_transcripts():
-    return
+@app.route('/search', methods=["GET"])
+#@validate_and_pass_on_ok_id
+def search_transcripts(ok_id=None):
+    params = {
+    'query': {
+            'match': {
+                'text': request.form['text']
+                #'cls': request.form['cls']
+            }
+        }
+    }
+    res = es_client.search_transcripts(params)
+    return res

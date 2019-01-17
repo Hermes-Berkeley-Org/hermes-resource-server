@@ -11,7 +11,7 @@ from utils.db_utils import insert, create_reference, encode_url
 from utils.db_utils import Course, Lecture, Video, Transcript
 
 def create_lecture(course_ok_id, db, lecture_title,
-                   date, link, youtube_access_token):
+                   date, link, youtube_access_token, es_client):
     """Executes full lecture creation process, which includes:
     - Handling playlists and single videos
     - Creates and stores a Lecture object in the DB, with a lookup key to a Course
@@ -78,6 +78,18 @@ def create_lecture(course_ok_id, db, lecture_title,
         # Here we want to create a document for each transcript in the lecture
         # and upload it to our elasticsearch instance so that the transcripts
         # can be searched (with timestamps)
+        print(transcript)
+        for clip in transcript.get("transcript"):
+            body = {
+                'text': clip['text'],
+                'begin': clip['begin'],
+                'end': clip['end'],
+                'link': youtube_url,
+                'cls': course_ok_id,
+            }
+            es_client.upload_transcript("transcripts", "clip", body=body)
+            print("uploaded")
+
     lecture = Lecture(
         name=lecture_title,
         date=date,
