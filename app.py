@@ -200,13 +200,13 @@ def course(course_ok_id, ok_id=None):
     """
     course = db[Course.collection].find_one(
         {'course_ok_id': course_ok_id},
-        {"_id": 0, "display_name": 1}
+        {"_id": 0}
     )
     if not course:
         return jsonify(
             success=False,
             message="Course with OK ID {0} does not exist".format(course_ok_id)
-        ), 400
+        ), 404
     return bson_dump({
         "info": course,
         "lectures": db[Lecture.collection].find(
@@ -348,7 +348,7 @@ def create_lecture(course_ok_id, ok_id=None):
                         }
                     ).sort("date", 1)
                     Piazza.recreate_master_post(db_obj,
-                                                request.form["master_id"],
+                                                request.form["piazza_master_post_id"],
                                                 piazza_course_id=request.form[
                                                     "piazza_course_id"])
                 return jsonify(success=True, **create_lecture_response), 200
@@ -373,12 +373,15 @@ def delete_lecture(course_ok_id, lecture_url_name, ok_id=None):
             if course['role'] != consts.INSTRUCTOR:
                 return jsonify(success=False,
                                message="Only instructors can delete lectures"), 403
-            db[Lecture.collection].remove(
+            lecture = db[Lecture.collection].find_one_and_delete(
                 {
                     'course_ok_id': course_ok_id,
                     'lecture_url_name': lecture_url_name
                 }
             )
+            if not lecture:
+                return jsonify(success=False,
+                               message="Lecture does not exist"), 404
             db[Video.collection].remove(
                 {
                     'course_ok_id': course_ok_id,
@@ -398,10 +401,10 @@ def delete_lecture(course_ok_id, lecture_url_name, ok_id=None):
             ).sort("date", 1)
             if request.args["piazza_active"] == "active":
                 Piazza.delete_post(
-                    piazza_course_id=request.form["piazza_course_id"],
-                    cid=request.form["post_id"])
-                Piazza.recreate_master_post(db_obj, request.form["master_id"],
-                                            piazza_course_id=request.form[
+                    piazza_course_id=request.args["piazza_course_id"],
+                    cid=lecture["lecture_piazza_id"])
+                Piazza.recreate_master_post(db_obj, request.args["piazza_master_post_id"],
+                                            piazza_course_id=request.args[
                                                 "piazza_course_id"])
 
             return jsonify(success=True), 200
@@ -493,7 +496,7 @@ def create_course(course_ok_id, ok_id=None):
             if course['role'] == consts.INSTRUCTOR:
                 if db['Courses'].find_one({'course_ok_id': course_ok_id}):
                     return jsonify(success=False,
-                                   message="Course has already been created"), 403
+                                   message="Course has already been created"), 400
                 try:
                     form_data = request.form.to_dict()
                     Course.create_course(
@@ -669,7 +672,8 @@ def disable_piazza(course_ok_id, ok_id=None):
 
     for course in user_courses:
         if course['course_id'] == int_course_ok_id:
-            print(course_ok_id)
+            Piazza.unpin_post(post_id=request.form["piazza_master_post_id"],
+                              piazza_course_id=request.form["piazza_course_id"])
             db[Course.collection].update_one({
                 "course_ok_id": course_ok_id},
                 {
@@ -678,8 +682,6 @@ def disable_piazza(course_ok_id, ok_id=None):
                     }
                 }
             )
-            Piazza.unpin_post(post_id=request.form["piazza_master_id"],
-                              piazza_course_id=request.form["piazza_course_id"])
             return jsonify(success=True), 200
     return jsonify(success=False,
                    message="Can only disable piazza for an OK course you are a part of"), 403
