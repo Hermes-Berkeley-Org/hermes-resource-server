@@ -9,19 +9,16 @@ from googleapiclient.errors import HttpError
 from bs4 import BeautifulSoup
 
 class YoutubeClient:
-    def __init__(self, access_token, mock=False):
-        if mock:
-            label
-        else:
-            credentials = google.oauth2.credentials.Credentials(
-                token=access_token
-            )
-            self.youtube = googleapiclient.discovery.build(
-                'youtube',
-                'v3',
-                credentials=credentials,
-                cache_discovery=False
-            )
+    def __init__(self, access_token):
+        credentials = google.oauth2.credentials.Credentials(
+            token=access_token
+        )
+        self.youtube = googleapiclient.discovery.build(
+            'youtube',
+            'v3',
+            credentials=credentials,
+            cache_discovery=False
+        )
 
     @staticmethod
     def get_youtube_id(link):
