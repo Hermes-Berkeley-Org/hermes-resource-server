@@ -509,8 +509,7 @@ def create_course(course_ok_id, ok_id=None):
     return jsonify(success=False,
                    message="Can only create a course on Hermes for an OK course you are a part of"), 403
 
-
-@app.route('/course/<course_ok_id>/lecture/<lecture_url_name>/video/<int:video_index>/create_vitamin', methods=["POST"])
+@app.route('/course/<course_ok_id>/create_piazza_bot')
 @validate_and_pass_on_ok_id
 def create_piazza_bot(course_ok_id, ok_id=None):
     """
@@ -687,6 +686,8 @@ def disable_piazza(course_ok_id, ok_id=None):
     return jsonify(success=False,
                    message="Can only disable piazza for an OK course you are a part of"), 403
 
+@app.route('/course/<course_ok_id>/lecture/<lecture_url_name>/video/<int:video_index>/create_vitamin', methods=["POST"])
+@validate_and_pass_on_ok_id
 def create_vitamin(course_ok_id, lecture_url_name, video_index, ok_id=None):
     """Creates a vitamin in the specified video within a lecture of a course."""
     user_courses = get_updated_user_courses()
@@ -713,6 +714,8 @@ def create_vitamin(course_ok_id, lecture_url_name, video_index, ok_id=None):
                         return jsonify(success=False, message=str(e)), 500
             return jsonify(success=False, message="Only instructors can create vitamins"), 403
     return jsonify(success=False, message="Can only create a vitamin on Hermes for an OK course you are a part of"), 403
+
+
 
 @app.route('/course/<course_ok_id>/lecture/<lecture_url_name>/video/<int:video_index>/create_resource', methods=["POST"])
 @validate_and_pass_on_ok_id
