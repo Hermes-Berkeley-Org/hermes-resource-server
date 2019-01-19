@@ -21,7 +21,7 @@ import logging
 import requests
 
 from utils.db_utils import User, Course, Lecture, Vitamin, Resource, Video, \
-    Transcript
+    Transcript, convert_seconds_to_timestamp
 import utils.lecture_utils as LectureUtils
 import utils.piazza_client as Piazza
 from utils.errors import CreateLectureFormValidationError
@@ -645,7 +645,7 @@ def ask_piazza_question(course_ok_id, ok_id=None):
         if course['course_id'] == int_course_ok_id:
             if request.form["question"]:
                 tag = "{0} {1}:".format(
-                    request.form["video_title"], request.form["timestamp"])
+                    request.form["video_title"], convert_seconds_to_timestamp(int(request.form["timestamp"])))
                 piazza_lecture_post_id = request.form["piazza_lecture_post_id"]
                 identity_msg = "posted Anonymously"
                 if request.form["anonymous"] == "nonanon":
