@@ -21,7 +21,7 @@ import logging
 import requests
 
 from utils.db_utils import User, Course, Lecture, Vitamin, Resource, Video, \
-    Transcript
+    Transcript, convert_seconds_to_timestamp
 import utils.lecture_utils as LectureUtils
 import utils.piazza_client as Piazza
 from utils.errors import CreateLectureFormValidationError
@@ -184,6 +184,7 @@ def home(ok_id=None):
         if ok_course['role'] == consts.INSTRUCTOR or db_course:
             if db_course:
                 ok_course['course']['display_name'] = db_course['display_name']
+            ok_course['hermes_active'] = bool(db_course)
             courses.append(ok_course)
     return json_dump(
         {
@@ -199,13 +200,13 @@ def course(course_ok_id, ok_id=None):
     """
     course = db[Course.collection].find_one(
         {'course_ok_id': course_ok_id},
-        {"_id": 0, "display_name": 1}
+        {"_id": 0}
     )
     if not course:
         return jsonify(
             success=False,
             message="Course with OK ID {0} does not exist".format(course_ok_id)
-        ), 400
+        ), 404
     return bson_dump({
         "info": course,
         "lectures": db[Lecture.collection].find(
@@ -347,7 +348,7 @@ def create_lecture(course_ok_id, ok_id=None):
                         }
                     ).sort("date", 1)
                     Piazza.recreate_master_post(db_obj,
-                                                request.form["master_id"],
+                                                request.form["piazza_master_post_id"],
                                                 piazza_course_id=request.form[
                                                     "piazza_course_id"])
                 return jsonify(success=True, **create_lecture_response), 200
@@ -372,12 +373,15 @@ def delete_lecture(course_ok_id, lecture_url_name, ok_id=None):
             if course['role'] != consts.INSTRUCTOR:
                 return jsonify(success=False,
                                message="Only instructors can delete lectures"), 403
-            db[Lecture.collection].remove(
+            lecture = db[Lecture.collection].find_one_and_delete(
                 {
                     'course_ok_id': course_ok_id,
                     'lecture_url_name': lecture_url_name
                 }
             )
+            if not lecture:
+                return jsonify(success=False,
+                               message="Lecture does not exist"), 404
             db[Video.collection].remove(
                 {
                     'course_ok_id': course_ok_id,
@@ -397,10 +401,10 @@ def delete_lecture(course_ok_id, lecture_url_name, ok_id=None):
             ).sort("date", 1)
             if request.args["piazza_active"] == "active":
                 Piazza.delete_post(
-                    piazza_course_id=request.form["piazza_course_id"],
-                    cid=request.form["post_id"])
-                Piazza.recreate_master_post(db_obj, request.form["master_id"],
-                                            piazza_course_id=request.form[
+                    piazza_course_id=request.args["piazza_course_id"],
+                    cid=lecture["lecture_piazza_id"])
+                Piazza.recreate_master_post(db_obj, request.args["piazza_master_post_id"],
+                                            piazza_course_id=request.args[
                                                 "piazza_course_id"])
 
             return jsonify(success=True), 200
@@ -492,7 +496,7 @@ def create_course(course_ok_id, ok_id=None):
             if course['role'] == consts.INSTRUCTOR:
                 if db['Courses'].find_one({'course_ok_id': course_ok_id}):
                     return jsonify(success=False,
-                                   message="Course has already been created"), 403
+                                   message="Course has already been created"), 400
                 try:
                     form_data = request.form.to_dict()
                     Course.create_course(
@@ -510,7 +514,7 @@ def create_course(course_ok_id, ok_id=None):
                    message="Can only create a course on Hermes for an OK course you are a part of"), 403
 
 
-@app.route('/course/<course_ok_id>/lecture/<lecture_url_name>/video/<int:video_index>/create_vitamin', methods=["POST"])
+@app.route('/course/<course_ok_id>/create_piazza_bot', methods=["POST"])
 @validate_and_pass_on_ok_id
 def create_piazza_bot(course_ok_id, ok_id=None):
     """
@@ -522,6 +526,7 @@ def create_piazza_bot(course_ok_id, ok_id=None):
 
     {
         "piazza_course_id": the Piazza course id (the id in the url) piazza.com/<piazza_course_id>
+        "piazza_master_id": the ID of the master post on the current course Piazza (blank if does not exist yet)
         "content": the body of the "Lecture Master Post": if not specified, will default to:
 
             "All lectures with their dates, names, and threads will be posted here. \n \n #pin"
@@ -541,11 +546,6 @@ def create_piazza_bot(course_ok_id, ok_id=None):
                 piazza_course_id = request.form["piazza_course_id"]
                 piazza_master_post_id = request.form['piazza_master_post_id']
 
-
-                course_db_obj = db[Course.collection].find_one(
-                    {"piazza_active": "active",
-                     "course_ok_id": course_ok_id}
-                )
 
                 if piazza_master_post_id:  # A Master post has already been created
                     Course.update_course(course_ok_id, db,
@@ -645,7 +645,7 @@ def ask_piazza_question(course_ok_id, ok_id=None):
         if course['course_id'] == int_course_ok_id:
             if request.form["question"]:
                 tag = "{0} {1}:".format(
-                    request.form["video_title"], request.form["timestamp"])
+                    request.form["video_title"], convert_seconds_to_timestamp(int(request.form["timestamp"])))
                 piazza_lecture_post_id = request.form["piazza_lecture_post_id"]
                 identity_msg = "posted Anonymously"
                 if request.form["anonymous"] == "nonanon":
@@ -672,7 +672,8 @@ def disable_piazza(course_ok_id, ok_id=None):
 
     for course in user_courses:
         if course['course_id'] == int_course_ok_id:
-            print(course_ok_id)
+            Piazza.unpin_post(post_id=request.form["piazza_master_post_id"],
+                              piazza_course_id=request.form["piazza_course_id"])
             db[Course.collection].update_one({
                 "course_ok_id": course_ok_id},
                 {
@@ -681,8 +682,6 @@ def disable_piazza(course_ok_id, ok_id=None):
                     }
                 }
             )
-            Piazza.unpin_post(post_id=request.form["piazza_master_id"],
-                              piazza_course_id=request.form["piazza_course_id"])
             return jsonify(success=True), 200
     return jsonify(success=False,
                    message="Can only disable piazza for an OK course you are a part of"), 403
