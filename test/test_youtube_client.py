@@ -54,7 +54,18 @@ def transcript_side_effect(arg):
         raise YoutubeError("Error retrieving caption track")
 youtube_client.youtube.get_transcript.side_effect = transcript_side_effect
 
-youtube_client.youtube.get_video_metadata.return_value = ("Prancakes", "00:01:02")
+def metadata_side_effect(id, part):
+    if id == EXPECTED_ID:
+        ret = {'items': [{'kind': 'youtube#video'}]}
+        if 'snippet' in part:
+            ret['items'][0]['snippet'] = {'title': 'Prancakes'}
+        if 'contentDetails' in part:
+            ret['items'][0]['contentDetails'] = {'duration': '0H1M2S'}
+        return MockExecute(ret)
+    else:
+        return MockExecute({})
+
+youtube_client.youtube.videos.return_value.list.side_effect = metadata_side_effect
 
 class TestYoutubeClientMethods(unittest.TestCase):
     def test_get_youtube_id(self):
