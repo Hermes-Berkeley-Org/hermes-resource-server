@@ -8,6 +8,8 @@ from googleapiclient.errors import HttpError
 
 from bs4 import BeautifulSoup
 
+from unittest.mock import MagicMock
+
 class YoutubeClient:
     def __init__(self, access_token):
         credentials = google.oauth2.credentials.Credentials(

@@ -25,8 +25,6 @@ INVALID_LINKS = ['asdf']
 
 youtube_client = MagicMock()
 youtube_client.get_link_metadata.return_value = {'video_id': 'M4hXAZiiIZw'}
-# ACCESS_TOKEN = 'ya29.GltnBl_0TZT5AH_ZTFQt9XNRW3Qthq1KeMAbEqX4PrkAywM_bHleU1CObe7E0LcsBM_O5cOwG7e154aJk5ZqUDrE4Bbvqk5Fib-LaDLpxcMeSh6BxMmG1UKgLLVY'
-# youtube_client = YoutubeClient(ACCESS_TOKEN)
 
 class TestLectureUtils(unittest.TestCase):
     def test_get_final_youtube_url(self):
