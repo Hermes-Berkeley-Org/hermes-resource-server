@@ -19,7 +19,8 @@ LINKS = [
 EXPECTED_ID = 'M4hXAZiiIZw'
 EXPECTED_LIST = 'PLbh6KXqwIdGAsHxGlkb6sEVv1kXtBHuc2'
 EXPECTED_LIST_IDS = ['M4hXAZiiIZw', 'HIgDFXeGOIg']
-CAPTIONED_VIDEO = "5B5tJWrCtoI"
+CAPTIONED_VIDEO = "ur_Uk5MwYJQ"
+CAPTION_ID = 'gT93Vm4dZW3z_pi8djEZCRRxGJuGUZ9SDJ2L-JSYoeo='
 
 class MockExecute:
     def __init__(self, items):
@@ -41,18 +42,28 @@ youtube_client.youtube.playlistItems.return_value.list.return_value.execute.retu
 def caption_side_effect(part, videoId):
     if videoId == CAPTIONED_VIDEO:
         return MockExecute({
-            'items': [{'id': 1}]
+            'items': [{'id': CAPTION_ID}]
         })
     else:
         return MockExecute({})
 youtube_client.youtube.captions.return_value.list.side_effect = caption_side_effect
 
-def transcript_side_effect(arg):
-    if arg == CAPTIONED_VIDEO:
-        return "let's look at a famous example"
+def transcript_side_effect(id, tfmt):
+    if id == CAPTION_ID and tfmt == 'ttml':
+        return MockExecute(b'<?xml version="1.0" encoding="utf-8" ?>\n'
+            b'<tt xml:lang="en" xmlns="http://www.w3.org/ns/ttml" xmlns:ttm="http://www.w3.org/ns/ttml#metadata"'
+            b' xmlns:tts="http://www.w3.org/ns/ttml#styling" xmlns:ttp="http://www.w3.org/ns/ttml#parameter"'
+            b' ttp:profile="http://www.w3.org/TR/profile/sdp-us" >\n<head>\n<styling>\n<style xml:id="s1"'
+            b' tts:textAlign="center" tts:extent="90% 90%" tts:origin="5% 5%" tts:displayAlign="after"/>\n'
+            b'<style xml:id="s2" tts:fontSize=".72c" tts:backgroundColor="black" tts:color="white"/>\n'
+            b'<style xml:id="s3" tts:color="#E5E5E5"/>\n<style xml:id="s4" tts:color="#CCCCCC"/>\n</styling>\n'
+            b'<layout>\n<region xml:id="r1" style="s1"/>\n</layout>\n</head>\n<body region="r1">\n<div>\n'
+            b'<p begin="00:00:00.860" end="00:00:06.660" style="s2">since sequences are fundamental to</p>\n</div>\n'
+            b'</body>\n</tt>\n'
+        )
     else:
         raise YoutubeError("Error retrieving caption track")
-youtube_client.youtube.get_transcript.side_effect = transcript_side_effect
+youtube_client.youtube.captions.return_value.download.side_effect = transcript_side_effect
 
 def metadata_side_effect(id, part):
     if id == EXPECTED_ID:
@@ -64,7 +75,6 @@ def metadata_side_effect(id, part):
         return MockExecute(ret)
     else:
         return MockExecute({})
-
 youtube_client.youtube.videos.return_value.list.side_effect = metadata_side_effect
 
 class TestYoutubeClientMethods(unittest.TestCase):
@@ -101,8 +111,10 @@ class TestYoutubeClientMethods(unittest.TestCase):
         ])
 
     def test_get_transcript(self):
+        def extract_text(transcript):
+            return transcript[0]["text"]
         self.assertRaises(YoutubeError, youtube_client.get_transcript, EXPECTED_ID)
-        self.assertEqual(youtube_client.get_transcript(CAPTIONED_VIDEO)[:10], "let's look")
+        self.assertEqual(extract_text(youtube_client.get_transcript(CAPTIONED_VIDEO))[:15], "since sequences")
 
     def test_get_video_metadata(self):
         title, duration = youtube_client.get_video_metadata(EXPECTED_ID)
