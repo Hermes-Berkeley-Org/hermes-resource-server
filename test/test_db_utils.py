@@ -97,10 +97,7 @@ class TestDBUtils(unittest.TestCase):
         self.create_test_courses(returned_ids,collection, db)
         for i in range(100):
             item = dbu.find_one_by_id(returned_ids[i], "Courses", db)
-            self.assertEqual(item['lectures'], [])
-            self.assertEqual(item['students'], [])
             self.assertEqual(item['display_name'], "CS61" + str(i))
-            self.assertEqual(item['semester'], "FA" + str(i))
             self.assertEqual(item['course_ok_id'], str(i))
 
     #Tests the Lecture Methods
