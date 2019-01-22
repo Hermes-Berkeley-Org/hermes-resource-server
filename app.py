@@ -519,7 +519,7 @@ def create_course(course_ok_id, ok_id=None):
     return jsonify(success=False,
                    message="Can only create a course on Hermes for an OK course you are a part of"), 403
 
-@app.route('/course/<course_ok_id>/create_piazza_bot')
+@app.route('/course/<course_ok_id>/create_piazza_bot', methods=['POST'])
 @validate_and_pass_on_ok_id
 def create_piazza_bot(course_ok_id, ok_id=None):
     """
