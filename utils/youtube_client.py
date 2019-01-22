@@ -8,10 +8,9 @@ from googleapiclient.errors import HttpError
 
 from bs4 import BeautifulSoup
 
+from unittest.mock import MagicMock
+
 class YoutubeClient:
-
-    # TODO AY: some way to test this functionality in test_youtube_client.py
-
     def __init__(self, access_token):
         credentials = google.oauth2.credentials.Credentials(
             token=access_token
@@ -99,8 +98,7 @@ class YoutubeClient:
         try:
             caption_id = self.get_caption_id(video_id)
             if not caption_id:
-                raise YoutubeError(
-                    'Error retrieving caption track')
+                raise YoutubeError('Error retrieving caption track')
             subtitle_html = self.youtube.captions().download(
                 id=caption_id,
                 tfmt='ttml'

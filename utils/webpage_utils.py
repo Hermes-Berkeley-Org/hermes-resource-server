@@ -17,7 +17,7 @@ class QuestionForm(Form):
 class AnswerForm(Form):
     answer = StringField('Answer', validators=[DataRequired()])
     timestamp = StringField('Timestamp', validators=[DataRequired()])
-    submit = SubmtField('Ask')
+    submit = SubmitField('Ask')
 
 class CreateClassForm(Form):
     class_name = StringField('Class name', validators=[DataRequired()])

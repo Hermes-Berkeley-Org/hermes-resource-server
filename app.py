@@ -686,6 +686,7 @@ def disable_piazza(course_ok_id, ok_id=None):
     return jsonify(success=False,
                    message="Can only disable piazza for an OK course you are a part of"), 403
 
+@app.route('/course/<course_ok_id>/lecture/<lecture_url_name>/video/<int:video_index>/create_vitamin', methods=["POST"])
 def create_vitamin(course_ok_id, lecture_url_name, video_index, ok_id=None):
     """Creates a vitamin in the specified video within a lecture of a course."""
     user_courses = get_updated_user_courses()
