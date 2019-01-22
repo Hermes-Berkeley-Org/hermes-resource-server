@@ -364,7 +364,7 @@ def create_lecture(course_ok_id, ok_id=None):
            methods=["DELETE"])
 @validate_and_pass_on_ok_id
 def delete_lecture(course_ok_id, lecture_url_name, ok_id=None):
-    """Deletes the associated Lecture, Video, and Transcript objects associated
+    """Deletes the associated Lecture, Video, Transcript, and Vitamin objects associated
     with a lecture_url_name in a course"""
     user_courses = get_updated_user_courses()
     int_course_ok_id = int(course_ok_id)
@@ -389,6 +389,12 @@ def delete_lecture(course_ok_id, lecture_url_name, ok_id=None):
                 }
             )
             db[Transcript.collection].remove(
+                {
+                    'course_ok_id': course_ok_id,
+                    'lecture_url_name': lecture_url_name
+                }
+            )
+            db[Vitamin.collection].remove(
                 {
                     'course_ok_id': course_ok_id,
                     'lecture_url_name': lecture_url_name
@@ -513,8 +519,7 @@ def create_course(course_ok_id, ok_id=None):
     return jsonify(success=False,
                    message="Can only create a course on Hermes for an OK course you are a part of"), 403
 
-
-@app.route('/course/<course_ok_id>/create_piazza_bot', methods=["POST"])
+@app.route('/course/<course_ok_id>/create_piazza_bot')
 @validate_and_pass_on_ok_id
 def create_piazza_bot(course_ok_id, ok_id=None):
     """
@@ -687,6 +692,7 @@ def disable_piazza(course_ok_id, ok_id=None):
                    message="Can only disable piazza for an OK course you are a part of"), 403
 
 @app.route('/course/<course_ok_id>/lecture/<lecture_url_name>/video/<int:video_index>/create_vitamin', methods=["POST"])
+@validate_and_pass_on_ok_id
 def create_vitamin(course_ok_id, lecture_url_name, video_index, ok_id=None):
     """Creates a vitamin in the specified video within a lecture of a course."""
     user_courses = get_updated_user_courses()
@@ -728,7 +734,7 @@ def create_resource(course_ok_id, lecture_url_name, video_index, ok_id=None):
                         'course_ok_id': course_ok_id,
                         'lecture_url_name': lecture_url_name,
                         'video_index': video_index
-                }):
+                    }):
                     try:
                         link = request.form.to_dict()['link']
                         Resource.add_resource(
@@ -785,3 +791,29 @@ def delete_resource(course_ok_id, lecture_url_name, video_index, resource_index,
             )
             return jsonify(success=True), 200
     return jsonify(success=False, message="Can only delete a resource on Hermes for an OK course you are a part of"), 403
+
+
+@app.route('/course/<course_ok_id>/lecture/<lecture_url_name>/video/<int:video_index>/answer_vitamin/<int:vitamin_index>', methods=["POST"])
+@validate_and_pass_on_ok_id
+def answer_vitamin(course_ok_id, lecture_url_name, video_index, vitamin_index, ok_id=None):
+    """Submits the user's answer to a given vitamin and returns if the user got it correct or not."""
+    user_courses = get_updated_user_courses()
+    int_course_ok_id = int(course_ok_id)
+    for course in user_courses:
+        if course['course_id'] == int_course_ok_id:
+            vitamin = db[Vitamin.collection].find_one({
+                'course_ok_id': course_ok_id,
+                'lecture_url_name': lecture_url_name,
+                'video_index': video_index,
+                'vitamin_index': vitamin_index
+            })
+            if vitamin:
+                ## Add SQL part for data collection/participation here.
+                submission = request.get_json().get('answer')
+                if submission == vitamin['answer']:
+                    return jsonify(success=True, message="Correct!"), 200
+                else:
+                    return jsonify(success=True, message="Incorrect, please try again."), 200
+            else:
+                return jsonify(success=False, message="Invalid vitamin"), 404
+    return jsonify(success=False, message="Can only answer a vitamin on Hermes for an OK course you are a part of"), 403
