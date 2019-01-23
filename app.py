@@ -720,6 +720,28 @@ def create_vitamin(course_ok_id, lecture_url_name, video_index, ok_id=None):
             return jsonify(success=False, message="Only instructors can create vitamins"), 403
     return jsonify(success=False, message="Can only create a vitamin on Hermes for an OK course you are a part of"), 403
 
+@app.route('/course/<course_ok_id>/lecture/<lecture_url_name>/video/<int:video_index>/edit')
+@validate_and_pass_on_ok_id
+def edit_video(course_ok_id, lecture_url_name, video_index, ok_id=None):
+    """Gets all vitamins on a video"""
+    user_courses = get_updated_user_courses()
+    int_course_ok_id = int(course_ok_id)
+    for course in user_courses:
+        if course['course_id'] == int_course_ok_id:
+            return bson_dump({
+                "vitamins": db[Vitamin.collection].find({
+                    'course_ok_id': course_ok_id,
+                    'lecture_url_name': lecture_url_name,
+                    'video_index': video_index
+                }),
+                "resources": db[Resource.collection].find({
+                    'course_ok_id': course_ok_id,
+                    'lecture_url_name': lecture_url_name,
+                    'video_index': video_index
+                })
+            })
+    return jsonify(success=False, message="Can only get vitamins on Hermes for an OK course you are a part of"), 403
+
 @app.route('/course/<course_ok_id>/lecture/<lecture_url_name>/video/<int:video_index>/create_resource', methods=["POST"])
 @validate_and_pass_on_ok_id
 def create_resource(course_ok_id, lecture_url_name, video_index, ok_id=None):
