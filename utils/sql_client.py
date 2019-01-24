@@ -12,11 +12,13 @@ class SQLClient:
         cur.close()
 
     def post_question(self, user_email, course_ok_id, lecture_url_name,
-                      piazza_question_id, seconds):
+                      piazza_question_id, seconds, identity):
+        print("here")
         cur = self.conn.cursor()
+        print(cur)
         cur.execute(
             'EXECUTE post_question (%s, %s, %s, %s, %s)',
-            (user_email, course_ok_id, lecture_url_name, piazza_question_id, seconds)
+            (user_email, course_ok_id, lecture_url_name, piazza_question_id, seconds, identity)
         )
         self.conn.commit()
         cur.close()

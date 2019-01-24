@@ -1,5 +1,7 @@
 import os
 import piazza_api as p
+from .db_utils import User, Course, Lecture, Vitamin, Resource, Video, \
+    Transcript
 
 piazza = p.Piazza()
 piazza.user_login(
@@ -8,8 +10,7 @@ piazza.user_login(
 )
 
 
-def create_master_post(content="", network=None,
-                       piazza_course_id=None):
+def create_master_post(content="", network=None, piazza_course_id=None):
     """
     Takes in:
     folders: array of which folders hermes posts should be in),
@@ -39,9 +40,8 @@ def create_master_post(content="", network=None,
     return master_post
 
 
-def create_lecture_post(lecture_title, date,
-                        network=None, piazza_course_id=None,
-                        master_id=None, content=None):
+def create_lecture_post(lecture_title, date,db,master_id,course_ok_id, lecture_url_name,
+                        network=None, piazza_course_id=None, content=None):
     """
     Creates a lecture post on piazza for a given lecture number. Takes in
     an array of folders that it will put the course in as well as the piazza_course_id
@@ -69,6 +69,18 @@ will (hopefully) respond.".format(lecture_title)
         "content": content,
         "folders": ["hermes"]
     })
+    lecture_piazza_id = post["nr"]
+    db[Lecture.collection].update_one(
+        {
+            'course_ok_id': course_ok_id,
+            'lecture_url_name': lecture_url_name
+        },
+        {
+            '$set': {
+                'lecture_piazza_id': lecture_piazza_id
+            }
+        }
+    )
     return post
 
 
@@ -137,7 +149,7 @@ def get_followup(post_id, followup_id, network=None, piazza_course_id=None):
             return child
 
 
-def recreate_master_post(lectures, master_id, network=None,
+def recreate_master_post(master_id, course_ok_id, db, network=None,
                          piazza_course_id=None):
     """
     Takes in:
@@ -155,6 +167,11 @@ def recreate_master_post(lectures, master_id, network=None,
         network = piazza.network(piazza_course_id)
     rpc = network._rpc
     piazza_ids = []
+    lectures = db[Lecture.collection].find(
+        {
+            "course_ok_id": course_ok_id
+        }
+    ).sort("date", 1)
     for lecture in lectures:
         piazza_ids.append({
             "date": lecture["date"],
@@ -169,6 +186,7 @@ def recreate_master_post(lectures, master_id, network=None,
     content += "#pin"
     edit_post(network=network, piazza_course_id=piazza_course_id,
               cid=master_id, content=content)
+
 
 
 def pin_post(post_id, network=None, piazza_course_id=None):
@@ -206,4 +224,21 @@ def delete_post(network=None, piazza_course_id=None, cid=None, post_data=None,
         'revision': None,
         'type': None
     }
-    return network._rpc.request("content.delete", params)
+    try:
+        return network._rpc.request("content.delete", params)
+    except:
+        return
+
+def add_unadded_lectures(db,course_ok_id):
+    not_on_piazza_db_obj = db[Lecture.collection].find({
+        "lecture_piazza_id": "",
+        "course_ok_id": course_ok_id
+    })
+
+    for lecture in not_on_piazza_db_obj:
+        lecture_post = Piazza.create_lecture_post(
+            lecture_title=lecture["name"],
+            date=lecture["date"],
+            piazza_course_id=piazza_course_id,
+            master_id=piazza_master_post_id
+        )
