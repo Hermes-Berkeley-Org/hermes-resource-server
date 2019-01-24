@@ -21,7 +21,7 @@ import logging
 import requests
 
 from utils.db_utils import User, Course, Lecture, Vitamin, Resource, Video, \
-    Transcript
+    Transcript, convert_seconds_to_timestamp
 import utils.lecture_utils as LectureUtils
 import utils.piazza_client as Piazza
 from utils.errors import CreateLectureFormValidationError
@@ -184,6 +184,7 @@ def home(ok_id=None):
         if ok_course['role'] == consts.INSTRUCTOR or db_course:
             if db_course:
                 ok_course['course']['display_name'] = db_course['display_name']
+            ok_course['hermes_active'] = bool(db_course)
             courses.append(ok_course)
     return json_dump(
         {
@@ -199,13 +200,13 @@ def course(course_ok_id, ok_id=None):
     """
     course = db[Course.collection].find_one(
         {'course_ok_id': course_ok_id},
-        {"_id": 0, "display_name": 1}
+        {"_id": 0}
     )
     if not course:
         return jsonify(
             success=False,
             message="Course with OK ID {0} does not exist".format(course_ok_id)
-        ), 400
+        ), 404
     return bson_dump({
         "info": course,
         "lectures": db[Lecture.collection].find(
@@ -350,7 +351,7 @@ def create_lecture(course_ok_id, ok_id=None):
            methods=["DELETE"])
 @validate_and_pass_on_ok_id
 def delete_lecture(course_ok_id, lecture_url_name, ok_id=None):
-    """Deletes the associated Lecture, Video, and Transcript objects associated
+    """Deletes the associated Lecture, Video, Transcript, and Vitamin objects associated
     with a lecture_url_name in a course"""
     user_courses = get_updated_user_courses()
     int_course_ok_id = int(course_ok_id)
@@ -359,12 +360,15 @@ def delete_lecture(course_ok_id, lecture_url_name, ok_id=None):
             if course['role'] != consts.INSTRUCTOR:
                 return jsonify(success=False,
                                message="Only instructors can delete lectures"), 403
-            db[Lecture.collection].remove(
+            lecture = db[Lecture.collection].find_one_and_delete(
                 {
                     'course_ok_id': course_ok_id,
                     'lecture_url_name': lecture_url_name
                 }
             )
+            if not lecture:
+                return jsonify(success=False,
+                               message="Lecture does not exist"), 404
             db[Video.collection].remove(
                 {
                     'course_ok_id': course_ok_id,
@@ -372,6 +376,12 @@ def delete_lecture(course_ok_id, lecture_url_name, ok_id=None):
                 }
             )
             db[Transcript.collection].remove(
+                {
+                    'course_ok_id': course_ok_id,
+                    'lecture_url_name': lecture_url_name
+                }
+            )
+            db[Vitamin.collection].remove(
                 {
                     'course_ok_id': course_ok_id,
                     'lecture_url_name': lecture_url_name
@@ -478,7 +488,7 @@ def create_course(course_ok_id, ok_id=None):
             if course['role'] == consts.INSTRUCTOR:
                 if db['Courses'].find_one({'course_ok_id': course_ok_id}):
                     return jsonify(success=False,
-                                   message="Course has already been created"), 403
+                                   message="Course has already been created"), 400
                 try:
                     form_data = request.form.to_dict()
                     Course.create_course(
@@ -496,7 +506,7 @@ def create_course(course_ok_id, ok_id=None):
                    message="Can only create a course on Hermes for an OK course you are a part of"), 403
 
 
-@app.route('/course/<course_ok_id>/create_piazza_bot', methods=["POST"])
+@app.route('/course/<course_ok_id>/create_piazza_bot', methods=['POST'])
 @validate_and_pass_on_ok_id
 def create_piazza_bot(course_ok_id, ok_id=None):
     """
@@ -508,6 +518,7 @@ def create_piazza_bot(course_ok_id, ok_id=None):
 
     {
         "piazza_course_id": the Piazza course id (the id in the url) piazza.com/<piazza_course_id>
+        "piazza_master_id": the ID of the master post on the current course Piazza (blank if does not exist yet)
         "content": the body of the "Lecture Master Post": if not specified, will default to:
 
             "All lectures with their dates, names, and threads will be posted here. \n \n #pin"
@@ -527,11 +538,6 @@ def create_piazza_bot(course_ok_id, ok_id=None):
                 piazza_course_id = request.form["piazza_course_id"]
                 piazza_master_post_id = request.form['piazza_master_post_id']
 
-
-                course_db_obj = db[Course.collection].find_one(
-                    {"piazza_active": "active",
-                     "course_ok_id": course_ok_id}
-                )
 
                 if piazza_master_post_id:  # A Master post has already been created
                     Course.update_course(course_ok_id, db,
@@ -590,7 +596,7 @@ def ask_piazza_question(course_ok_id, ok_id=None):
             name = "anonymously"
             if request.form["question"]:
                 tag = "{0} {1}:".format(
-                    request.form["video_title"], request.form["timestamp"])
+                    request.form["video_title"], convert_seconds_to_timestamp(int(request.form["timestamp"])))
                 piazza_lecture_post_id = request.form["piazza_lecture_post_id"]
                 identity_msg = "posted Anonymously"
                 if request.form["anonymous"] == "nonanon":
@@ -625,7 +631,8 @@ def disable_piazza(course_ok_id, ok_id=None):
 
     for course in user_courses:
         if course['course_id'] == int_course_ok_id:
-            print(course_ok_id)
+            Piazza.unpin_post(post_id=request.form["piazza_master_post_id"],
+                              piazza_course_id=request.form["piazza_course_id"])
             db[Course.collection].update_one({
                 "course_ok_id": course_ok_id},
                 {
@@ -650,6 +657,8 @@ def disable_piazza(course_ok_id, ok_id=None):
     return jsonify(success=False,
                    message="Can only disable piazza for an OK course you are a part of"), 403
 
+@app.route('/course/<course_ok_id>/lecture/<lecture_url_name>/video/<int:video_index>/create_vitamin', methods=["POST"])
+@validate_and_pass_on_ok_id
 def create_vitamin(course_ok_id, lecture_url_name, video_index, ok_id=None):
     """Creates a vitamin in the specified video within a lecture of a course."""
     user_courses = get_updated_user_courses()
@@ -691,7 +700,7 @@ def create_resource(course_ok_id, lecture_url_name, video_index, ok_id=None):
                         'course_ok_id': course_ok_id,
                         'lecture_url_name': lecture_url_name,
                         'video_index': video_index
-                }):
+                    }):
                     try:
                         link = request.form.to_dict()['link']
                         Resource.add_resource(
@@ -748,3 +757,29 @@ def delete_resource(course_ok_id, lecture_url_name, video_index, resource_index,
             )
             return jsonify(success=True), 200
     return jsonify(success=False, message="Can only delete a resource on Hermes for an OK course you are a part of"), 403
+
+
+@app.route('/course/<course_ok_id>/lecture/<lecture_url_name>/video/<int:video_index>/answer_vitamin/<int:vitamin_index>', methods=["POST"])
+@validate_and_pass_on_ok_id
+def answer_vitamin(course_ok_id, lecture_url_name, video_index, vitamin_index, ok_id=None):
+    """Submits the user's answer to a given vitamin and returns if the user got it correct or not."""
+    user_courses = get_updated_user_courses()
+    int_course_ok_id = int(course_ok_id)
+    for course in user_courses:
+        if course['course_id'] == int_course_ok_id:
+            vitamin = db[Vitamin.collection].find_one({
+                'course_ok_id': course_ok_id,
+                'lecture_url_name': lecture_url_name,
+                'video_index': video_index,
+                'vitamin_index': vitamin_index
+            })
+            if vitamin:
+                ## Add SQL part for data collection/participation here.
+                submission = request.get_json().get('answer')
+                if submission == vitamin['answer']:
+                    return jsonify(success=True, message="Correct!"), 200
+                else:
+                    return jsonify(success=True, message="Incorrect, please try again."), 200
+            else:
+                return jsonify(success=False, message="Invalid vitamin"), 404
+    return jsonify(success=False, message="Can only answer a vitamin on Hermes for an OK course you are a part of"), 403

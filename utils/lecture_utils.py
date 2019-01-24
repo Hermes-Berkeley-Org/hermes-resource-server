@@ -29,7 +29,10 @@ def create_lecture(course_ok_id, db, lecture_title,
     # check for duplicate title
     lecture_url_name = encode_url(lecture_title)
     if db[Lecture.collection].find_one(
-        {'lecture_url_name': lecture_url_name}
+        {
+            'lecture_url_name': lecture_url_name,
+            'course_ok_id': course_ok_id
+        }
     ):
         raise LectureAlreadyExists(
             'A lecture with title {0} in course OK ID {1} has already been created'
