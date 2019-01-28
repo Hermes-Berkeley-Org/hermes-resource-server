@@ -541,20 +541,19 @@ def create_piazza_bot(course_ok_id, ok_id=None):
                 piazza_master_post_id = request.form['piazza_master_post_id']
 
                 if piazza_master_post_id:  # A Master post has already been created
-                    Course.update_course(course_ok_id, db,
-                                         piazza_active="active")
-
-                    Piazza.pin_post(post_id=piazza_master_post_id,
-                                    piazza_course_id=piazza_course_id)
-
-                    Piazza.add_unadded_lectures(db, course_ok_id)
-                    Piazza.recreate_master_post(
-                        master_id=piazza_master_post_id,
-                        course_ok_id=course_ok_id,
-                        piazza_course_id=piazza_course_id,
-                        db=db)
-                    return jsonify(success=True), 200
-
+                    Course.update_course(course_ok_id, db,piazza_active="active")
+                    if Piazza.post_exists(post_id=piazza_master_post_id,
+                            piazza_course_id=piazza_course_id):
+                        Piazza.pin_post(post_id=piazza_master_post_id,
+                                        piazza_course_id=piazza_course_id)
+                        Piazza.add_unadded_lectures(piazza_course_id, piazza_master_post_id, db, course_ok_id)
+                        Piazza.recreate_master_post(
+                            master_id=piazza_master_post_id,
+                            course_ok_id=course_ok_id,
+                            piazza_course_id=piazza_course_id,
+                            db=db
+                            )
+                        return jsonify(success=True), 200
                 try:
                     master_post = Piazza.create_master_post(
                         piazza_course_id=piazza_course_id,
@@ -562,7 +561,7 @@ def create_piazza_bot(course_ok_id, ok_id=None):
                     )
                     master_id = master_post["nr"]
 
-                    Piazza.add_unadded_lectures(db, course_ok_id)
+                    Piazza.add_unadded_lectures(piazza_course_id, piazza_master_post_id, db, course_ok_id)
                     Piazza.recreate_master_post(master_id=master_id,
                                                 course_ok_id=course_ok_id,
                                                 piazza_course_id=piazza_course_id,
@@ -609,7 +608,8 @@ def ask_piazza_question(course_ok_id, lecture_url_name, video_index,
                     data = get_user_data()
                     name = data["name"]
                     email = data["email"]
-                try:
+                if piazza.post_exists(post_id=request.form["piazza_lecture_post_id"],
+                        piazza_course_id=request.form["piazza_course_id"]):
                     identity_msg = "posted on behalf of " + name
                     post_id = Piazza.create_followup_question(
                         piazza_lecture_post_id, request.form["video_url"], tag,
@@ -628,10 +628,9 @@ def ask_piazza_question(course_ok_id, lecture_url_name, video_index,
                             identity=name)
                     except Exception as e:
                         pass
-                except Exception as e:
-                    return jsonify(success=False,
-                                   message="Piazza Post is not active, please tell an instructor to a. recreate the post on Hermes or b. Delete this lecture"), 403
-                return jsonify(success=True), 200
+                    return jsonify(success=True), 200
+                return jsonify(success=False,
+                               message="Piazza Post is not active, please tell an instructor to a. recreate the post on Hermes or b. Delete this lecture"), 403
             return jsonify(success=False,
                            message="Please enter a question"), 403
     return jsonify(success=False,
@@ -646,8 +645,6 @@ def disable_piazza(course_ok_id, ok_id=None):
 
     for course in user_courses:
         if course['course_id'] == int_course_ok_id:
-            Piazza.unpin_post(post_id=request.form["piazza_master_post_id"],
-                              piazza_course_id=request.form["piazza_course_id"])
             db[Course.collection].update_one({
                 "course_ok_id": course_ok_id},
                 {
@@ -656,16 +653,18 @@ def disable_piazza(course_ok_id, ok_id=None):
                     }
                 }
             )
-            try:
-                Piazza.unpin_post(post_id=request.form["piazza_master_id"],
+            if Piazza.post_exists(post_id=request.form["piazza_master_post_id"],
+                              piazza_course_id=request.form[
+                                  "piazza_course_id"]):
+                Piazza.unpin_post(post_id=request.form["piazza_master_post_id"],
                                   piazza_course_id=request.form[
                                       "piazza_course_id"])
-            except:
+            else:
                 db[Course.collection].update_one({
                     "course_ok_id": course_ok_id},
                     {
                         "$set": {
-                            "piazza_course_id": ""
+                            "piazza_master_post_id": ""
                         }
                     }
                 )
@@ -836,6 +835,7 @@ def answer_vitamin(course_ok_id, lecture_url_name, video_index, vitamin_index,
     """Submits the user's answer to a given vitamin and returns if the user got it correct or not."""
     user_courses = get_updated_user_courses()
     int_course_ok_id = int(course_ok_id)
+    user_ok_id = get_user_data()["id"]
     for course in user_courses:
         if course['course_id'] == int_course_ok_id:
             vitamin = db[Vitamin.collection].find_one({
@@ -845,7 +845,9 @@ def answer_vitamin(course_ok_id, lecture_url_name, video_index, vitamin_index,
                 'vitamin_index': vitamin_index
             })
             if vitamin:
-                ## Add SQL part for data collection/participation here.
+                time = datetime.now()
+
+                sql_client.answer_vitamin(user_ok_id, course_ok_id, time.strftime("%Y-%m-%d %H:%M:%S"), vitamin['answer'], video_index, vitamin_index, lecture_url_name)
                 submission = request.get_json().get('answer')
                 if submission == vitamin['answer']:
                     return jsonify(success=True, message="Correct!"), 200

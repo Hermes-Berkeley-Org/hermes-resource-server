@@ -229,16 +229,31 @@ def delete_post(network=None, piazza_course_id=None, cid=None, post_data=None,
     except:
         return
 
-def add_unadded_lectures(db,course_ok_id):
+def add_unadded_lectures(piazza_course_id, piazza_master_post_id, db,course_ok_id):
     not_on_piazza_db_obj = db[Lecture.collection].find({
         "lecture_piazza_id": "",
         "course_ok_id": course_ok_id
     })
 
     for lecture in not_on_piazza_db_obj:
-        lecture_post = Piazza.create_lecture_post(
+        lecture_post = create_lecture_post(
             lecture_title=lecture["name"],
             date=lecture["date"],
             piazza_course_id=piazza_course_id,
-            master_id=piazza_master_post_id
+            master_id=piazza_master_post_id,
+            course_ok_id=course_ok_id,
+            lecture_url_name=lecture["lecture_url_name"],
+            db=db
         )
+
+def post_exists(post_id, network=None, piazza_course_id = None):
+    try:
+        if not network:
+            network = piazza.network(piazza_course_id)
+        rpc = network._rpc
+        post_data = network.get_post(post_id)
+        post_data['history'][0]
+        return True
+    except Exception as e:
+        print(e)
+        return False
