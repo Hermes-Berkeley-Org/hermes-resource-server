@@ -401,6 +401,12 @@ def delete_lecture(course_ok_id, lecture_url_name, ok_id=None):
                     'lecture_url_name': lecture_url_name
                 }
             )
+            db[Resource.collection].remove(
+                {
+                    'course_ok_id': course_ok_id,
+                    'lecture_url_name': lecture_url_name
+                }
+            )
             db_obj = db[Lecture.collection].find(
                 {
                     "course_ok_id": course_ok_id
