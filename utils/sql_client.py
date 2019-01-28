@@ -1,3 +1,4 @@
+import psycopg2.extras as extras
 
 class SQLClient:
 
@@ -13,7 +14,6 @@ class SQLClient:
 
     def post_question(self, user_email, course_ok_id, lecture_url_name, video_index,
                       piazza_question_id, seconds, identity):
-        print("here")
         cur = self.conn.cursor()
         cur.execute(
             'EXECUTE post_question (%s, %s, %s, %s, %s, %s, %s)',
@@ -21,11 +21,10 @@ class SQLClient:
             seconds, identity)
         )
         self.conn.commit()
-        print("emitted")
         cur.close()
 
     def retrieve_questions_for_timestamp(self, start_second, end_second, course_ok_id, lecture_url_name, video_index):
-        cur = self.conn.cursor()
+        cur = self.conn.cursor(cursor_factory=extras.DictCursor)
         query = cur.execute(
             'EXECUTE retrieve_questions_for_timestamp (%s, %s, %s, %s, %s)',
             (start_second, end_second, course_ok_id, lecture_url_name, video_index)

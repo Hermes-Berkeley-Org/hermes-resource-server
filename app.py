@@ -618,14 +618,13 @@ def ask_piazza_question(course_ok_id, lecture_url_name, video_index, ok_id=None)
                                     user_email=email,
                                     course_ok_id=course_ok_id,
                                     lecture_url_name=lecture_url_name,
-                                    video_index=str(video_index),
+                                    video_index=video_index,
                                     piazza_question_id=post_id,
                                     seconds =request.form["seconds"],
                                     identity=name)
                     except Exception as e:
-                        print(e)
+                        pass
                 except Exception as e:
-                    print(e)
                     return jsonify(success=False,
                                    message="Piazza Post is not active, please tell an instructor to a. recreate the post on Hermes or b. Delete this lecture"), 403
                 return jsonify(success=True), 200
@@ -669,7 +668,7 @@ def disable_piazza(course_ok_id, ok_id=None):
     return jsonify(success=False,
                    message="Can only disable piazza for an OK course you are a part of"), 403
 
-@app.route('/course/<course_ok_id>/lecture/<lecture_url_name>/video/<int:video_index>/get_questions_in_range', methods=["GET"])
+@app.route('/course/<course_ok_id>/lecture/<lecture_url_name>/video/<int:video_index>/questions', methods=["GET"])
 @validate_and_pass_on_ok_id
 def get_questions_in_range(course_ok_id, lecture_url_name, video_index, ok_id=None):
     user_courses = get_updated_user_courses()
@@ -679,10 +678,9 @@ def get_questions_in_range(course_ok_id, lecture_url_name, video_index, ok_id=No
             sql_returned = sql_client.retrieve_questions_for_timestamp(request.form["start_second"], request.form["end_second"], course_ok_id, lecture_url_name, video_index)
             questions = []
             for question in sql_returned:
-                followup = Piazza.get_followup(request.form["lecture_post_id"],question[4], piazza_course_id=request.form["piazza_course_id"])
+                followup = Piazza.get_followup(request.form["lecture_post_id"],question["piazza_question_id"], piazza_course_id=request.form["piazza_course_id"])
                 content = followup["subject"].split("</b>")[1]
-                questions.append([content, question[5], question[6]])
-            print(questions)
+                questions.append([content, question["seconds"], question["identity"]])
             return json_dump({
                 'questions': questions
             })

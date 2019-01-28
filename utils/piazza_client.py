@@ -1,6 +1,5 @@
 import os
 import piazza_api as p
-from pprint import pprint
 from .db_utils import User, Course, Lecture, Vitamin, Resource, Video, \
     Transcript
 
