@@ -334,7 +334,7 @@ def create_lecture(course_ok_id, ok_id=None):
                         master_id=course_obj["piazza_master_post_id"]
                     )
                     Piazza.recreate_master_post(
-                                                request.form["master_id"],
+                                                request.form["piazza_master_post_id"],
                                                 course_ok_id=course_ok_id,
                                                 piazza_course_id=request.form[
                                                     "piazza_course_id"], db=db)
@@ -396,7 +396,7 @@ def delete_lecture(course_ok_id, lecture_url_name, ok_id=None):
                 Piazza.delete_post(
                     piazza_course_id=request.form["piazza_course_id"],
                     cid=request.form["post_id"])
-                Piazza.recreate_master_post(request.form["master_id"],
+                Piazza.recreate_master_post(request.form["piazza_master_post_id"],
                                         piazza_course_id=request.form[
                                                 "piazza_course_id"], db=db)
             return jsonify(success=True), 200
@@ -581,9 +581,9 @@ def create_piazza_bot(course_ok_id, ok_id=None):
                    message="Can only create a PiazzaBot on behalf of Hermes for an OK course you are a part of"), 403
 
 
-@app.route('/course/<course_ok_id>/question', methods=["POST"])
+@app.route('/course/<course_ok_id>/lecture/<lecture_url_name>/video/<int:video_index>/question', methods=["POST"])
 @validate_and_pass_on_ok_id
-def ask_piazza_question(course_ok_id, ok_id=None):
+def ask_piazza_question(course_ok_id, lecture_url_name, video_index, ok_id=None):
     """
     For a question need the following items in a form:
     question, video title, timestamp, piazza_lecture_post_id (the id on Piazza
@@ -595,12 +595,15 @@ def ask_piazza_question(course_ok_id, ok_id=None):
         if course['course_id'] == int_course_ok_id:
             name = "anonymously"
             if request.form["question"]:
+                timestamp = convert_seconds_to_timestamp(int(request.form["seconds"]))
                 tag = "{0} {1}:".format(
-                    request.form["video_title"], convert_seconds_to_timestamp(int(request.form["timestamp"])))
+                    request.form["video_title"], timestamp)
                 piazza_lecture_post_id = request.form["piazza_lecture_post_id"]
                 identity_msg = "posted Anonymously"
                 if request.form["anonymous"] == "nonanon":
-                    name = get_user_data()["name"]
+                    data = get_user_data()
+                    name = data["name"]
+                    email = data["email"]
                 try:
                     identity_msg = "posted on behalf of " + name
                     post_id = Piazza.create_followup_question(
@@ -608,12 +611,21 @@ def ask_piazza_question(course_ok_id, ok_id=None):
                         request.form["question"],
                         piazza_course_id=request.form["piazza_course_id"],
                         identity_msg=identity_msg
-                    )
+                    )["id"]
                     try:
-                        sql_client.post_question(None,None,None,None,None,None)
+
+                        sql_client.post_question(
+                                    user_email=email,
+                                    course_ok_id=course_ok_id,
+                                    lecture_url_name=lecture_url_name,
+                                    video_index=str(video_index),
+                                    piazza_question_id=post_id,
+                                    seconds =request.form["seconds"],
+                                    identity=name)
                     except Exception as e:
                         print(e)
-                except:
+                except Exception as e:
+                    print(e)
                     return jsonify(success=False,
                                    message="Piazza Post is not active, please tell an instructor to a. recreate the post on Hermes or b. Delete this lecture"), 403
                 return jsonify(success=True), 200
@@ -653,6 +665,27 @@ def disable_piazza(course_ok_id, ok_id=None):
                         }
                     }
                 )
+            return jsonify(success=True), 200
+    return jsonify(success=False,
+                   message="Can only disable piazza for an OK course you are a part of"), 403
+
+@app.route('/course/<course_ok_id>/lecture/<lecture_url_name>/video/<int:video_index>/get_questions_in_range', methods=["GET"])
+@validate_and_pass_on_ok_id
+def get_questions_in_range(course_ok_id, lecture_url_name, video_index, ok_id=None):
+    user_courses = get_updated_user_courses()
+    int_course_ok_id = int(course_ok_id)
+    for course in user_courses:
+        if course['course_id'] == int_course_ok_id:
+            sql_returned = sql_client.retrieve_questions_for_timestamp(request.form["start_second"], request.form["end_second"], course_ok_id, lecture_url_name, video_index)
+            questions = []
+            for question in sql_returned:
+                followup = Piazza.get_followup(request.form["lecture_post_id"],question[4], piazza_course_id=request.form["piazza_course_id"])
+                content = followup["subject"].split("</b>")[1]
+                questions.append([content, question[5], question[6]])
+            print(questions)
+            return json_dump({
+                'questions': questions
+            })
             return jsonify(success=True), 200
     return jsonify(success=False,
                    message="Can only disable piazza for an OK course you are a part of"), 403

@@ -1,5 +1,6 @@
 import os
 import piazza_api as p
+from pprint import pprint
 from .db_utils import User, Course, Lecture, Vitamin, Resource, Video, \
     Transcript
 
@@ -145,7 +146,7 @@ def get_followup(post_id, followup_id, network=None, piazza_course_id=None):
     rpc = network._rpc
     lecture_post = network.get_post(post_id)
     for child in lecture_post['children']:
-        if child['uid'] == followup_id:
+        if child['id'] == followup_id:
             return child
 
 
