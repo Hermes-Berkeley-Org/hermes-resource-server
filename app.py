@@ -688,7 +688,7 @@ def get_questions_in_range(course_ok_id, lecture_url_name, video_index, ok_id=No
             })
             return jsonify(success=True), 200
     return jsonify(success=False,
-                   message="Can only disable piazza for an OK course you are a part of"), 403
+                   message="Can only get questions for an OK course you are a part of"), 403
 
 @app.route('/course/<course_ok_id>/lecture/<lecture_url_name>/video/<int:video_index>/create_vitamin', methods=["POST"])
 @validate_and_pass_on_ok_id
