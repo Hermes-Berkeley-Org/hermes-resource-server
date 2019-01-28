@@ -40,7 +40,8 @@ def create_master_post(content="", network=None, piazza_course_id=None):
     return master_post
 
 
-def create_lecture_post(lecture_title, date,db,master_id,course_ok_id, lecture_url_name,
+def create_lecture_post(lecture_title, date, db, master_id, course_ok_id,
+                        lecture_url_name,
                         network=None, piazza_course_id=None, content=None):
     """
     Creates a lecture post on piazza for a given lecture number. Takes in
@@ -85,7 +86,8 @@ will (hopefully) respond.".format(lecture_title)
 
 
 def create_followup_question(lecture_post_id, url, tag, question, network=None,
-                             piazza_course_id=None, identity_msg="posted Anonymously"):
+                             piazza_course_id=None,
+                             identity_msg="posted Anonymously"):
     """Adds a followup question to a given lecture post. Takes in a lecture number,
     course id, and contents of a question.
     piazza_course_id: (the id in the url)- piazza.com/<piazza_course_id>
@@ -188,7 +190,6 @@ def recreate_master_post(master_id, course_ok_id, db, network=None,
               cid=master_id, content=content)
 
 
-
 def pin_post(post_id, network=None, piazza_course_id=None):
     if not network:
         network = piazza.network(piazza_course_id)
@@ -196,7 +197,8 @@ def pin_post(post_id, network=None, piazza_course_id=None):
     post = network.get_post(post_id)
     post_content = post["history"][0]["content"]
     post_content += "<p>#pin</p>"
-    edit_post(network=network, piazza_course_id=piazza_course_id, cid=post_id, content=post_content)
+    edit_post(network=network, piazza_course_id=piazza_course_id, cid=post_id,
+              content=post_content)
 
 
 def unpin_post(post_id, network=None, piazza_course_id=None):
@@ -205,7 +207,8 @@ def unpin_post(post_id, network=None, piazza_course_id=None):
     rpc = network._rpc
     post = network.get_post(post_id)
     post_content = post["history"][0]["content"].replace("#pin", "")
-    edit_post(network=network, piazza_course_id=piazza_course_id, cid=post_id, content=post_content)
+    edit_post(network=network, piazza_course_id=piazza_course_id, cid=post_id,
+              content=post_content)
 
 
 def delete_post(network=None, piazza_course_id=None, cid=None, post_data=None,
@@ -229,16 +232,34 @@ def delete_post(network=None, piazza_course_id=None, cid=None, post_data=None,
     except:
         return
 
-def add_unadded_lectures(db,course_ok_id):
+
+def add_unadded_lectures(piazza_course_id, piazza_master_post_id, db,
+                         course_ok_id):
     not_on_piazza_db_obj = db[Lecture.collection].find({
         "lecture_piazza_id": "",
         "course_ok_id": course_ok_id
     })
 
     for lecture in not_on_piazza_db_obj:
-        lecture_post = Piazza.create_lecture_post(
+        lecture_post = create_lecture_post(
             lecture_title=lecture["name"],
             date=lecture["date"],
             piazza_course_id=piazza_course_id,
-            master_id=piazza_master_post_id
+            master_id=piazza_master_post_id,
+            course_ok_id=course_ok_id,
+            lecture_url_name=lecture["lecture_url_name"],
+            db=db
         )
+
+
+def post_exists(post_id, network=None, piazza_course_id=None):
+    try:
+        if not network:
+            network = piazza.network(piazza_course_id)
+        rpc = network._rpc
+        post_data = network.get_post(post_id)
+        post_data['history'][0]
+        return True
+    except Exception as e:
+        print(e)
+        return False

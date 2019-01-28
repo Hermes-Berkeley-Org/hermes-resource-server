@@ -30,6 +30,29 @@ class SQLClient:
             (start_second, end_second, course_ok_id, lecture_url_name, video_index)
         )
         self.conn.commit()
-        cursor  = cur.fetchall()
+        rows = cur.fetchall()
         cur.close()
-        return cursor
+        return rows
+
+    def answer_vitamin(self,user_ok_id,course_ok_id,answer,
+                        video_index, vitamin_index,lecture_url_name):
+        cur = self.conn.cursor()
+        print("here")
+
+        cur.execute(
+            'EXECUTE answer_vitamin (%s, %s, %s, %s, %s, %s)',
+            (user_ok_id, course_ok_id, answer,video_index,
+            vitamin_index, lecture_url_name)
+        )
+        self.conn.commit()
+        cur.close()
+
+
+    def watch_video(self,user_ok_id, course_ok_id,time_watched,video_index, lecture_url_name):
+        cur = self.conn.cursor()
+        cur.execute(
+            'EXECUTE watch_video (%s, %s, %s, %s, %s)',
+            (user_ok_id, course_ok_id,time_watched,video_index, lecture_url_name)
+        )
+        self.conn.commit()
+        cur.close()
