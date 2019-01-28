@@ -618,7 +618,6 @@ def ask_piazza_question(course_ok_id, lecture_url_name, video_index,
                         identity_msg=identity_msg
                     )["id"]
                     try:
-
                         sql_client.post_question(
                             user_email=email,
                             course_ok_id=course_ok_id,
