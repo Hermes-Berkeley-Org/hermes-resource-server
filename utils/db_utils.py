@@ -260,7 +260,7 @@ class Resource(DBObject):
         DBObject.__init__(self, **attr)
 
     @staticmethod
-    def add_resource(course_ok_id, lecture_url_name, video_index, link, db):
+    def add_resource(course_ok_id, lecture_url_name, video_index, db, resource_data):
         video = db[Video.collection].find_one(
             {
                 "course_ok_id": course_ok_id,
@@ -271,11 +271,11 @@ class Resource(DBObject):
         resource_index = video['num_resources']
         insert(
             Resource(
-                link = link,
                 resource_index = resource_index,
                 course_ok_id = course_ok_id,
                 lecture_url_name = lecture_url_name,
-                video_index = video_index
+                video_index = video_index,
+                **resource_data
             ),
             db
         )
