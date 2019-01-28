@@ -407,6 +407,7 @@ def delete_lecture(course_ok_id, lecture_url_name, ok_id=None):
                     cid=request.args["lecture_piazza_id"])
                 Piazza.recreate_master_post(
                     request.args["piazza_master_post_id"],
+                    course_ok_id=course_ok_id,
                     piazza_course_id=request.args["piazza_course_id"],
                     db=db)
             return jsonify(success=True), 200
