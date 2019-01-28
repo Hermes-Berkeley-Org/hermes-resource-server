@@ -46,6 +46,7 @@ sh.setFormatter(
 )
 logger.addHandler(sh)
 logger.setLevel(logging.INFO)
+logger.info('Backend READY')
 
 ok_server = app.config['OK_SERVER']
 
@@ -383,6 +384,12 @@ def delete_lecture(course_ok_id, lecture_url_name, ok_id=None):
                 }
             )
             db[Vitamin.collection].remove(
+                {
+                    'course_ok_id': course_ok_id,
+                    'lecture_url_name': lecture_url_name
+                }
+            )
+            db[Resource.collection].remove(
                 {
                     'course_ok_id': course_ok_id,
                     'lecture_url_name': lecture_url_name
@@ -739,9 +746,88 @@ def create_vitamin(course_ok_id, lecture_url_name, video_index, ok_id=None):
                    message="Can only create a vitamin on Hermes for an OK course you are a part of"), 403
 
 
-@app.route(
-    '/course/<course_ok_id>/lecture/<lecture_url_name>/video/<int:video_index>/create_resource',
-    methods=["POST"])
+@app.route('/course/<course_ok_id>/lecture/<lecture_url_name>/video/<int:video_index>/edit_vitamin/<int:vitamin_index>', methods=["POST"])
+@validate_and_pass_on_ok_id
+def edit_vitamin(course_ok_id, lecture_url_name, video_index, vitamin_index, ok_id=None):
+    """Creates a vitamin in the specified video within a lecture of a course."""
+    user_courses = get_updated_user_courses()
+    int_course_ok_id = int(course_ok_id)
+    for course in user_courses:
+        if course['course_id'] == int_course_ok_id:
+            if course['role'] == consts.INSTRUCTOR:
+                try:
+                    vitamin = request.get_json().get('vitamin')
+                    # new_vitamin is a DB/BSON object
+                    vitamin.pop('_id')
+                    db[Vitamin.collection].update_one(
+                        {
+                            'course_ok_id': course_ok_id,
+                            'lecture_url_name': lecture_url_name,
+                            'video_index': video_index,
+                            'vitamin_index': vitamin_index
+                        },
+                        {
+                            '$set': vitamin
+                        },
+                        upsert=False
+                    )
+                    return jsonify(success=True), 200
+                except ValueError as e:
+                    return jsonify(success=False, message=str(e)), 500
+            return jsonify(success=False, message="Only instructors can create vitamins"), 403
+    return jsonify(success=False, message="Can only create a vitamin on Hermes for an OK course you are a part of"), 403
+
+@app.route('/course/<course_ok_id>/lecture/<lecture_url_name>/video/<int:video_index>/edit_resource/<int:resource_index>', methods=["POST"])
+@validate_and_pass_on_ok_id
+def edit_resource(course_ok_id, lecture_url_name, video_index, resource_index, ok_id=None):
+    """Creates a vitamin in the specified video within a lecture of a course."""
+    user_courses = get_updated_user_courses()
+    int_course_ok_id = int(course_ok_id)
+    for course in user_courses:
+        if course['course_id'] == int_course_ok_id:
+            if course['role'] == consts.INSTRUCTOR:
+                try:
+                    db[Resource.collection].update_one(
+                        {
+                            'course_ok_id': course_ok_id,
+                            'lecture_url_name': lecture_url_name,
+                            'video_index': video_index,
+                            'resource_index': resource_index
+                        },
+                        {
+                            '$set': request.form.to_dict()
+                        },
+                        upsert=False
+                    )
+                    return jsonify(success=True), 200
+                except ValueError as e:
+                    return jsonify(success=False, message=str(e)), 500
+            return jsonify(success=False, message="Only instructors can create vitamins"), 403
+    return jsonify(success=False, message="Can only create a vitamin on Hermes for an OK course you are a part of"), 403
+
+@app.route('/course/<course_ok_id>/lecture/<lecture_url_name>/video/<int:video_index>/edit')
+@validate_and_pass_on_ok_id
+def edit_video(course_ok_id, lecture_url_name, video_index, ok_id=None):
+    """Gets all vitamins on a video"""
+    user_courses = get_updated_user_courses()
+    int_course_ok_id = int(course_ok_id)
+    for course in user_courses:
+        if course['course_id'] == int_course_ok_id:
+            return bson_dump({
+                "vitamins": db[Vitamin.collection].find({
+                    'course_ok_id': course_ok_id,
+                    'lecture_url_name': lecture_url_name,
+                    'video_index': video_index
+                }).sort("seconds", 1),
+                "resources": db[Resource.collection].find({
+                    'course_ok_id': course_ok_id,
+                    'lecture_url_name': lecture_url_name,
+                    'video_index': video_index
+                })
+            })
+    return jsonify(success=False, message="Can only get vitamins on Hermes for an OK course you are a part of"), 403
+
+@app.route('/course/<course_ok_id>/lecture/<lecture_url_name>/video/<int:video_index>/create_resource', methods=["POST"])
 @validate_and_pass_on_ok_id
 def create_resource(course_ok_id, lecture_url_name, video_index, ok_id=None):
     """Creates a resource in the specified video within a lecture of a course."""
@@ -757,13 +843,13 @@ def create_resource(course_ok_id, lecture_url_name, video_index, ok_id=None):
                     'video_index': video_index
                 }):
                     try:
-                        link = request.form.to_dict()['link']
                         Resource.add_resource(
-                            course_ok_id=course_ok_id,
-                            lecture_url_name=lecture_url_name,
-                            video_index=video_index,
-                            link=link,
-                            db=db
+                            course_ok_id = course_ok_id,
+                            lecture_url_name = lecture_url_name,
+                            video_index = video_index,
+                            db = db,
+                            resource_data = request.form.to_dict()
+                          
                         )
                         return jsonify(success=True), 200
                     except ValueError as e:
