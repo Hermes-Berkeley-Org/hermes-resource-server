@@ -218,6 +218,7 @@ def course(course_ok_id, ok_id=None):
                 "date": 1,
                 "lecture_url_name": 1,
                 "video_titles": 1,
+                "lecture_piazza_id": 1,
                 "_id": 0
             }
         ).sort([('lecture_index', 1)])
