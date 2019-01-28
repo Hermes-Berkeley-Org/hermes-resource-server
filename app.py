@@ -529,7 +529,6 @@ def create_course(course_ok_id, ok_id=None):
 @app.route('/course/<course_ok_id>/create_piazza_bot', methods=['POST'])
 @validate_and_pass_on_ok_id
 def create_piazza_bot(course_ok_id, ok_id=None):
-    print(request.form.to_dict())
     """
     Creates a piazza bot. Extra steps needed to make a piazza bot work on Piazza:
     1. Register the Hermes email as an instructor on course Piazza
