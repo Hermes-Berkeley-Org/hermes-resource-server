@@ -620,7 +620,7 @@ def ask_piazza_question(course_ok_id, lecture_url_name, video_index,
                     data = get_user_data()
                     name = data["name"]
                     email = data["email"]
-                if piazza.post_exists(
+                if Piazza.post_exists(
                         post_id=request.form["piazza_lecture_post_id"],
                         piazza_course_id=request.form["piazza_course_id"]):
                     identity_msg = "posted on behalf of " + name
