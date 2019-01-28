@@ -402,12 +402,12 @@ def delete_lecture(course_ok_id, lecture_url_name, ok_id=None):
             ).sort("date", 1)
             if request.args["piazza_active"] == "active":
                 Piazza.delete_post(
-                    piazza_course_id=request.form["piazza_course_id"],
-                    cid=request.form["post_id"])
+                    piazza_course_id=request.args["piazza_course_id"],
+                    cid=request.args["lecture_piazza_id"])
                 Piazza.recreate_master_post(
-                    request.form["piazza_master_post_id"],
-                    piazza_course_id=request.form[
-                        "piazza_course_id"], db=db)
+                    request.args["piazza_master_post_id"],
+                    piazza_course_id=request.args["piazza_course_id"],
+                    db=db)
             return jsonify(success=True), 200
     return jsonify(success=False,
                    message="Can only delete a lecture on Hermes for an OK course you are a part of"), 403
@@ -638,10 +638,10 @@ def ask_piazza_question(course_ok_id, lecture_url_name, video_index,
                         pass
                 except Exception as e:
                     return jsonify(success=False,
-                                   message="Piazza Post is not active, please tell an instructor to a. recreate the post on Hermes or b. Delete this lecture"), 403
+                                   message="Piazza Post is not active, please tell an instructor to a. recreate the post on Hermes or b. Delete this lecture"), 400
                 return jsonify(success=True), 200
             return jsonify(success=False,
-                           message="Please enter a question"), 403
+                           message="Please enter a question"), 400
     return jsonify(success=False,
                    message="Can only create ask a question for an OK course you are a part of"), 403
 
@@ -849,7 +849,7 @@ def create_resource(course_ok_id, lecture_url_name, video_index, ok_id=None):
                             video_index = video_index,
                             db = db,
                             resource_data = request.form.to_dict()
-                          
+
                         )
                         return jsonify(success=True), 200
                     except ValueError as e:
