@@ -41,7 +41,7 @@ PREPARE retrieve_questions_for_timestamp as
   SELECT * FROM piazza_questions WHERE seconds >= $1 AND seconds <= $2 AND course_ok_id=($3) AND lecture_url_name=($4) AND video_index=($5);
 
 PREPARE answer_vitamin as
-  INSERT INTO vitamin_answers VALUES ($1, $2, $3, $4, $5, $6, $7);
+  INSERT INTO vitamin_answers VALUES ($1, $2, localtimestamp, $3, $4, $5, $6);
 
 PREPARE watch_video as
-  INSERT INTO videos_watched VALUES ($1, $2, $3, $4, $5);
+  INSERT INTO videos_watched VALUES ($1, $2, $3, $4, $5)

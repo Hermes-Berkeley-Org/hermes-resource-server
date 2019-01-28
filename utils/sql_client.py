@@ -34,14 +34,14 @@ class SQLClient:
         cur.close()
         return rows
 
-    def answer_vitamin(self,user_ok_id,course_ok_id, time_answered,answer,
+    def answer_vitamin(self,user_ok_id,course_ok_id,answer,
                         video_index, vitamin_index,lecture_url_name):
         cur = self.conn.cursor()
         print("here")
-        
+
         cur.execute(
-            'EXECUTE answer_vitamin (%s, %s, %s, %s, %s, %s, %s)',
-            (user_ok_id, course_ok_id, time_answered, answer,video_index,
+            'EXECUTE answer_vitamin (%s, %s, %s, %s, %s, %s)',
+            (user_ok_id, course_ok_id, answer,video_index,
             vitamin_index, lecture_url_name)
         )
         self.conn.commit()
