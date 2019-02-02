@@ -610,14 +610,13 @@ def ask_piazza_question(course_ok_id, lecture_url_name, video_index,
     int_course_ok_id = int(course_ok_id)
     for course in user_courses:
         if course['course_id'] == int_course_ok_id:
-            name = "anonymously"
+            name, email = "anonymous", None
             if request.form["question"]:
                 timestamp = convert_seconds_to_timestamp(
                     int(request.form["seconds"]))
                 tag = "{0} {1}:".format(
                     request.form["video_title"], timestamp)
                 piazza_lecture_post_id = request.form["piazza_lecture_post_id"]
-                identity_msg = "posted Anonymously"
                 if request.form["anonymous"] == "nonanon":
                     data = get_user_data()
                     name = data["name"]
@@ -634,15 +633,15 @@ def ask_piazza_question(course_ok_id, lecture_url_name, video_index,
                     )["id"]
                     try:
                         sql_client.post_question(
-                            user_email=email,
+                            user_email=email or '',
                             course_ok_id=course_ok_id,
                             lecture_url_name=lecture_url_name,
                             video_index=video_index,
                             piazza_question_id=post_id,
                             seconds=request.form["seconds"],
-                            identity=name)
+                            identity=name or '')
                     except Exception as e:
-                        pass
+                        logger.warn("Piazza question not posted to SQL", e)
                     return jsonify(success=True), 200
                 return jsonify(success=False,
                                message="Piazza Post is not active, please tell an instructor to a. recreate the post on Hermes or b. Delete this lecture"), 403
@@ -699,17 +698,20 @@ def get_questions_in_range(course_ok_id, lecture_url_name, video_index,
     for course in user_courses:
         if course['course_id'] == int_course_ok_id:
             sql_returned = sql_client.retrieve_questions_for_timestamp(
-                request.form["start_second"], request.form["end_second"],
+                int(request.args["start_second"]), int(request.args["end_second"]),
                 course_ok_id, lecture_url_name, video_index)
             questions = []
             for question in sql_returned:
-                followup = Piazza.get_followup(request.form["lecture_post_id"],
+                followup = Piazza.get_followup(request.args["lecture_post_id"],
                                                question["piazza_question_id"],
-                                               piazza_course_id=request.form[
+                                               piazza_course_id=request.args[
                                                    "piazza_course_id"])
                 content = followup["subject"].split("</b>")[1]
-                questions.append(
-                    [content, question["seconds"], question["identity"]])
+                questions.append({
+                    "content": content,
+                    "seconds": question["seconds"],
+                    "identity": question["identity"]
+                })
             return json_dump({
                 'questions': questions
             })
