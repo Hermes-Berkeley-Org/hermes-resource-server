@@ -38,4 +38,7 @@ PREPARE answer_vitamin as
   INSERT INTO vitamin_answers VALUES ($1, $2, localtimestamp, $3, $4, $5, $6);
 
 PREPARE watch_video as
-  INSERT INTO videos_watched VALUES ($1, $2, localtimestamp, $3, $4)
+  INSERT INTO videos_watched VALUES ($1, $2, localtimestamp, $3, $4);
+
+PREPARE get_answered_vitamins AS 
+  SELECT * FROM vitamin_answers WHERE user_email = ($1) AND course_ok_id = ($2) AND lecture_url_name = ($3) AND video_index = ($4);

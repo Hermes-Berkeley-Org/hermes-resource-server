@@ -813,7 +813,7 @@ def edit_resource(course_ok_id, lecture_url_name, video_index, resource_index, o
             return jsonify(success=False, message="Only instructors can create vitamins"), 403
     return jsonify(success=False, message="Can only create a vitamin on Hermes for an OK course you are a part of"), 403
 
-@app.route('/course/<course_ok_id>/lecture/<lecture_url_name>/video/<int:video_index>/edit')
+@app.route('/course/<course_ok_id>/lecture/<lecture_url_name>/video/<int:video_index>/edit', methods=["GET"])
 @validate_and_pass_on_ok_id
 def edit_video(course_ok_id, lecture_url_name, video_index, ok_id=None):
     """Gets all vitamins on a video"""
@@ -821,18 +821,27 @@ def edit_video(course_ok_id, lecture_url_name, video_index, ok_id=None):
     int_course_ok_id = int(course_ok_id)
     for course in user_courses:
         if course['course_id'] == int_course_ok_id:
+            user_email = get_user_data()["email"]
+            rows = sql_client.get_answered_vitamins(user_email, course_ok_id, lecture_url_name, video_index)
+            indices = []
+            for vitamin in rows:
+                indices.append(vitamin['vitamin_index'])
             vitamins = db[Vitamin.collection].find({
                 'course_ok_id': course_ok_id,
                 'lecture_url_name': lecture_url_name,
                 'video_index': video_index
             }).sort("seconds", 1)
+            flagged_vitamins = []
+            for vitamin in vitamins:
+                if vitamin['vitamin_index'] in indices:
+                    vitamin["answered"] = True
+                else:
+                    vitamin["answered"] = False
+                # Iterating through vitamins destroys the vitamin object
+                flagged_vitamins.append(vitamin)
 
             return bson_dump({
-                "vitamins": db[Vitamin.collection].find({
-                    'course_ok_id': course_ok_id,
-                    'lecture_url_name': lecture_url_name,
-                    'video_index': video_index
-                }).sort("seconds", 1),
+                "vitamins": flagged_vitamins,
                 "resources": db[Resource.collection].find({
                     'course_ok_id': course_ok_id,
                     'lecture_url_name': lecture_url_name,

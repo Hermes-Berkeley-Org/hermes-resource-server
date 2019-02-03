@@ -61,3 +61,14 @@ class SQLClient:
         cur.execute(
             'EXECUTE lecture_attendence(%s, %s,%s,%s)'
         )
+
+    def get_answered_vitamins(self, user_email, course_ok_id, lecture_url_name, video_index):
+        cur = self.conn.cursor(cursor_factory=extras.DictCursor)
+        cur.execute(
+            'EXECUTE get_answered_vitamins(%s, %s, %s, %s)',
+            (user_email, course_ok_id, lecture_url_name, video_index)
+        )
+        self.conn.commit()
+        rows = cur.fetchall()
+        cur.close()
+        return rows
