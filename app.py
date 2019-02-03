@@ -944,8 +944,8 @@ def answer_vitamin(course_ok_id, lecture_url_name, video_index, vitamin_index,
                 time = datetime.now()
 
                 sql_client.answer_vitamin(user_ok_id, course_ok_id,
-                                          vitamin['answer'], video_index,
-                                          vitamin_index, lecture_url_name)
+                                          vitamin['answer'], lecture_url_name, video_index,
+                                          vitamin_index)
                 submission = request.get_json().get('answer')
                 if submission == vitamin['answer']:
                     return jsonify(success=True, message="Correct!"), 200
