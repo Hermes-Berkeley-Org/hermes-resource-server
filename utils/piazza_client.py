@@ -102,7 +102,7 @@ def create_followup_question(lecture_post_id, url, tag, question, network=None,
     post = rpc.content_get(lecture_post_id)
     followup = network.create_followup(
         post=post,
-        content="<b><a href={0}>{1}</a></b> {2}<p>{3}</p>".format(url, tag,
+        content="<b><a href={0}>{1}</a></b> {2} ({3})".format(url, tag,
                                                                   question,
                                                                   identity_msg)
     )
