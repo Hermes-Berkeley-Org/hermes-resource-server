@@ -146,7 +146,7 @@ def ok_code():
         'client_secret': app.config['CLIENT_SECRET'],
         'client_id': app.config['CLIENT_ID'],
         'grant_type': 'authorization_code',
-        'redirect_uri': 'https://ui-dot-hermes-199405.appspot.com/authorized'
+        'redirect_uri': '{0}/authorized'.format(os.environ.get('HERMES_UI_URL'))
     })
     if r.ok:
         return json_dump(r.json())
@@ -164,7 +164,7 @@ def ok_refresh():
         'client_secret': app.config['CLIENT_SECRET'],
         'client_id': app.config['CLIENT_ID'],
         'grant_type': 'refresh_token',
-        'redirect_uri': 'https://ui-dot-hermes-199405.appspot.com/authorized'
+        'redirect_uri': '{0}/authorized'.format(os.environ.get('HERMES_UI_URL'))
     })
     if r.ok:
         return json_dump(r.json())
