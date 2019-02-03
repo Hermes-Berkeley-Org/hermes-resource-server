@@ -30,7 +30,7 @@ from utils.sql_client import SQLClient
 import consts
 
 app = Flask(__name__)
-CORS(app, resources={r"/*": {"origins": os.environ.get('HERMES_UI_URL')}})
+CORS(app)
 app.config.from_object(Config)
 
 client = MongoClient(os.environ.get('MONGODB_URI'))
@@ -931,7 +931,7 @@ def answer_vitamin(course_ok_id, lecture_url_name, video_index, vitamin_index,
     """Submits the user's answer to a given vitamin and returns if the user got it correct or not."""
     user_courses = get_updated_user_courses()
     int_course_ok_id = int(course_ok_id)
-    user_ok_id = get_user_data()["id"]
+    user_ok_id = get_user_data()["email"]
     for course in user_courses:
         if course['course_id'] == int_course_ok_id:
             vitamin = db[Vitamin.collection].find_one({
@@ -944,8 +944,8 @@ def answer_vitamin(course_ok_id, lecture_url_name, video_index, vitamin_index,
                 time = datetime.now()
 
                 sql_client.answer_vitamin(user_ok_id, course_ok_id,
-                                          vitamin['answer'], video_index,
-                                          vitamin_index, lecture_url_name)
+                                          vitamin['answer'], lecture_url_name, video_index,
+                                          vitamin_index)
                 submission = request.get_json().get('answer')
                 if submission == vitamin['answer']:
                     return jsonify(success=True, message="Correct!"), 200
@@ -956,3 +956,25 @@ def answer_vitamin(course_ok_id, lecture_url_name, video_index, vitamin_index,
                 return jsonify(success=False, message="Invalid vitamin"), 404
     return jsonify(success=False,
                    message="Can only answer a vitamin on Hermes for an OK course you are a part of"), 403
+
+@app.route(
+    '/course/<course_ok_id>/lecture/<lecture_url_name>/video/<int:video_index>/watch_video',
+    methods=["POST"])
+@validate_and_pass_on_ok_id
+def watch_video(course_ok_id, lecture_url_name, video_index, ok_id=None):
+    user_courses = get_updated_user_courses()
+    int_course_ok_id = int(course_ok_id)
+    user_ok_id = get_user_data()["email"]
+    for course in user_courses:
+        if course['course_id'] == int_course_ok_id:
+            sql_client.watch_video(user_ok_id, course_ok_id, lecture_url_name,video_index)
+            return jsonify(success=True,message="Watched Video"), 200
+    return jsonify(success=False,
+                   message="Can only view a lecture on Hermes for an OK course you are a part of"), 403
+
+@app.route(
+    '/course/<course_ok_id>/lecture/<lecture_url_name>/video/<int:video_index>/watch_video',
+    methods=["GET"])
+@validate_and_pass_on_ok_id
+def get_lecture_attendence(course_ok_id, lecture_url_name, video_index, ok_id=None):
+    return

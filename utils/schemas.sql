@@ -1,11 +1,5 @@
 DEALLOCATE ALL;
 
-CREATE TABLE IF NOT EXISTS attendance  (
-    user_email          varchar NOT NULL,
-    course_ok_id        varchar NOT NULL,
-    lecture_url_name    varchar NOT NULL
-);
-
 CREATE TABLE IF NOT EXISTS piazza_questions  (
     user_email              varchar NOT NULL,
     course_ok_id            varchar NOT NULL,
@@ -17,21 +11,21 @@ CREATE TABLE IF NOT EXISTS piazza_questions  (
 );
 
 CREATE TABLE IF NOT EXISTS vitamin_answers  (
-    user_ok_id              varchar NOT NULL,
+    user_email              varchar NOT NULL,
     course_ok_id            varchar NOT NULL,
     time_answered           timestamp NOT NULL,
     answer                  varchar NOT NULL,
+    lecture_url_name        varchar NOT NULL,
     video_index             integer NOT NULL,
-    vitamin_index           integer NOT NULL,
-    lecture_url_name        varchar NOT NULL
+    vitamin_index           integer NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS videos_watched  (
-    user_ok_id              varchar NOT NULL,
+    user_email              varchar NOT NULL,
     course_ok_id            varchar NOT NULL,
-    time_watched             timestamp NOT NULL,
-    video_index             integer NOT NULL,
-    lecture_url_name        varchar NOT NULL
+    time_watched            timestamp NOT NULL,
+    lecture_url_name        varchar NOT NULL,
+    video_index             integer NOT NULL
 );
 
 PREPARE post_question AS
@@ -44,4 +38,4 @@ PREPARE answer_vitamin as
   INSERT INTO vitamin_answers VALUES ($1, $2, localtimestamp, $3, $4, $5, $6);
 
 PREPARE watch_video as
-  INSERT INTO videos_watched VALUES ($1, $2, $3, $4, $5)
+  INSERT INTO videos_watched VALUES ($1, $2, localtimestamp, $3, $4)
