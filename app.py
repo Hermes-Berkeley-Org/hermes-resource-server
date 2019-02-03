@@ -821,6 +821,12 @@ def edit_video(course_ok_id, lecture_url_name, video_index, ok_id=None):
     int_course_ok_id = int(course_ok_id)
     for course in user_courses:
         if course['course_id'] == int_course_ok_id:
+            vitamins = db[Vitamin.collection].find({
+                'course_ok_id': course_ok_id,
+                'lecture_url_name': lecture_url_name,
+                'video_index': video_index
+            }).sort("seconds", 1)
+
             return bson_dump({
                 "vitamins": db[Vitamin.collection].find({
                     'course_ok_id': course_ok_id,
@@ -931,7 +937,7 @@ def answer_vitamin(course_ok_id, lecture_url_name, video_index, vitamin_index,
     """Submits the user's answer to a given vitamin and returns if the user got it correct or not."""
     user_courses = get_updated_user_courses()
     int_course_ok_id = int(course_ok_id)
-    user_ok_id = get_user_data()["email"]
+    user_email = get_user_data()["email"]
     for course in user_courses:
         if course['course_id'] == int_course_ok_id:
             vitamin = db[Vitamin.collection].find_one({
@@ -941,9 +947,7 @@ def answer_vitamin(course_ok_id, lecture_url_name, video_index, vitamin_index,
                 'vitamin_index': vitamin_index
             })
             if vitamin:
-                time = datetime.now()
-
-                sql_client.answer_vitamin(user_ok_id, course_ok_id,
+                sql_client.answer_vitamin(user_email, course_ok_id,
                                           vitamin['answer'], lecture_url_name, video_index,
                                           vitamin_index)
                 submission = request.get_json().get('answer')
@@ -964,10 +968,10 @@ def answer_vitamin(course_ok_id, lecture_url_name, video_index, vitamin_index,
 def watch_video(course_ok_id, lecture_url_name, video_index, ok_id=None):
     user_courses = get_updated_user_courses()
     int_course_ok_id = int(course_ok_id)
-    user_ok_id = get_user_data()["email"]
+    user_email = get_user_data()["email"]
     for course in user_courses:
         if course['course_id'] == int_course_ok_id:
-            sql_client.watch_video(user_ok_id, course_ok_id, lecture_url_name,video_index)
+            sql_client.watch_video(user_email, course_ok_id, lecture_url_name,video_index)
             return jsonify(success=True,message="Watched Video"), 200
     return jsonify(success=False,
                    message="Can only view a lecture on Hermes for an OK course you are a part of"), 403
