@@ -30,7 +30,7 @@ from utils.sql_client import SQLClient
 import consts
 
 app = Flask(__name__)
-CORS(app, resources={r"/*": {"origins": os.environ.get('HERMES_UI_URL')}})
+CORS(app)
 app.config.from_object(Config)
 
 client = MongoClient(os.environ.get('MONGODB_URI'))
@@ -968,7 +968,13 @@ def watch_video(course_ok_id, lecture_url_name, video_index, ok_id=None):
     for course in user_courses:
         if course['course_id'] == int_course_ok_id:
             sql_client.watch_video(user_ok_id, course_ok_id, lecture_url_name,video_index)
-            eturn jsonify(success=True,
-                           message="Watched Video"), 200
+            return jsonify(success=True,message="Watched Video"), 200
     return jsonify(success=False,
                    message="Can only view a lecture on Hermes for an OK course you are a part of"), 403
+
+@app.route(
+    '/course/<course_ok_id>/lecture/<lecture_url_name>/video/<int:video_index>/watch_video',
+    methods=["GET"])
+@validate_and_pass_on_ok_id
+def get_lecture_attendence(course_ok_id, lecture_url_name, video_index, ok_id=None):
+    return

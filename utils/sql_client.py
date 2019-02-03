@@ -56,3 +56,9 @@ class SQLClient:
         )
         self.conn.commit()
         cur.close()
+
+    def get_lecture_attendence(self, user_email, course_ok_id, lecture_url_name):
+        cur = self.conn.cursor()
+        cur.execute(
+            'EXECUTE lecture_attendence(%s, %s,%s,%s)'
+        )
