@@ -41,8 +41,7 @@ class SQLClient:
 
         cur.execute(
             'EXECUTE answer_vitamin (%s, %s, %s, %s, %s, %s)',
-            (user_email, course_ok_id, answer,video_index,
-            lecture_url_name,vitamin_index)
+            (user_email, course_ok_id, answer,lecture_url_name,video_index,vitamin_index)
         )
         self.conn.commit()
         cur.close()
