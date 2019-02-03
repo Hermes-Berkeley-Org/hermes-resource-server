@@ -37,7 +37,6 @@ class SQLClient:
     def answer_vitamin(self,user_email,course_ok_id,answer,
                         lecture_url_name, video_index, vitamin_index):
         cur = self.conn.cursor()
-        print("here")
 
         cur.execute(
             'EXECUTE answer_vitamin (%s, %s, %s, %s, %s, %s)',
