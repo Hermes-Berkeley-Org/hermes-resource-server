@@ -478,7 +478,7 @@
 				"header": [
 					{
 						"key": "Authorization",
-						"value": "Bearer Wzfklr06YBb4gkp5HU88YOu3vFQZHW",
+						"value": "Bearer ",
 						"type": "text"
 					}
 				],
@@ -588,7 +588,7 @@
 				"header": [
 					{
 						"key": "Authorization",
-						"value": "Bearer Wzfklr06YBb4gkp5HU88YOu3vFQZHW",
+						"value": "Bearer ",
 						"type": "text"
 					}
 				],
@@ -634,7 +634,7 @@
 				"header": [
 					{
 						"key": "Authorization",
-						"value": "Bearer Wzfklr06YBb4gkp5HU88YOu3vFQZHW",
+						"value": "Bearer ",
 						"type": "text"
 					},
 					{
@@ -676,7 +676,7 @@
 					{
 						"key": "Authorization",
 						"type": "text",
-						"value": "Bearer 8FKBom4SZ7CVRWKWcgJJ0mDTAFvaXD"
+						"value": "Bearer "
 					}
 				],
 				"body": {
@@ -715,7 +715,7 @@
 				"header": [
 					{
 						"key": "Authorization",
-						"value": "Bearer 8FKBom4SZ7CVRWKWcgJJ0mDTAFvaXD"
+						"value": "Bearer "
 					}
 				],
 				"body": {
@@ -783,7 +783,7 @@
 				"header": [
 					{
 						"key": "Authorization",
-						"value": "Bearer yd56JXKtuQMoQrZGflcbkRMPG2P1XH"
+						"value": "Bearer "
 					},
 					{
 						"key": "Content-Type",
@@ -914,7 +914,7 @@
 				"header": [
 					{
 						"key": "Authorization",
-						"value": "Bearer grf2Mc16z8gIrjfXmDCH9z40TBnB0r",
+						"value": "Bearer ",
 						"type": "text"
 					}
 				],
