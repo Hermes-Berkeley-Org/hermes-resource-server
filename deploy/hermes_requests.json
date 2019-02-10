@@ -1,0 +1,939 @@
+{
+	"info": {
+		"_postman_id": "152cb002-43b6-4264-ba11-de5c2875540a",
+		"name": "Hermes Resource Server copy",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Home",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer "
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
+				"url": {
+					"raw": "localhost:5000/home/",
+					"host": [
+						"localhost"
+					],
+					"port": "5000",
+					"path": [
+						"home",
+						""
+					]
+				},
+				"description": "Gets all classes a user is a part of on Hermes\n- If a user is an instructor, it will also show classes that are not on Hermes, but need to be registered"
+			},
+			"response": []
+		},
+		{
+			"name": "Course",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer "
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
+				"url": {
+					"raw": "localhost:5000/course/234",
+					"host": [
+						"localhost"
+					],
+					"port": "5000",
+					"path": [
+						"course",
+						"234"
+					]
+				},
+				"description": "Gets all information necessary to populate /course/<course_ok_id> "
+			},
+			"response": []
+		},
+		{
+			"name": "Lecture Info",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer ",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
+				"url": {
+					"raw": "localhost:5000/course/345/lecture/0",
+					"host": [
+						"localhost"
+					],
+					"port": "5000",
+					"path": [
+						"course",
+						"345",
+						"lecture",
+						"0"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Video Info",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer "
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
+				"url": {
+					"raw": "localhost:5000/course/345/lecture/test-playlist/video/0",
+					"host": [
+						"localhost"
+					],
+					"port": "5000",
+					"path": [
+						"course",
+						"345",
+						"lecture",
+						"test-playlist",
+						"video",
+						"0"
+					]
+				},
+				"description": "Gets video metadata"
+			},
+			"response": []
+		},
+		{
+			"name": "Create Lecture",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer "
+					}
+				],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "date",
+							"value": "2019-01-18",
+							"type": "text"
+						},
+						{
+							"key": "link",
+							"value": "https://www.youtube.com/watch?v=dS0qGi_Spqc",
+							"type": "text"
+						},
+						{
+							"key": "youtube_access_token",
+							"value": "",
+							"type": "text"
+						},
+						{
+							"key": "piazza_course_id",
+							"value": "jhf7k1p4m3n364",
+							"type": "text"
+						},
+						{
+							"key": "master_id",
+							"value": "158",
+							"type": "text"
+						},
+						{
+							"key": "piazza_active",
+							"value": "active",
+							"type": "text"
+						},
+						{
+							"key": "title",
+							"value": "karitk is here3",
+							"type": "text"
+						}
+					]
+				},
+				"url": {
+					"raw": "localhost:5000/course/345/create_lecture",
+					"host": [
+						"localhost"
+					],
+					"port": "5000",
+					"path": [
+						"course",
+						"345",
+						"create_lecture"
+					]
+				},
+				"description": "Creates lecture"
+			},
+			"response": []
+		},
+		{
+			"name": "Transcript",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer "
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
+				"url": {
+					"raw": "localhost:5000/course/234/lecture/41/video/0/transcript",
+					"host": [
+						"localhost"
+					],
+					"port": "5000",
+					"path": [
+						"course",
+						"234",
+						"lecture",
+						"41",
+						"video",
+						"0",
+						"transcript"
+					]
+				},
+				"description": "Gets transcript of a video"
+			},
+			"response": []
+		},
+		{
+			"name": "Edit Transcript",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer "
+					}
+				],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "index",
+							"value": "0",
+							"type": "text"
+						},
+						{
+							"key": "suggestion",
+							"value": "let us look at a famous example of",
+							"type": "text"
+						},
+						{
+							"key": "user_id",
+							"value": "",
+							"description": "ok id",
+							"type": "text"
+						}
+					]
+				},
+				"url": {
+					"raw": "localhost:5000/course/234/lecture/41/video/0/edit_transcript",
+					"host": [
+						"localhost"
+					],
+					"port": "5000",
+					"path": [
+						"course",
+						"234",
+						"lecture",
+						"41",
+						"video",
+						"0",
+						"edit_transcript"
+					]
+				},
+				"description": "Edits a specific index (in the transcript array) of the transcript"
+			},
+			"response": []
+		},
+		{
+			"name": "Create Course",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer ",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "display_name",
+							"value": "HermesTest",
+							"type": "text"
+						},
+						{
+							"key": "offering",
+							"value": "cal/cs61a/fa18",
+							"type": "text"
+						}
+					]
+				},
+				"url": {
+					"raw": "http://localhost:5000/course/234/create_course",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "5000",
+					"path": [
+						"course",
+						"234",
+						"create_course"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "create_piazza_bot",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer ",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "piazza_course_id",
+							"value": "jhf7k1p4m3n364",
+							"type": "text"
+						},
+						{
+							"key": "content",
+							"value": "",
+							"type": "text"
+						},
+						{
+							"key": "piazza_active",
+							"value": "inactive",
+							"description": "active or inactive must be inactive to work ",
+							"type": "text"
+						},
+						{
+							"key": "piazza_master_post_id",
+							"value": "178",
+							"description": "postid of master th",
+							"type": "text"
+						}
+					]
+				},
+				"url": {
+					"raw": "localhost:5000/course/345/create_piazza_bot",
+					"host": [
+						"localhost"
+					],
+					"port": "5000",
+					"path": [
+						"course",
+						"345",
+						"create_piazza_bot"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "recreate_lecture_post",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer ",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "piazza_course_id",
+							"value": "jhf7k1p4m3n364",
+							"type": "text"
+						},
+						{
+							"key": "piazza_folders",
+							"value": "hw2",
+							"type": "text"
+						},
+						{
+							"key": "content",
+							"value": "",
+							"type": "text"
+						}
+					]
+				},
+				"url": {
+					"raw": "localhost:5000/course/345/create_piazza_bot",
+					"host": [
+						"localhost"
+					],
+					"port": "5000",
+					"path": [
+						"course",
+						"345",
+						"create_piazza_bot"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Delete Lecture",
+			"request": {
+				"method": "DELETE",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer ",
+						"type": "text"
+					},
+					{
+						"key": "piazza_active",
+						"value": "active",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "master_id",
+							"value": "158",
+							"type": "text"
+						},
+						{
+							"key": "piazza_course_id",
+							"value": "jhf7k1p4m3n364",
+							"type": "text"
+						},
+						{
+							"key": "post_id",
+							"value": "161",
+							"type": "text"
+						}
+					]
+				},
+				"url": {
+					"raw": "localhost:5000/course/345/lecture/karitk-is-here",
+					"host": [
+						"localhost"
+					],
+					"port": "5000",
+					"path": [
+						"course",
+						"345",
+						"lecture",
+						"karitk-is-here"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Ask Question",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer Wzfklr06YBb4gkp5HU88YOu3vFQZHW",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "question",
+							"value": "Not at all in range",
+							"type": "text"
+						},
+						{
+							"key": "video_title",
+							"value": "0",
+							"type": "text"
+						},
+						{
+							"key": "piazza_lecture_post_id",
+							"value": "170",
+							"type": "text"
+						},
+						{
+							"key": "video_url",
+							"value": "http://localhost:3000/course/345/lecture/sql-test/video/0",
+							"type": "text"
+						},
+						{
+							"key": "anonymous",
+							"value": "nonanon",
+							"description": "anon or nonanon",
+							"type": "text"
+						},
+						{
+							"key": "piazza_active",
+							"value": "active",
+							"description": "active or inactive, must be active to work ",
+							"type": "text"
+						},
+						{
+							"key": "seconds",
+							"value": "160",
+							"type": "text"
+						},
+						{
+							"key": "piazza_course_id",
+							"value": "jhf7k1p4m3n364",
+							"type": "text"
+						}
+					]
+				},
+				"url": {
+					"raw": "localhost:5000/course/345/lecture/sql-test/video/0/question",
+					"host": [
+						"localhost"
+					],
+					"port": "5000",
+					"path": [
+						"course",
+						"345",
+						"lecture",
+						"sql-test",
+						"video",
+						"0",
+						"question"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Reorder Lectures",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer "
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\"ordering\": {\n\t\t\"test-playlist\": 0,\n\t\t\"prancakes\": 1\n\t}\n}"
+				},
+				"url": {
+					"raw": "localhost:5000/course/345/reorder_lectures",
+					"host": [
+						"localhost"
+					],
+					"port": "5000",
+					"path": [
+						"course",
+						"345",
+						"reorder_lectures"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Disable Piazza",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer Wzfklr06YBb4gkp5HU88YOu3vFQZHW",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "piazza_master_post_id",
+							"value": "178",
+							"type": "text"
+						},
+						{
+							"key": "piazza_active",
+							"value": "active",
+							"type": "text"
+						},
+						{
+							"key": "piazza_course_id",
+							"value": "jhf7k1p4m3n364",
+							"type": "text"
+						}
+					]
+				},
+				"url": {
+					"raw": "localhost:5000/course/234/disable_piazza",
+					"host": [
+						"localhost"
+					],
+					"port": "5000",
+					"path": [
+						"course",
+						"234",
+						"disable_piazza"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Create Vitamin",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer Wzfklr06YBb4gkp5HU88YOu3vFQZHW",
+						"type": "text"
+					},
+					{
+						"key": "Content-Type",
+						"name": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\"vitamin\": {\n\t\t\"question\": \"playlist?\",\n\t\t\"answer\": \"Answer.\",\n\t\t\"choices\": [\"Answer.\", \"No\"],\n\t\t\"seconds\": 2.078\n\t}\n}"
+				},
+				"url": {
+					"raw": "http://localhost:5000/course/345/lecture/list-4/video/0/create_vitamin",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "5000",
+					"path": [
+						"course",
+						"345",
+						"lecture",
+						"list-4",
+						"video",
+						"0",
+						"create_vitamin"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Create Resource",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"type": "text",
+						"value": "Bearer 8FKBom4SZ7CVRWKWcgJJ0mDTAFvaXD"
+					}
+				],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "link",
+							"value": "https://www.google.com",
+							"type": "text"
+						}
+					]
+				},
+				"url": {
+					"raw": "localhost:5000/course/345/lecture/b11/video/0/create_resource",
+					"host": [
+						"localhost"
+					],
+					"port": "5000",
+					"path": [
+						"course",
+						"345",
+						"lecture",
+						"b11",
+						"video",
+						"0",
+						"create_resource"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Delete Vitamin",
+			"request": {
+				"method": "DELETE",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer 8FKBom4SZ7CVRWKWcgJJ0mDTAFvaXD"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
+				"url": {
+					"raw": "localhost:5000/course/345/lecture/b11/video/0/delete_vitamin/4",
+					"host": [
+						"localhost"
+					],
+					"port": "5000",
+					"path": [
+						"course",
+						"345",
+						"lecture",
+						"b11",
+						"video",
+						"0",
+						"delete_vitamin",
+						"4"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Delete Resource",
+			"request": {
+				"method": "DELETE",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer "
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
+				"url": {
+					"raw": "localhost:5000/course/345/lecture/b11/video/0/delete_resource/1",
+					"host": [
+						"localhost"
+					],
+					"port": "5000",
+					"path": [
+						"course",
+						"345",
+						"lecture",
+						"b11",
+						"video",
+						"0",
+						"delete_resource",
+						"1"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Answer Vitamin",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer yd56JXKtuQMoQrZGflcbkRMPG2P1XH"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\"answer\": \"E\"\n}"
+				},
+				"url": {
+					"raw": "http://localhost:5000/course/345/lecture/playlist-test/video/0/answer_vitamin/0",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "5000",
+					"path": [
+						"course",
+						"345",
+						"lecture",
+						"playlist-test",
+						"video",
+						"0",
+						"answer_vitamin",
+						"0"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "localhost:5000/course/345/lecture/ewe/video/0/get_questions_in_range",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "uvwDTOBVIgo1SkhgBKJywdHaxE61gm",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "start_second",
+							"value": "109",
+							"type": "text"
+						},
+						{
+							"key": "end_second",
+							"value": "114",
+							"type": "text"
+						},
+						{
+							"key": "piazza_course_id",
+							"value": "jhf7k1p4m3n364",
+							"type": "text"
+						},
+						{
+							"key": "lecture_post_id",
+							"value": "168",
+							"type": "text"
+						}
+					]
+				},
+				"url": {
+					"raw": "localhost:5000/course/345/lecture/sql-test/video/0/questions",
+					"host": [
+						"localhost"
+					],
+					"port": "5000",
+					"path": [
+						"course",
+						"345",
+						"lecture",
+						"sql-test",
+						"video",
+						"0",
+						"questions"
+					]
+				},
+				"description": "dd"
+			},
+			"response": []
+		},
+		{
+			"name": "watch video",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer ",
+						"type": "text"
+					}
+				],
+				"body": {},
+				"url": {
+					"raw": "http://localhost:5000/course/345/lecture/playlist-test/video/0/watch_video",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "5000",
+					"path": [
+						"course",
+						"345",
+						"lecture",
+						"playlist-test",
+						"video",
+						"0",
+						"watch_video"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "hello",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer grf2Mc16z8gIrjfXmDCH9z40TBnB0r",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
+				"url": {
+					"raw": "localhost:5000/hello",
+					"host": [
+						"localhost"
+					],
+					"port": "5000",
+					"path": [
+						"hello"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}
