@@ -6,4 +6,4 @@ export TESTING_OK_ID=lejRej
 export TRANSCRIPTION_MODE=api
 export OAUTHLIB_INSECURE_TRANSPORT=1
 export FLASK_DEBUG=1
-export HERMES_UI_URL=https://ui-dot-hermes-199405.appspot.com
+export HERMES_UI_URL=http://localhost:3000

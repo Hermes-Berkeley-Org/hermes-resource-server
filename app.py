@@ -36,8 +36,7 @@ app.config.from_object(Config)
 client = MongoClient(os.environ.get('MONGODB_URI'))
 db = client[os.environ.get('DATABASE_NAME')]
 
-conn = psycopg2.connect(os.environ.get('SQL_DATABASE_URL'))
-sql_client = SQLClient(conn)
+sql_client = SQLClient()
 
 logger = logging.getLogger('app_logger')
 sh = logging.StreamHandler(stream=sys.stdout)
@@ -813,9 +812,9 @@ def edit_resource(course_ok_id, lecture_url_name, video_index, resource_index, o
             return jsonify(success=False, message="Only instructors can create vitamins"), 403
     return jsonify(success=False, message="Can only create a vitamin on Hermes for an OK course you are a part of"), 403
 
-@app.route('/course/<course_ok_id>/lecture/<lecture_url_name>/video/<int:video_index>/edit', methods=["GET"])
+@app.route('/course/<course_ok_id>/lecture/<lecture_url_name>/video/<int:video_index>/vitamins_and_resources', methods=["GET"])
 @validate_and_pass_on_ok_id
-def edit_video(course_ok_id, lecture_url_name, video_index, ok_id=None):
+def vitamins_and_resources(course_ok_id, lecture_url_name, video_index, ok_id=None):
     """Gets all vitamins on a video"""
     user_courses = get_updated_user_courses()
     int_course_ok_id = int(course_ok_id)
