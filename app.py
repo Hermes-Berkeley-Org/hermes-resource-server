@@ -1010,11 +1010,11 @@ def search(ok_id=None):
     else:
         user_courses = get_updated_user_courses()
         course_ok_ids.extend([course['course_id'] for course in user_courses])
-        display_name_mapping = {str(course['course_id']): course['display_name'] for course in user_courses}
+        display_name_mapping = {str(course['course_id']): course['course']['display_name'] for course in user_courses}
     query = request.args.get('q')
     if not query:
         return jsonify(success=False, message='Must pass in a query'), 400
     search_results = search_client.search(query, course_ok_ids)
     for result in search_results:
-        search_results['course_display_name'] = display_name_mapping[result['course_ok_id']]
+        result['course_display_name'] = display_name_mapping[str(result['course_ok_id'][0])]
     return json_dump(search_results)

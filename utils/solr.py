@@ -37,7 +37,7 @@ class SearchClient:
         text_clause = ' OR '.join(map(lambda word: f'text:{word}', query.split(' ')))
         return list(self.solr.search(
             q=('{!parent which="' + f'({text_clause})' + ' AND ' + f'({course_ok_ids_clause})' + '"}'),
-            fl='course_ok_id,video_index,lecture_url_name,begin,end,text',
+            fl='course_ok_id,video_index,lecture_url_name,lecture_title,begin,end,text',
             limit=50))
 
     def clear(self):
@@ -50,4 +50,4 @@ if __name__ == '__main__':
     search_client = SearchClient(CORE_URL)
     search_client.clear()
     for transcript in db['Transcripts'].find():
-        search_client.add_transcript(transcript)
+        search_client.add_transcript(transcript, 'Playlist Test')
