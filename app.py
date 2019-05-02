@@ -26,6 +26,7 @@ import utils.lecture_utils as LectureUtils
 import utils.piazza_client as Piazza
 from utils.errors import CreateLectureFormValidationError
 from utils.sql_client import SQLClient
+from utils.solr import SearchClient
 
 import consts
 
@@ -35,6 +36,8 @@ app.config.from_object(Config)
 
 client = MongoClient(os.environ.get('MONGODB_URI'))
 db = client[os.environ.get('DATABASE_NAME')]
+
+search_client = SearchClient(os.environ.get('SOLR_URL'))
 
 conn = psycopg2.connect(os.environ.get('SQL_DATABASE_URL'))
 sql_client = SQLClient(conn)
@@ -51,7 +54,6 @@ logger.info('Backend READY')
 ok_server = app.config['OK_SERVER']
 
 json_dump = lambda j: json.dumps(j, indent=4)
-
 
 def get_oauth_token():
     """Retrieves OAuth token from the request header"""
@@ -318,7 +320,7 @@ def create_lecture(course_ok_id, ok_id=None):
                 course_obj = db[Course.collection].find_one({
                     "course_ok_id": course_ok_id
                 })
-                create_lecture_response, lecture_url_name = LectureUtils.create_lecture(
+                create_lecture_response, transcripts, lecture_url_name = LectureUtils.create_lecture(
                     course_ok_id,
                     db,
                     request.form['title'],
@@ -341,6 +343,10 @@ def create_lecture(course_ok_id, ok_id=None):
                         course_ok_id=course_ok_id,
                         piazza_course_id=request.form[
                             "piazza_course_id"], db=db)
+
+                for transcript in transcripts:
+                    search_client.add_transcript(transcript, create_lecture_response['lecture_title'])
+
                 return jsonify(success=True, **create_lecture_response), 200
             except CreateLectureFormValidationError as e:
                 return jsonify(success=False, message=str(e)), 400
@@ -813,9 +819,9 @@ def edit_resource(course_ok_id, lecture_url_name, video_index, resource_index, o
             return jsonify(success=False, message="Only instructors can create vitamins"), 403
     return jsonify(success=False, message="Can only create a vitamin on Hermes for an OK course you are a part of"), 403
 
-@app.route('/course/<course_ok_id>/lecture/<lecture_url_name>/video/<int:video_index>/edit', methods=["GET"])
+@app.route('/course/<course_ok_id>/lecture/<lecture_url_name>/video/<int:video_index>/vitamins_and_resources', methods=["GET"])
 @validate_and_pass_on_ok_id
-def edit_video(course_ok_id, lecture_url_name, video_index, ok_id=None):
+def vitamins_and_resources(course_ok_id, lecture_url_name, video_index, ok_id=None):
     """Gets all vitamins on a video"""
     user_courses = get_updated_user_courses()
     int_course_ok_id = int(course_ok_id)
@@ -991,3 +997,24 @@ def watch_video(course_ok_id, lecture_url_name, video_index, ok_id=None):
 @validate_and_pass_on_ok_id
 def get_lecture_attendence(course_ok_id, lecture_url_name, video_index, ok_id=None):
     return
+
+@app.route(
+    '/search',
+    methods=["GET"])
+@validate_and_pass_on_ok_id
+def search(ok_id=None):
+    course_ok_ids = []
+    if request.args.get('course_ok_id'):
+        # TODO: better response for one course
+        course_ok_ids.append(request.args.get('course_ok_id'))
+    else:
+        user_courses = get_updated_user_courses()
+        course_ok_ids.extend([course['course_id'] for course in user_courses])
+        display_name_mapping = {str(course['course_id']): course['display_name'] for course in user_courses}
+    query = request.args.get('q')
+    if not query:
+        return jsonify(success=False, message='Must pass in a query'), 400
+    search_results = search_client.search(query, course_ok_ids)
+    for result in search_results:
+        search_results['course_display_name'] = display_name_mapping[result['course_ok_id']]
+    return json_dump(search_results)

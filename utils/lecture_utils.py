@@ -99,8 +99,9 @@ def create_lecture(course_ok_id, db, lecture_title,
         }
     )
     return {
-        'no_transcript_videos': no_transcript_videos
-    }, lecture_url_name
+        'no_transcript_videos': no_transcript_videos,
+        'lecture_title': lecture_title
+    }, transcripts, lecture_url_name
 
 def get_final_youtube_url(link):
     """Checks if YouTube link is a valid URL and gets the final redirected
